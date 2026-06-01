@@ -4,25 +4,23 @@ export default function Toasts({ toasts, onDismiss }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`pointer-events-auto animate-fade-in-up rounded-xl border p-3.5 shadow-card ${
+          className={`pointer-events-auto animate-fade-in-up rounded-xl border p-3.5 backdrop-blur-xl ${
             t.tone === "nudge"
-              ? "border-rose-200 bg-white"
+              ? "border-rose-400/40 bg-rose-500/10 shadow-glow-sm"
               : t.tone === "error"
-              ? "border-rose-200 bg-rose-50"
-              : "border-slate-200 bg-white"
+              ? "border-rose-400/40 bg-rose-500/10"
+              : "border-white/10 bg-ink-850/90 shadow-card"
           }`}
         >
           <div className="flex items-start gap-3">
             <span className="text-lg leading-none">{t.icon || "🔔"}</span>
             <div className="min-w-0 flex-1">
-              {t.title ? (
-                <div className="text-sm font-semibold text-slate-900">{t.title}</div>
-              ) : null}
-              <div className="text-sm text-slate-600">{t.text}</div>
+              {t.title ? <div className="text-sm font-semibold text-white">{t.title}</div> : null}
+              <div className="text-sm text-slate-300">{t.text}</div>
             </div>
             <button
               onClick={() => onDismiss(t.id)}
-              className="shrink-0 text-slate-300 transition hover:text-slate-500"
+              className="shrink-0 text-slate-500 transition hover:text-slate-300"
             >
               ✕
             </button>

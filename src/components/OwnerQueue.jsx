@@ -6,16 +6,16 @@ import { NUDGE_THRESHOLD_MS } from "../lib/state.js";
 export default function OwnerQueue({ queue, now, onHandled, onSelect }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">Needs you</h2>
+          <h2 className="text-sm font-semibold text-white">Needs you</h2>
           {queue.length > 0 ? (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white shadow-glow">
               {queue.length}
             </span>
           ) : null}
         </div>
-        <span className="text-xs text-slate-400">owner handoffs</span>
+        <span className="text-xs text-slate-500">owner handoffs</span>
       </div>
 
       <div className="flex-1 space-y-2.5 overflow-y-auto p-3">
@@ -33,7 +33,9 @@ export default function OwnerQueue({ queue, now, onHandled, onSelect }) {
               <div
                 key={c.id}
                 className={`rounded-xl border p-3 transition ${
-                  overdue ? "border-rose-200 bg-rose-50/60" : "border-slate-200 bg-white"
+                  overdue
+                    ? "border-rose-400/40 bg-rose-500/10 shadow-glow-sm"
+                    : "border-white/10 bg-white/[0.04]"
                 }`}
               >
                 <div className="flex items-start gap-2.5">
@@ -42,33 +44,33 @@ export default function OwnerQueue({ queue, now, onHandled, onSelect }) {
                     <div className="flex items-center justify-between gap-2">
                       <button
                         onClick={() => onSelect(c.id)}
-                        className="truncate text-sm font-semibold text-slate-900 hover:text-accent-700"
+                        className="truncate text-sm font-semibold text-white hover:text-violet-300"
                       >
                         {c.lead.customer_name || c.customerName}
                       </button>
                       <span
                         className={`shrink-0 text-xs font-medium ${
-                          overdue ? "text-rose-600" : "text-slate-400"
+                          overdue ? "text-rose-300" : "text-slate-500"
                         }`}
                       >
                         {overdue ? "⏰ " : ""}
                         {formatAgo(c.createdAt, now)}
                       </span>
                     </div>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{c.lead.summary}</p>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-400">{c.lead.summary}</p>
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <Badge className={URGENCY_STYLES[c.lead.urgency]}>{c.lead.urgency}</Badge>
                       {c.lead.contact ? (
                         <span className="text-xs text-slate-400">{c.lead.contact}</span>
                       ) : (
-                        <span className="text-xs text-slate-300">no contact given</span>
+                        <span className="text-xs text-slate-600">no contact given</span>
                       )}
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => onHandled(c.id)}
-                  className="mt-2.5 w-full rounded-lg bg-slate-900 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700"
+                  className="mt-2.5 w-full rounded-lg border border-white/10 bg-white/10 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/20"
                 >
                   Mark as handled
                 </button>

@@ -27,10 +27,10 @@ function SimulateControls({ channel, onChannel, onSimulate, onSend }) {
   };
 
   return (
-    <div className="border-b border-slate-100 p-3">
+    <div className="border-b border-white/10 p-3">
       <button
         onClick={onSimulate}
-        className="mb-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-accent-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-700"
+        className="btn-accent mb-2.5 flex w-full items-center justify-center gap-2 py-2.5 text-sm font-semibold"
       >
         ⚡ Simulate incoming enquiry
       </button>
@@ -54,11 +54,11 @@ function SimulateControls({ channel, onChannel, onSimulate, onSend }) {
           onKeyDown={(e) => {
             if (e.key === "Enter") send();
           }}
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent-400 focus:ring-4 focus:ring-accent-100"
+          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-violet-400/60 focus:ring-4 focus:ring-violet-500/15"
         />
         <button
           onClick={send}
-          className="shrink-0 rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+          className="shrink-0 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:bg-white/20"
         >
           Send
         </button>
@@ -78,38 +78,38 @@ function FeedRow({ convo, now, selected, onSelect }) {
   return (
     <button
       onClick={() => onSelect(convo.id)}
-      className={`flex w-full items-start gap-2.5 border-b border-slate-50 px-3 py-3 text-left transition hover:bg-slate-50 ${
-        selected ? "bg-accent-50/60" : ""
+      className={`flex w-full items-start gap-2.5 border-b border-white/5 px-3 py-3 text-left transition hover:bg-white/5 ${
+        selected ? "bg-violet-500/10" : ""
       }`}
     >
       <Avatar initials={av.initials} color={av.color} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold text-slate-900">{name}</span>
-          <span className="shrink-0 text-[11px] text-slate-400">{formatAgo(convo.createdAt, now)}</span>
+          <span className="truncate text-sm font-semibold text-white">{name}</span>
+          <span className="shrink-0 text-[11px] text-slate-500">{formatAgo(convo.createdAt, now)}</span>
         </div>
-        <p className="truncate text-xs text-slate-500">
+        <p className="truncate text-xs text-slate-400">
           {convo.status === "replying" && last.role === "customer" ? (
-            <span className="italic text-slate-400">{last.text}</span>
+            <span className="italic text-slate-500">{last.text}</span>
           ) : (
             last.text
           )}
         </p>
         <div className="mt-1.5 flex items-center gap-1.5">
-          <Badge className={CHANNEL_STYLES[convo.channel] || "bg-slate-50 text-slate-600 ring-slate-200"}>
+          <Badge className={CHANNEL_STYLES[convo.channel] || "bg-white/10 text-slate-300 ring-white/15"}>
             {convo.channel}
           </Badge>
           {convo.status === "replying" ? (
-            <span className="flex items-center gap-1 text-[11px] font-medium text-accent-600">
-              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-accent-500" />
+            <span className="flex items-center gap-1 text-[11px] font-medium text-violet-300">
+              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-violet-400 shadow-glow-sm" />
               replying…
             </span>
           ) : convo.status === "error" ? (
-            <span className="text-[11px] font-medium text-rose-600">error</span>
+            <span className="text-[11px] font-medium text-rose-300">error</span>
           ) : convo.lead?.needs_owner ? (
-            <Badge className="bg-accent-50 text-accent-700 ring-accent-200">needs you</Badge>
+            <Badge className="bg-violet-500/15 text-violet-300 ring-violet-400/30">needs you</Badge>
           ) : (
-            <span className="text-[11px] font-medium text-emerald-600">✓ handled</span>
+            <span className="text-[11px] font-medium text-emerald-300">✓ handled</span>
           )}
         </div>
       </div>
@@ -127,16 +127,20 @@ function MessageBubble({ msg }) {
     <div className={`flex ${isAi ? "justify-end" : "justify-start"}`}>
       <div className="max-w-[80%]">
         <div
-          className={`rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
+          className={`rounded-2xl px-3.5 py-2.5 text-sm ${
             isAi
-              ? "rounded-br-md bg-accent-600 text-white"
-              : "rounded-bl-md border border-slate-200 bg-white text-slate-800"
+              ? "rounded-br-md bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-glow"
+              : "rounded-bl-md border border-white/10 bg-white/[0.06] text-slate-100 backdrop-blur-xl"
           }`}
         >
           {msg.text}
         </div>
-        <div className={`mt-1 text-[11px] text-slate-400 ${isAi ? "text-right" : "text-left"}`}>
-          {isAi ? "Replyr AI" : "Customer"} · {formatClock(msg.ts)}
+        <div
+          className={`mt-1 flex items-center gap-1 text-[11px] text-slate-500 ${
+            isAi ? "justify-end" : "justify-start"
+          }`}
+        >
+          {isAi ? "✦ Replyr AI" : "Customer"} · {formatClock(msg.ts)}
         </div>
       </div>
     </div>
@@ -145,15 +149,15 @@ function MessageBubble({ msg }) {
 
 function LeadDetail({ lead }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Captured lead
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <span className="text-gradient">✦</span> Captured lead
         </span>
         {lead.needs_owner ? (
-          <Badge className="bg-accent-50 text-accent-700 ring-accent-200">routed to owner</Badge>
+          <Badge className="bg-violet-500/15 text-violet-300 ring-violet-400/30">routed to owner</Badge>
         ) : (
-          <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-200">handled by AI</Badge>
+          <Badge className="bg-emerald-500/15 text-emerald-300 ring-emerald-400/30">handled by AI</Badge>
         )}
       </div>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -161,14 +165,14 @@ function LeadDetail({ lead }) {
         <Detail label="Contact" value={lead.contact || "—"} />
         <Detail label="Intent" value={INTENT_LABELS[lead.intent] || lead.intent} />
         <div>
-          <dt className="text-xs text-slate-400">Urgency</dt>
+          <dt className="text-xs text-slate-500">Urgency</dt>
           <dd className="mt-0.5">
             <Badge className={URGENCY_STYLES[lead.urgency]}>{lead.urgency}</Badge>
           </dd>
         </div>
         <div className="col-span-2">
-          <dt className="text-xs text-slate-400">Summary</dt>
-          <dd className="mt-0.5 text-slate-800">{lead.summary}</dd>
+          <dt className="text-xs text-slate-500">Summary</dt>
+          <dd className="mt-0.5 text-slate-200">{lead.summary}</dd>
         </div>
       </dl>
     </div>
@@ -178,8 +182,8 @@ function LeadDetail({ lead }) {
 function Detail({ label, value }) {
   return (
     <div>
-      <dt className="text-xs text-slate-400">{label}</dt>
-      <dd className="mt-0.5 truncate font-medium text-slate-800">{value}</dd>
+      <dt className="text-xs text-slate-500">{label}</dt>
+      <dd className="mt-0.5 truncate font-medium text-slate-200">{value}</dd>
     </div>
   );
 }
@@ -196,7 +200,6 @@ function ChatThread({ convo, onFollowUp }) {
     );
   }
 
-  const firstAi = convo.messages.find((m) => m.role === "ai");
   const send = () => {
     const t = text.trim();
     if (!t) return;
@@ -207,18 +210,18 @@ function ChatThread({ convo, onFollowUp }) {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-slate-900">
+          <span className="text-sm font-semibold text-white">
             {convo.lead?.customer_name || convo.customerName}
           </span>
-          <Badge className={CHANNEL_STYLES[convo.channel] || "bg-slate-50 text-slate-600 ring-slate-200"}>
+          <Badge className={CHANNEL_STYLES[convo.channel] || "bg-white/10 text-slate-300 ring-white/15"}>
             {convo.channel}
           </Badge>
-          <Badge className="bg-slate-100 text-slate-500 ring-slate-200">Demo</Badge>
+          <Badge className="bg-white/5 text-slate-400 ring-white/10">Demo</Badge>
         </div>
         {convo.responseSeconds != null ? (
-          <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+          <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
             ⚡ replied in {formatSeconds(convo.responseSeconds)}
           </span>
         ) : null}
@@ -232,7 +235,7 @@ function ChatThread({ convo, onFollowUp }) {
 
         {convo.status === "replying" ? (
           <div className="flex justify-end">
-            <div className="flex items-center gap-1.5 rounded-2xl rounded-br-md bg-accent-600 px-4 py-3">
+            <div className="flex items-center gap-1.5 rounded-2xl rounded-br-md bg-gradient-to-br from-violet-500 to-indigo-500 px-4 py-3 shadow-glow">
               <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-white" />
               <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-white [animation-delay:0.2s]" />
               <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-white [animation-delay:0.4s]" />
@@ -241,7 +244,7 @@ function ChatThread({ convo, onFollowUp }) {
         ) : null}
 
         {convo.status === "error" ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-sm text-rose-200">
             <div className="font-semibold">Couldn't generate a reply</div>
             <div className="mt-0.5 text-xs">{convo.error}</div>
           </div>
@@ -251,7 +254,7 @@ function ChatThread({ convo, onFollowUp }) {
       </div>
 
       {/* Follow-up composer */}
-      <div className="border-t border-slate-100 p-3">
+      <div className="border-t border-white/10 p-3">
         <div className="flex gap-2">
           <input
             value={text}
@@ -260,12 +263,12 @@ function ChatThread({ convo, onFollowUp }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") send();
             }}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent-400 focus:ring-4 focus:ring-accent-100"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-violet-400/60 focus:ring-4 focus:ring-violet-500/15"
           />
           <button
             onClick={send}
             disabled={convo.status === "replying"}
-            className="shrink-0 rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-40"
+            className="shrink-0 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:bg-white/20 disabled:opacity-40"
           >
             Send
           </button>
@@ -302,10 +305,10 @@ export default function Inbox({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Feed */}
         <section className="lg:col-span-4">
-          <div className="flex h-[72vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+          <div className="glass flex h-[72vh] flex-col overflow-hidden rounded-2xl shadow-card">
             <div className="flex items-center justify-between px-4 pt-3">
-              <h2 className="text-sm font-semibold text-slate-900">Live enquiries</h2>
-              <span className="text-xs text-slate-400">{conversations.length} total</span>
+              <h2 className="text-sm font-semibold text-white">Live enquiries</h2>
+              <span className="text-xs text-slate-500">{conversations.length} total</span>
             </div>
             <SimulateControls
               channel={channel}
@@ -337,14 +340,14 @@ export default function Inbox({
 
         {/* Thread */}
         <section className="lg:col-span-5">
-          <div className="h-[72vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/40 shadow-card">
+          <div className="glass h-[72vh] overflow-hidden rounded-2xl shadow-card">
             <ChatThread convo={selected} onFollowUp={onFollowUp} />
           </div>
         </section>
 
         {/* Owner queue */}
         <section className="lg:col-span-3">
-          <div className="h-[72vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+          <div className="glass h-[72vh] overflow-hidden rounded-2xl shadow-card">
             <OwnerQueue queue={queue} now={now} onHandled={onHandled} onSelect={onSelect} />
           </div>
         </section>

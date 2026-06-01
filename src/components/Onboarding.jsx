@@ -9,16 +9,16 @@ export default function Onboarding({ business, onChange, onReset, onContinue, on
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Set up your business
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Set up your <span className="text-gradient">business</span>
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-400">
           This is the knowledge base your AI answers from. The more you add, the more it can
           confidently handle — anything it doesn't know gets routed to you.
         </p>
       </div>
 
-      <div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+      <div className="glass space-y-6 rounded-2xl p-6 shadow-card">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Business name">
             <TextInput
@@ -89,7 +89,7 @@ export default function Onboarding({ business, onChange, onReset, onContinue, on
                 : "Only fixed, public prices. Leave blank if you'd rather quote yourself."
             }
             onChange={(e) => set({ prices: e.target.value })}
-            className={quoteBased ? "cursor-not-allowed bg-slate-50 text-slate-400" : ""}
+            className={quoteBased ? "cursor-not-allowed opacity-50" : ""}
           />
         </Field>
 
@@ -110,8 +110,8 @@ export default function Onboarding({ business, onChange, onReset, onContinue, on
                 onClick={() => set({ tone: t })}
                 className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
                   business.tone === t
-                    ? "border-accent-300 bg-accent-50 text-accent-700 ring-2 ring-accent-100"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    ? "border-violet-400/40 bg-violet-500/15 text-violet-200 shadow-glow-sm"
+                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                 }`}
               >
                 {t}
@@ -122,21 +122,18 @@ export default function Onboarding({ business, onChange, onReset, onContinue, on
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          onClick={onContinue}
-          className="rounded-xl bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-700"
-        >
+        <button onClick={onContinue} className="btn-accent px-5 py-2.5 text-sm font-semibold">
           {onboarded ? "Save & go to inbox" : "Continue to inbox →"}
         </button>
         <button
           onClick={() => onReset(SAMPLE_BUSINESS)}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10"
         >
           Load sample cafe
         </button>
         <button
           onClick={() => onReset(BLANK_BUSINESS)}
-          className="rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:text-slate-600"
+          className="rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-300"
         >
           Clear all
         </button>

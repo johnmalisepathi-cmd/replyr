@@ -24,9 +24,9 @@ export function formatSeconds(secs) {
 }
 
 export const URGENCY_STYLES = {
-  high: "bg-rose-50 text-rose-700 ring-rose-200",
-  medium: "bg-amber-50 text-amber-700 ring-amber-200",
-  low: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  high: "bg-rose-500/15 text-rose-300 ring-rose-400/30",
+  medium: "bg-amber-500/15 text-amber-300 ring-amber-400/30",
+  low: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/30",
 };
 
 export const INTENT_LABELS = {
@@ -37,8 +37,8 @@ export const INTENT_LABELS = {
 };
 
 export const CHANNEL_STYLES = {
-  WhatsApp: "bg-green-50 text-green-700 ring-green-200",
-  Email: "bg-sky-50 text-sky-700 ring-sky-200",
-  "Instagram DM": "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200",
-  Facebook: "bg-blue-50 text-blue-700 ring-blue-200",
+  WhatsApp: "bg-green-500/15 text-green-300 ring-green-400/30",
+  Email: "bg-sky-500/15 text-sky-300 ring-sky-400/30",
+  "Instagram DM": "bg-fuchsia-500/15 text-fuchsia-300 ring-fuchsia-400/30",
+  Facebook: "bg-blue-500/15 text-blue-300 ring-blue-400/30",
 };

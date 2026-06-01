@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html,
@@ -14,24 +14,67 @@ body,
 
 body {
   margin: 0;
-  background-color: #f7f8fb;
+  color: #e2e8f0;
+  background-color: #06060c;
+  /* Layered radial glows + a faint grid for the "AI product" backdrop. */
+  background-image:
+    radial-gradient(900px 520px at 12% -8%, rgba(124, 58, 237, 0.22), transparent 60%),
+    radial-gradient(820px 520px at 100% 0%, rgba(34, 211, 238, 0.14), transparent 55%),
+    radial-gradient(760px 600px at 50% 120%, rgba(79, 70, 229, 0.16), transparent 60%),
+    linear-gradient(180deg, #07070f 0%, #06060c 100%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Calm, thin scrollbars so panels feel light. */
+/* Subtle grid overlay sitting above the gradient. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 100% 80% at 50% 0%, #000 30%, transparent 80%);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/10 bg-white/[0.035] backdrop-blur-xl;
+  }
+  .text-gradient {
+    @apply bg-gradient-to-r from-violet-300 via-indigo-200 to-cyan-200 bg-clip-text text-transparent;
+  }
+  .btn-accent {
+    @apply rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 text-white shadow-glow transition hover:from-violet-400 hover:to-indigo-400;
+  }
+}
+
+/* Dark, thin scrollbars. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #d4d7e3 transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background-color: #d4d7e3;
+  background-color: rgba(148, 163, 184, 0.25);
   border-radius: 9999px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+::selection {
+  background: rgba(124, 58, 237, 0.35);
 }

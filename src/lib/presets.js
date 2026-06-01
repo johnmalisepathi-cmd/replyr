@@ -79,12 +79,12 @@ export const DEMO_ENQUIRIES = [
 
 // Avatar-ish initials + a deterministic colour per name.
 const AVATAR_COLORS = [
-  "bg-rose-100 text-rose-700",
-  "bg-amber-100 text-amber-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-sky-100 text-sky-700",
-  "bg-violet-100 text-violet-700",
-  "bg-fuchsia-100 text-fuchsia-700",
+  "bg-rose-500/20 text-rose-200",
+  "bg-amber-500/20 text-amber-200",
+  "bg-emerald-500/20 text-emerald-200",
+  "bg-sky-500/20 text-sky-200",
+  "bg-violet-500/20 text-violet-200",
+  "bg-fuchsia-500/20 text-fuchsia-200",
 ];
 
 export function avatarFor(name) {

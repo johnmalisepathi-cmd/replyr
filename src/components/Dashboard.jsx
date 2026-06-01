@@ -3,24 +3,29 @@ import { formatSeconds } from "../lib/format.js";
 function StatCard({ label, value, sub, accent, big }) {
   return (
     <div
-      className={`rounded-2xl border p-5 shadow-card ${
+      className={`relative overflow-hidden rounded-2xl p-5 ${
         accent
-          ? "border-accent-200 bg-gradient-to-br from-accent-600 to-accent-700 text-white"
-          : "border-slate-200 bg-white"
+          ? "border border-violet-400/30 bg-gradient-to-br from-violet-600/90 via-indigo-600/80 to-cyan-500/60 text-white shadow-glow"
+          : "glass shadow-card"
       }`}
     >
-      <div className={`text-xs font-medium ${accent ? "text-accent-100" : "text-slate-500"}`}>
+      {accent ? (
+        <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
+      ) : null}
+      <div className={`relative text-xs font-medium ${accent ? "text-violet-100" : "text-slate-400"}`}>
         {label}
       </div>
       <div
-        className={`mt-1 font-bold tracking-tight ${big ? "text-4xl" : "text-3xl"} ${
-          accent ? "text-white" : "text-slate-900"
+        className={`relative mt-1 font-bold tracking-tight ${big ? "text-4xl" : "text-3xl"} ${
+          accent ? "text-white" : "text-white"
         }`}
       >
         {value}
       </div>
       {sub ? (
-        <div className={`mt-1 text-xs ${accent ? "text-accent-100" : "text-slate-400"}`}>{sub}</div>
+        <div className={`relative mt-1 text-xs ${accent ? "text-violet-100/90" : "text-slate-500"}`}>
+          {sub}
+        </div>
       ) : null}
     </div>
   );
@@ -40,24 +45,24 @@ export function StatStrip({ stats }) {
 function MiniStat({ label, value, alert, highlight }) {
   return (
     <div
-      className={`rounded-xl border px-4 py-3 ${
+      className={`rounded-xl border px-4 py-3 backdrop-blur-xl ${
         highlight
-          ? "border-accent-200 bg-accent-50"
+          ? "border-violet-400/30 bg-violet-500/10"
           : alert
-          ? "border-rose-200 bg-rose-50"
-          : "border-slate-200 bg-white"
+          ? "border-rose-400/30 bg-rose-500/10"
+          : "border-white/10 bg-white/[0.035]"
       }`}
     >
       <div
         className={`text-[11px] font-medium ${
-          highlight ? "text-accent-700" : alert ? "text-rose-600" : "text-slate-500"
+          highlight ? "text-violet-300" : alert ? "text-rose-300" : "text-slate-400"
         }`}
       >
         {label}
       </div>
       <div
         className={`text-xl font-bold tracking-tight ${
-          highlight ? "text-accent-700" : alert ? "text-rose-700" : "text-slate-900"
+          highlight ? "text-violet-200" : alert ? "text-rose-200" : "text-white"
         }`}
       >
         {value}
@@ -68,13 +73,12 @@ function MiniStat({ label, value, alert, highlight }) {
 
 export default function Dashboard({ stats }) {
   const caught = stats.caught;
-  const captureRate = caught > 0 ? Math.round(((caught - 0) / caught) * 100) : 0;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+        <p className="mt-1 text-sm text-slate-400">
           The value, at a glance: every enquiry answered instantly is one that didn't slip away.
         </p>
       </div>
@@ -113,9 +117,9 @@ export default function Dashboard({ stats }) {
         />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-card">
+      <div className="glass mt-6 rounded-2xl p-5 text-sm text-slate-400 shadow-card">
         <p>
-          <span className="font-semibold text-slate-700">Why this matters:</span> roughly half of
+          <span className="font-semibold text-slate-200">Why this matters:</span> roughly half of
           customers go with whoever replies first. Replyr makes sure that's always you — instantly,
           accurately, and in your voice — even when you're with a customer, on a job, or asleep.
         </p>
