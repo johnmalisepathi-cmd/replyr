@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+// Local dev serves at "/", production build is served under the GitHub Pages
+// project subpath "/replyr/art-creator/".
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/replyr/art-creator/" : "/",
   plugins: [react()],
-});
+}));
