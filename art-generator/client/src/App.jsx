@@ -15,6 +15,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [batches, setBatches] = useState([]);
   const [apiConfigured, setApiConfigured] = useState(null);
+  const [printSize, setPrintSize] = useState("8x10");
 
   useEffect(() => {
     checkHealth().then((health) => setApiConfigured(Boolean(health.configured)));
@@ -84,7 +85,7 @@ export default function App() {
         </aside>
 
         <section className="flex flex-1 flex-col">
-          <ResultsGallery batches={batches} />
+          <ResultsGallery batches={batches} printSize={printSize} setPrintSize={setPrintSize} />
         </section>
       </main>
     </div>

@@ -3,6 +3,7 @@ import Canvas from "./components/Canvas";
 import Toolbar from "./components/Toolbar";
 import TemplateGallery from "./components/TemplateGallery";
 import { templateToDataUrl } from "./lib/templates";
+import { downloadImageAsPdf } from "./lib/pdf";
 
 export default function App() {
   const canvasRef = useRef(null);
@@ -13,6 +14,12 @@ export default function App() {
   const [opacity, setOpacity] = useState(1);
   const [activeTemplateId, setActiveTemplateId] = useState("blank");
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
+  const [printSize, setPrintSize] = useState("8x10");
+
+  function handleDownloadPdf() {
+    const dataUrl = canvasRef.current?.getDataUrl();
+    if (dataUrl) downloadImageAsPdf(dataUrl, { sizeId: printSize, filename: "artcraft-studio.pdf" });
+  }
 
   function handleSelectTemplate(template) {
     canvasRef.current?.loadImage(templateToDataUrl(template.svg));
@@ -80,6 +87,9 @@ export default function App() {
             onRedo={() => canvasRef.current?.redo()}
             onClear={handleClear}
             onDownload={() => canvasRef.current?.download("artcraft-studio.png")}
+            onDownloadPdf={handleDownloadPdf}
+            printSize={printSize}
+            setPrintSize={setPrintSize}
             canUndo={history.canUndo}
             canRedo={history.canRedo}
           />

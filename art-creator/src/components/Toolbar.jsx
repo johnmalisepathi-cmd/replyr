@@ -7,6 +7,8 @@ const TOOLS = [
   { id: "circle", label: "Circle" },
 ];
 
+import { printSizes } from "../lib/pdf";
+
 const SWATCHES = [
   "#1f2937",
   "#ffffff",
@@ -39,6 +41,9 @@ export default function Toolbar({
   onRedo,
   onClear,
   onDownload,
+  onDownloadPdf,
+  printSize,
+  setPrintSize,
   canUndo,
   canRedo,
 }) {
@@ -144,6 +149,27 @@ export default function Toolbar({
         </button>
         <button onClick={onDownload} className="btn-accent rounded-lg px-3 py-2.5 text-sm font-semibold">
           Download PNG
+        </button>
+      </section>
+
+      <section>
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">Print size</h3>
+        <select
+          value={printSize}
+          onChange={(e) => setPrintSize(e.target.value)}
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-sm text-white focus:border-fuchsia-400/60 focus:outline-none"
+        >
+          {printSizes.map((s) => (
+            <option key={s.id} value={s.id} className="bg-ink-900">
+              {s.label}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={onDownloadPdf}
+          className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10"
+        >
+          Download print-ready PDF
         </button>
       </section>
     </div>

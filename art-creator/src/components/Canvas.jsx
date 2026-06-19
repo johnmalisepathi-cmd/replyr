@@ -194,6 +194,9 @@ const Canvas = forwardRef(function Canvas({ tool, color, brushSize, opacity, onH
       link.href = canvasRef.current.toDataURL("image/png");
       link.click();
     },
+    getDataUrl() {
+      return canvasRef.current.toDataURL("image/png");
+    },
   }));
 
   return (
