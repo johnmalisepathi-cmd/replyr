@@ -4,6 +4,7 @@ import GeneratorForm from "./components/GeneratorForm";
 import ResultsGallery from "./components/ResultsGallery";
 import { stylePresets, buildPrompt } from "./lib/presets";
 import { generateImages, checkHealth } from "./lib/api";
+import { printSizes } from "./lib/pdf";
 
 export default function App() {
   const [styleId, setStyleId] = useState(stylePresets[0].id);
@@ -16,6 +17,11 @@ export default function App() {
   const [batches, setBatches] = useState([]);
   const [apiConfigured, setApiConfigured] = useState(null);
   const [printSize, setPrintSize] = useState("8x10");
+  const [bundleSizeIds, setBundleSizeIds] = useState(printSizes.map((s) => s.id));
+
+  function toggleBundleSize(id) {
+    setBundleSizeIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }
 
   useEffect(() => {
     checkHealth().then((health) => setApiConfigured(Boolean(health.configured)));
@@ -85,7 +91,13 @@ export default function App() {
         </aside>
 
         <section className="flex flex-1 flex-col">
-          <ResultsGallery batches={batches} printSize={printSize} setPrintSize={setPrintSize} />
+          <ResultsGallery
+            batches={batches}
+            printSize={printSize}
+            setPrintSize={setPrintSize}
+            bundleSizeIds={bundleSizeIds}
+            toggleBundleSize={toggleBundleSize}
+          />
         </section>
       </main>
     </div>

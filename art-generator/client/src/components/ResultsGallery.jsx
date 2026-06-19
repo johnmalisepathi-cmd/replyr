@@ -1,4 +1,4 @@
-import { printSizes, downloadImageAsPdf } from "../lib/pdf";
+import { printSizes, downloadImageAsPdf, downloadImageSizeBundlePdf } from "../lib/pdf";
 
 function downloadImage(src, filename) {
   const link = document.createElement("a");
@@ -7,7 +7,7 @@ function downloadImage(src, filename) {
   link.click();
 }
 
-export default function ResultsGallery({ batches, printSize, setPrintSize }) {
+export default function ResultsGallery({ batches, printSize, setPrintSize, bundleSizeIds, toggleBundleSize }) {
   if (batches.length === 0) {
     return (
       <div className="glass flex flex-1 flex-col items-center justify-center rounded-2xl p-10 text-center">
@@ -22,21 +22,41 @@ export default function ResultsGallery({ batches, printSize, setPrintSize }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="glass flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
-          PDF print size
-        </span>
-        <select
-          value={printSize}
-          onChange={(e) => setPrintSize(e.target.value)}
-          className="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-        >
+      <div className="glass flex flex-col gap-3 rounded-2xl p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
+            Single PDF print size
+          </span>
+          <select
+            value={printSize}
+            onChange={(e) => setPrintSize(e.target.value)}
+            className="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+          >
+            {printSizes.map((s) => (
+              <option key={s.id} value={s.id} className="bg-ink-900">
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
+            Bundle sizes
+          </span>
           {printSizes.map((s) => (
-            <option key={s.id} value={s.id} className="bg-ink-900">
+            <button
+              key={s.id}
+              onClick={() => toggleBundleSize(s.id)}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                bundleSizeIds.includes(s.id)
+                  ? "border-cyan-400/60 bg-cyan-500/15 text-white"
+                  : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10"
+              }`}
+            >
               {s.label}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       {batches.map((batch) => (
@@ -51,7 +71,7 @@ export default function ResultsGallery({ batches, printSize, setPrintSize }) {
             {batch.images.map((src, idx) => (
               <div key={idx} className="group relative overflow-hidden rounded-xl border border-white/10 bg-black/20">
                 <img src={src} alt={`Generated artwork ${idx + 1}`} className="aspect-square w-full object-cover" />
-                <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 transition group-hover:opacity-100">
+                <div className="absolute bottom-2 right-2 flex flex-wrap justify-end gap-1.5 opacity-0 transition group-hover:opacity-100">
                   <button
                     onClick={() => downloadImage(src, `${batch.styleId}-${batch.id}-${idx + 1}.png`)}
                     className="rounded-lg bg-black/60 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur"
@@ -68,6 +88,18 @@ export default function ResultsGallery({ batches, printSize, setPrintSize }) {
                     className="rounded-lg bg-black/60 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur"
                   >
                     PDF
+                  </button>
+                  <button
+                    onClick={() =>
+                      downloadImageSizeBundlePdf(src, {
+                        sizeIds: bundleSizeIds,
+                        filename: `${batch.styleId}-${batch.id}-${idx + 1}-bundle.pdf`,
+                      })
+                    }
+                    disabled={bundleSizeIds.length === 0}
+                    className="rounded-lg bg-cyan-600/70 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur disabled:opacity-30"
+                  >
+                    Bundle
                   </button>
                 </div>
               </div>

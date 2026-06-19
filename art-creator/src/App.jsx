@@ -3,7 +3,7 @@ import Canvas from "./components/Canvas";
 import Toolbar from "./components/Toolbar";
 import TemplateGallery from "./components/TemplateGallery";
 import { templateToDataUrl } from "./lib/templates";
-import { downloadImageAsPdf } from "./lib/pdf";
+import { downloadImageAsPdf, downloadImageSizeBundlePdf, printSizes } from "./lib/pdf";
 
 export default function App() {
   const canvasRef = useRef(null);
@@ -15,10 +15,20 @@ export default function App() {
   const [activeTemplateId, setActiveTemplateId] = useState("blank");
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
   const [printSize, setPrintSize] = useState("8x10");
+  const [bundleSizeIds, setBundleSizeIds] = useState(printSizes.map((s) => s.id));
+
+  function toggleBundleSize(id) {
+    setBundleSizeIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }
 
   function handleDownloadPdf() {
     const dataUrl = canvasRef.current?.getDataUrl();
     if (dataUrl) downloadImageAsPdf(dataUrl, { sizeId: printSize, filename: "artcraft-studio.pdf" });
+  }
+
+  function handleDownloadBundlePdf() {
+    const dataUrl = canvasRef.current?.getDataUrl();
+    if (dataUrl) downloadImageSizeBundlePdf(dataUrl, { sizeIds: bundleSizeIds, filename: "artcraft-studio-bundle.pdf" });
   }
 
   function handleSelectTemplate(template) {
@@ -90,6 +100,9 @@ export default function App() {
             onDownloadPdf={handleDownloadPdf}
             printSize={printSize}
             setPrintSize={setPrintSize}
+            bundleSizeIds={bundleSizeIds}
+            toggleBundleSize={toggleBundleSize}
+            onDownloadBundlePdf={handleDownloadBundlePdf}
             canUndo={history.canUndo}
             canRedo={history.canRedo}
           />

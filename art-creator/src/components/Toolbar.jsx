@@ -44,6 +44,9 @@ export default function Toolbar({
   onDownloadPdf,
   printSize,
   setPrintSize,
+  bundleSizeIds,
+  toggleBundleSize,
+  onDownloadBundlePdf,
   canUndo,
   canRedo,
 }) {
@@ -170,6 +173,32 @@ export default function Toolbar({
           className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10"
         >
           Download print-ready PDF
+        </button>
+      </section>
+
+      <section>
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">Bundle sizes</h3>
+        <div className="flex flex-wrap gap-1.5">
+          {printSizes.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => toggleBundleSize(s.id)}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                bundleSizeIds.includes(s.id)
+                  ? "border-fuchsia-400/60 bg-fuchsia-500/15 text-white"
+                  : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={onDownloadBundlePdf}
+          disabled={bundleSizeIds.length === 0}
+          className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 disabled:opacity-30"
+        >
+          Download multi-size bundle PDF
         </button>
       </section>
     </div>
