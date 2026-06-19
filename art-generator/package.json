@@ -1,0 +1,12 @@
+{
+  "name": "art-generator",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "setup": "npm install --prefix server && npm install --prefix client",
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run start --prefix server\" \"npm run dev --prefix client -- --open\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -20,21 +20,24 @@ It's split into two parts:
    cd art-generator/server
    cp .env.example .env
    # edit .env and paste your key into OPENAI_API_KEY=
-   npm install
-   npm run dev
    ```
 
-   This starts the API on `http://localhost:8787`.
-
-3. In another terminal, start the frontend:
+3. Install everything (one time):
 
    ```bash
-   cd art-generator/client
-   npm install
-   npm run dev
+   cd art-generator
+   npm run setup
    ```
 
-   Open the printed local URL. The frontend proxies `/api/*` requests to the server above.
+## Run it
+
+```bash
+cd art-generator
+npm run dev
+```
+
+This starts the API server (`http://localhost:8787`) and the frontend (`http://localhost:5173`)
+together, and opens the app in your default browser automatically. Press `Ctrl+C` to stop both.
 
 ## How it works
 
