@@ -43,6 +43,14 @@ export const stylePresets = [
       "romantic vintage aesthetic featuring a handwritten love letter, wax seal, feather quill, warm soft lighting, nostalgic mood, photorealistic detail",
   },
   {
+    id: "coloring-page",
+    name: "Coloring Book Page",
+    description: "Simple cute outline sheet for kids' coloring books",
+    swatch: "#cbd5e1",
+    suffix:
+      "simple cute children's coloring book page, bold thick black outlines only, no shading, no color, no greyscale, flat white background, clean minimal line art, friendly rounded shapes, centered single subject",
+  },
+  {
     id: "mandala",
     name: "Mandala / Coloring Page",
     description: "Black & white line art, perfect for coloring books",
