@@ -2,13 +2,17 @@
 // capture the canvas as a MediaStream, and record it with MediaRecorder.
 // No server, no upload of the customer's photos anywhere.
 
-export const TIMING = {
-  before: 2.0, // seconds holding on the "before" photo
-  transition: 0.6, // seconds crossfading/wiping between photos
-  after: 2.6, // seconds holding on the "after" photo
-};
+// Per-pair hold/transition durations. A single pair gets a slower, more
+// cinematic pace; multiple pairs use a snappier pace so a 4-5 pair video
+// doesn't run half a minute long.
+const TIMING_SINGLE = { before: 2.0, transition: 0.6, after: 2.6 };
+const TIMING_MULTI = { before: 1.0, transition: 0.4, after: 1.2 };
 
-export const TOTAL_SECONDS = TIMING.before + TIMING.transition + TIMING.after;
+export const MAX_PAIRS = 6;
+
+export function getTiming(pairCount) {
+  return pairCount <= 1 ? TIMING_SINGLE : TIMING_MULTI;
+}
 
 export function loadImageFromFile(file) {
   return new Promise((resolve, reject) => {
@@ -17,6 +21,22 @@ export function loadImageFromFile(file) {
     img.onerror = reject;
     img.src = URL.createObjectURL(file);
   });
+}
+
+// Builds a flat timeline from an ordered list of { beforeImg, afterImg }
+// pairs, so a single time value `t` can look up which pair is active and
+// how far into its before/transition/after phases it is.
+export function buildTimeline(pairs) {
+  const timing = getTiming(pairs.length);
+  const pairDuration = timing.before + timing.transition + timing.after;
+  const segments = pairs.map((pair, i) => ({
+    ...pair,
+    tStart: i * pairDuration,
+    tBeforeEnd: i * pairDuration + timing.before,
+    tTransitionEnd: i * pairDuration + timing.before + timing.transition,
+    tEnd: (i + 1) * pairDuration,
+  }));
+  return { segments, timing, totalSeconds: segments.length * pairDuration };
 }
 
 // Draws `img` into the rect (x, y, w, h) with CSS object-fit: cover behaviour,
@@ -47,7 +67,7 @@ function drawImageCover(ctx, img, x, y, w, h, zoom = 1) {
   ctx.restore();
 }
 
-function drawLabelPill(ctx, text, width, opacity) {
+function drawLabelPill(ctx, text, opacity) {
   if (opacity <= 0) return;
   const paddingX = 22;
   const paddingY = 10;
@@ -65,6 +85,26 @@ function drawLabelPill(ctx, text, width, opacity) {
   ctx.fill();
   ctx.fillStyle = "#14b8a6";
   ctx.fillText(text, x + paddingX, y + pillH / 2 + 10);
+  ctx.restore();
+}
+
+function drawPairCounter(ctx, index, total, width) {
+  if (total <= 1) return;
+  const text = `${index + 1} / ${total}`;
+  ctx.save();
+  ctx.font = "600 20px Inter, sans-serif";
+  const textWidth = ctx.measureText(text).width;
+  const paddingX = 14;
+  const pillW = textWidth + paddingX * 2;
+  const pillH = 34;
+  const x = width - pillW - 24;
+  const y = 28;
+  ctx.fillStyle = "rgba(8,9,11,0.72)";
+  roundRect(ctx, x, y, pillW, pillH, pillH / 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "left";
+  ctx.fillText(text, x + paddingX, y + pillH / 2 + 7);
   ctx.restore();
 }
 
@@ -99,24 +139,31 @@ function easeInOut(t) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
-// Renders one frame for time `t` (seconds, 0..TOTAL_SECONDS) into ctx.
-export function renderFrame(ctx, { beforeImg, afterImg, width, height, t, transitionType, captionBottom }) {
+function findSegment(segments, t) {
+  return segments.find((s) => t < s.tEnd) || segments[segments.length - 1];
+}
+
+// Renders one frame for time `t` (seconds, 0..totalSeconds) into ctx, given
+// a timeline built by buildTimeline().
+export function renderFrame(ctx, { segments, timing, width, height, t, transitionType, captionBottom }) {
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#08090b";
   ctx.fillRect(0, 0, width, height);
 
-  const tBeforeEnd = TIMING.before;
-  const tTransitionEnd = TIMING.before + TIMING.transition;
+  const segment = findSegment(segments, t);
+  const segIndex = segments.indexOf(segment);
+  const localT = Math.min(t - segment.tStart, timing.before + timing.transition + timing.after);
+  const { beforeImg, afterImg } = segment;
 
   let beforeLabelOpacity = 0;
   let afterLabelOpacity = 0;
 
-  if (t < tBeforeEnd) {
-    const zoom = 1 + 0.05 * (t / TIMING.before);
+  if (localT < timing.before) {
+    const zoom = 1 + 0.05 * (localT / timing.before);
     drawImageCover(ctx, beforeImg, 0, 0, width, height, zoom);
     beforeLabelOpacity = 1;
-  } else if (t < tTransitionEnd) {
-    const p = easeInOut((t - tBeforeEnd) / TIMING.transition);
+  } else if (localT < timing.before + timing.transition) {
+    const p = easeInOut((localT - timing.before) / timing.transition);
     const zoomBefore = 1.05;
     const zoomAfter = 1;
 
@@ -138,14 +185,15 @@ export function renderFrame(ctx, { beforeImg, afterImg, width, height, t, transi
     beforeLabelOpacity = 1 - p;
     afterLabelOpacity = p;
   } else {
-    const localT = t - tTransitionEnd;
-    const zoom = 1 + 0.05 * (localT / TIMING.after);
+    const afterLocalT = localT - timing.before - timing.transition;
+    const zoom = 1 + 0.05 * (afterLocalT / timing.after);
     drawImageCover(ctx, afterImg, 0, 0, width, height, zoom);
     afterLabelOpacity = 1;
   }
 
-  drawLabelPill(ctx, "BEFORE", width, beforeLabelOpacity);
-  drawLabelPill(ctx, "AFTER", width, afterLabelOpacity);
+  drawLabelPill(ctx, "BEFORE", beforeLabelOpacity);
+  drawLabelPill(ctx, "AFTER", afterLabelOpacity);
+  drawPairCounter(ctx, segIndex, segments.length, width);
   drawCaptionBar(ctx, captionBottom, width, height);
 }
 
@@ -158,15 +206,21 @@ function pickMimeType() {
   return candidates.find((type) => window.MediaRecorder?.isTypeSupported?.(type)) || "video/webm";
 }
 
-// Plays the full before -> transition -> after sequence on `canvas` once,
-// recording it into a downloadable Blob. Resolves with { blob, url }.
-export function recordVideo({ canvas, beforeImg, afterImg, transitionType, captionBottom, fps = 30, onProgress }) {
+// Plays the full timeline (one or more before -> transition -> after
+// segments) on `canvas` once, recording it into a downloadable Blob.
+// Resolves with { blob, url }.
+export function recordVideo({ canvas, pairs, transitionType, captionBottom, fps = 30, onProgress }) {
   return new Promise((resolve, reject) => {
     if (!window.MediaRecorder) {
       reject(new Error("This browser doesn't support recording video (MediaRecorder API missing). Try Chrome or Edge."));
       return;
     }
+    if (!pairs.length) {
+      reject(new Error("Add at least one before/after pair first."));
+      return;
+    }
 
+    const { segments, timing, totalSeconds } = buildTimeline(pairs);
     const ctx = canvas.getContext("2d");
     const { width, height } = canvas;
     const mimeType = pickMimeType();
@@ -188,13 +242,13 @@ export function recordVideo({ canvas, beforeImg, afterImg, transitionType, capti
 
     function tick() {
       const t = (performance.now() - startTime) / 1000;
-      if (t >= TOTAL_SECONDS) {
-        renderFrame(ctx, { beforeImg, afterImg, width, height, t: TOTAL_SECONDS - 0.001, transitionType, captionBottom });
+      if (t >= totalSeconds) {
+        renderFrame(ctx, { segments, timing, width, height, t: totalSeconds - 0.001, transitionType, captionBottom });
         recorder.stop();
         return;
       }
-      renderFrame(ctx, { beforeImg, afterImg, width, height, t, transitionType, captionBottom });
-      onProgress?.(t / TOTAL_SECONDS);
+      renderFrame(ctx, { segments, timing, width, height, t, transitionType, captionBottom });
+      onProgress?.(t / totalSeconds);
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);

@@ -1,10 +1,15 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { loadImageFromFile, renderFrame, recordVideo, TOTAL_SECONDS } from "./lib/recorder.js";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { loadImageFromFile, renderFrame, recordVideo, buildTimeline, MAX_PAIRS } from "./lib/recorder.js";
 
 const ASPECTS = {
   vertical: { label: "Vertical (Reels/TikTok)", width: 540, height: 960 },
   square: { label: "Square (Feed post)", width: 720, height: 720 },
 };
+
+let nextId = 1;
+function makePair() {
+  return { id: nextId++, beforeFile: null, beforeImg: null, afterFile: null, afterImg: null };
+}
 
 function UploadSlot({ label, file, onChange }) {
   const inputRef = useRef(null);
@@ -14,7 +19,7 @@ function UploadSlot({ label, file, onChange }) {
     <button
       type="button"
       onClick={() => inputRef.current?.click()}
-      className="group relative flex h-36 w-full flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-white/15 bg-white/5 text-sm text-slate-300 transition hover:border-accent-500/60 hover:bg-white/10"
+      className="group relative flex h-32 w-full flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-white/15 bg-white/5 text-sm text-slate-300 transition hover:border-accent-500/60 hover:bg-white/10"
     >
       {previewUrl ? (
         <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full object-cover" />
@@ -40,12 +45,31 @@ function UploadSlot({ label, file, onChange }) {
   );
 }
 
-export default function App() {
-  const [beforeFile, setBeforeFile] = useState(null);
-  const [afterFile, setAfterFile] = useState(null);
-  const [beforeImg, setBeforeImg] = useState(null);
-  const [afterImg, setAfterImg] = useState(null);
+function PairRow({ pair, index, canRemove, onFileChange, onRemove }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-400">Pair {index + 1}</span>
+        {canRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-xs text-slate-500 hover:text-red-400"
+          >
+            Remove
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <UploadSlot label="Before" file={pair.beforeFile} onChange={(f) => onFileChange("before", f)} />
+        <UploadSlot label="After" file={pair.afterFile} onChange={(f) => onFileChange("after", f)} />
+      </div>
+    </div>
+  );
+}
 
+export default function App() {
+  const [pairs, setPairs] = useState(() => [makePair()]);
   const [aspectKey, setAspectKey] = useState("vertical");
   const [transitionType, setTransitionType] = useState("crossfade");
   const [caption, setCaption] = useState("");
@@ -58,23 +82,35 @@ export default function App() {
   const canvasRef = useRef(null);
   const aspect = ASPECTS[aspectKey];
 
-  useEffect(() => {
-    if (!beforeFile) return setBeforeImg(null);
-    let cancelled = false;
-    loadImageFromFile(beforeFile).then((img) => !cancelled && setBeforeImg(img));
-    return () => {
-      cancelled = true;
-    };
-  }, [beforeFile]);
+  const handleFileChange = useCallback((pairId, side, file) => {
+    setPairs((prev) =>
+      prev.map((p) =>
+        p.id === pairId ? { ...p, [`${side}File`]: file, [`${side}Img`]: null } : p
+      )
+    );
+    if (!file) return;
+    loadImageFromFile(file).then((img) => {
+      setPairs((prev) => prev.map((p) => (p.id === pairId ? { ...p, [`${side}Img`]: img } : p)));
+    });
+  }, []);
 
-  useEffect(() => {
-    if (!afterFile) return setAfterImg(null);
-    let cancelled = false;
-    loadImageFromFile(afterFile).then((img) => !cancelled && setAfterImg(img));
-    return () => {
-      cancelled = true;
-    };
-  }, [afterFile]);
+  const addPair = useCallback(() => {
+    setPairs((prev) => (prev.length >= MAX_PAIRS ? prev : [...prev, makePair()]));
+  }, []);
+
+  const removePair = useCallback((pairId) => {
+    setPairs((prev) => (prev.length <= 1 ? prev : prev.filter((p) => p.id !== pairId)));
+  }, []);
+
+  const readyPairs = useMemo(
+    () => pairs.filter((p) => p.beforeImg && p.afterImg),
+    [pairs]
+  );
+
+  const timeline = useMemo(
+    () => (readyPairs.length ? buildTimeline(readyPairs) : null),
+    [readyPairs]
+  );
 
   // Static preview of the first frame whenever inputs change (and we're not
   // mid-recording, where the animation loop owns the canvas).
@@ -85,10 +121,10 @@ export default function App() {
     canvas.width = aspect.width;
     canvas.height = aspect.height;
     const ctx = canvas.getContext("2d");
-    if (beforeImg && afterImg) {
+    if (timeline) {
       renderFrame(ctx, {
-        beforeImg,
-        afterImg,
+        segments: timeline.segments,
+        timing: timeline.timing,
         width: aspect.width,
         height: aspect.height,
         t: 0,
@@ -102,12 +138,12 @@ export default function App() {
       ctx.fillStyle = "rgba(255,255,255,0.35)";
       ctx.font = "500 20px Inter, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("Upload a before + after photo to preview", aspect.width / 2, aspect.height / 2, aspect.width - 60);
+      ctx.fillText("Upload at least one before + after pair to preview", aspect.width / 2, aspect.height / 2, aspect.width - 60);
     }
-  }, [beforeImg, afterImg, aspectKey, transitionType, caption, status, aspect.width, aspect.height]);
+  }, [timeline, aspectKey, transitionType, caption, status, aspect.width, aspect.height]);
 
   const handleGenerate = useCallback(async () => {
-    if (!beforeImg || !afterImg || !canvasRef.current) return;
+    if (!readyPairs.length || !canvasRef.current) return;
     setStatus("recording");
     setProgress(0);
     setErrorMsg("");
@@ -117,8 +153,7 @@ export default function App() {
     try {
       const { url } = await recordVideo({
         canvas: canvasRef.current,
-        beforeImg,
-        afterImg,
+        pairs: readyPairs,
         transitionType,
         captionBottom: caption,
         onProgress: setProgress,
@@ -130,9 +165,9 @@ export default function App() {
       setErrorMsg(err.message || "Something went wrong generating the video.");
       setStatus("error");
     }
-  }, [beforeImg, afterImg, transitionType, caption, resultUrl]);
+  }, [readyPairs, transitionType, caption, resultUrl]);
 
-  const canGenerate = Boolean(beforeImg && afterImg) && status !== "recording";
+  const canGenerate = readyPairs.length > 0 && status !== "recording";
 
   return (
     <div className="min-h-full bg-ink-950">
@@ -140,7 +175,7 @@ export default function App() {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-white">Before/After Studio</h1>
-            <p className="text-sm text-slate-400">Upload two photos, get a share-ready video. Nothing leaves your browser.</p>
+            <p className="text-sm text-slate-400">Upload before/after photo pairs, get a share-ready video. Nothing leaves your browser.</p>
           </div>
           <span className="rounded-full bg-accent-500/15 px-3 py-1 text-xs font-medium text-accent-300">MVP · client-side only</span>
         </div>
@@ -149,11 +184,30 @@ export default function App() {
       <main className="mx-auto grid max-w-5xl gap-8 px-6 py-8 md:grid-cols-[380px_1fr]">
         <section className="space-y-6">
           <div>
-            <h2 className="mb-2 text-sm font-semibold text-slate-200">1. Photos</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <UploadSlot label="Before" file={beforeFile} onChange={setBeforeFile} />
-              <UploadSlot label="After" file={afterFile} onChange={setAfterFile} />
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-200">1. Photos</h2>
+              <span className="text-xs text-slate-500">{pairs.length}/{MAX_PAIRS} pairs</span>
             </div>
+            <div className="space-y-3">
+              {pairs.map((pair, i) => (
+                <PairRow
+                  key={pair.id}
+                  pair={pair}
+                  index={i}
+                  canRemove={pairs.length > 1}
+                  onFileChange={(side, f) => handleFileChange(pair.id, side, f)}
+                  onRemove={() => removePair(pair.id)}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={addPair}
+              disabled={pairs.length >= MAX_PAIRS}
+              className="mt-3 w-full rounded-xl border border-dashed border-white/15 py-2 text-xs font-medium text-slate-400 transition hover:border-accent-500/50 hover:text-accent-300 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              + Add another before/after pair
+            </button>
           </div>
 
           <div>
@@ -245,7 +299,8 @@ export default function App() {
           )}
 
           <p className="max-w-xs text-center text-xs text-slate-500">
-            ~{TOTAL_SECONDS.toFixed(1)}s clip. Works best in Chrome/Edge — Safari's video recording support is limited.
+            {timeline ? `~${timeline.totalSeconds.toFixed(1)}s clip, ${readyPairs.length} pair${readyPairs.length > 1 ? "s" : ""}.` : "Add photos to see the estimated length."}
+            {" "}Works best in Chrome/Edge — Safari's video recording support is limited.
           </p>
         </section>
       </main>

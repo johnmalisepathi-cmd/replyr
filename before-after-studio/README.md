@@ -1,6 +1,6 @@
 # Before/After Studio
 
-Upload a "before" photo and an "after" photo, get back a short share-ready
+Upload one or more before/after photo pairs, get back a short share-ready
 video with a crossfade/wipe transition, before/after labels, and an
 optional caption — built for any before/after business: landscaping,
 renovation, detailing, cleaning, makeup, construction, manufacturing,
@@ -39,9 +39,10 @@ npm run dev
 
 ## What's next if this validates
 
-- Multiple before/after pairs in one video (a "job gallery" reel).
 - More transition styles and branding options (logo watermark, brand
   colors/fonts).
+- Background music, then optional voiceover — in that order, since music is
+  the bigger quality jump for the least effort.
 - Optional MP4 export via a small server-side conversion step, once there's
   a paying reason to run one.
 - Accounts + saved projects, if/when this becomes a paid subscription
