@@ -1,0 +1,44 @@
+{
+  "queue": [
+    {
+      "id": "ai-first-responder-inbox",
+      "title": "Never leaving a customer message on read: AI inbox responders for small business",
+      "angle": "What tools like this actually do, what they cost, and when they're worth it vs. just checking your phone more often."
+    },
+    {
+      "id": "ai-invoice-receipt-cleanup",
+      "title": "Turning a shoebox of receipts into a tax-ready spreadsheet with AI",
+      "angle": "Practical walkthrough of receipt/invoice OCR tools for solo owners who hate bookkeeping."
+    },
+    {
+      "id": "ai-social-captions",
+      "title": "Writing a week of social captions in 15 minutes with AI",
+      "angle": "How to prompt for on-brand captions without sounding like everyone else's AI-written posts."
+    },
+    {
+      "id": "ai-meeting-notes",
+      "title": "AI meeting notes tools: worth it for a 3-person team?",
+      "angle": "Honest cost/benefit for very small teams, not enterprise buyers."
+    },
+    {
+      "id": "ai-customer-faq",
+      "title": "Building a customer FAQ bot from your own website text, no coding",
+      "angle": "Step-by-step for a non-technical owner using a no-code AI tool."
+    },
+    {
+      "id": "ai-review-responses",
+      "title": "Responding to Google/Yelp reviews faster without sounding robotic",
+      "angle": "Using AI as a first draft, not an auto-poster — keeping the owner's voice."
+    },
+    {
+      "id": "ai-scheduling-followups",
+      "title": "AI tools that chase down no-show bookings so you don't have to",
+      "angle": "For service businesses: appointment reminders and follow-ups."
+    },
+    {
+      "id": "ai-competitor-price-watch",
+      "title": "Keeping an eye on competitor pricing without checking manually every week",
+      "angle": "Simple AI/automation approaches for a solo owner, not a full BI stack."
+    }
+  ]
+}
