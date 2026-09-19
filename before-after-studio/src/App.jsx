@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { loadImageFromFile, renderFrame, recordVideo, buildTimeline, MAX_PAIRS } from "./lib/recorder.js";
+import { fileToDataUrl, buildEmbedHtml } from "./lib/embed.js";
+import BeforeAfterSlider from "./components/BeforeAfterSlider.jsx";
 
 const ASPECTS = {
   vertical: { label: "Vertical (Reels/TikTok)", width: 540, height: 960 },
@@ -78,6 +80,9 @@ export default function App() {
   const [progress, setProgress] = useState(0);
   const [resultUrl, setResultUrl] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [outputMode, setOutputMode] = useState("video"); // video | widget
+  const [widgetStatus, setWidgetStatus] = useState("idle"); // idle | building | done
 
   const canvasRef = useRef(null);
   const aspect = ASPECTS[aspectKey];
@@ -168,6 +173,30 @@ export default function App() {
   }, [readyPairs, transitionType, caption, resultUrl]);
 
   const canGenerate = readyPairs.length > 0 && status !== "recording";
+
+  const handleDownloadWidget = useCallback(async () => {
+    const first = readyPairs[0];
+    if (!first) return;
+    setWidgetStatus("building");
+    try {
+      const [beforeDataUrl, afterDataUrl] = await Promise.all([
+        fileToDataUrl(first.beforeFile),
+        fileToDataUrl(first.afterFile),
+      ]);
+      const html = buildEmbedHtml({ beforeDataUrl, afterDataUrl, caption });
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "before-after-widget.html";
+      a.click();
+      URL.revokeObjectURL(url);
+      setWidgetStatus("done");
+    } catch (err) {
+      console.error(err);
+      setWidgetStatus("idle");
+    }
+  }, [readyPairs, caption]);
 
   return (
     <div className="min-h-full bg-ink-950">
@@ -277,31 +306,90 @@ export default function App() {
         </section>
 
         <section className="flex flex-col items-center gap-4">
-          <div
-            className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-card"
-            style={{ aspectRatio: `${aspect.width} / ${aspect.height}`, width: aspectKey === "vertical" ? 300 : 420 }}
-          >
-            {status === "done" && resultUrl ? (
-              <video src={resultUrl} controls loop autoPlay className="h-full w-full object-contain" />
-            ) : (
-              <canvas ref={canvasRef} className="h-full w-full" />
-            )}
+          <div className="flex gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
+            <button
+              type="button"
+              onClick={() => setOutputMode("video")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                outputMode === "video" ? "bg-accent-500/20 text-accent-200" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Video
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutputMode("widget")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                outputMode === "widget" ? "bg-accent-500/20 text-accent-200" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Interactive widget <span className="ml-1 rounded-full bg-accent-500/25 px-1.5 py-0.5 text-[10px] text-accent-200">new</span>
+            </button>
           </div>
 
-          {status === "done" && resultUrl && (
-            <a
-              href={resultUrl}
-              download="before-after.webm"
-              className="rounded-xl border border-accent-500/50 bg-accent-500/10 px-4 py-2 text-sm font-medium text-accent-200 transition hover:bg-accent-500/20"
-            >
-              Download video (.webm)
-            </a>
-          )}
+          {outputMode === "video" ? (
+            <>
+              <div
+                className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-card"
+                style={{ aspectRatio: `${aspect.width} / ${aspect.height}`, width: aspectKey === "vertical" ? 300 : 420 }}
+              >
+                {status === "done" && resultUrl ? (
+                  <video src={resultUrl} controls loop autoPlay className="h-full w-full object-contain" />
+                ) : (
+                  <canvas ref={canvasRef} className="h-full w-full" />
+                )}
+              </div>
 
-          <p className="max-w-xs text-center text-xs text-slate-500">
-            {timeline ? `~${timeline.totalSeconds.toFixed(1)}s clip, ${readyPairs.length} pair${readyPairs.length > 1 ? "s" : ""}.` : "Add photos to see the estimated length."}
-            {" "}Works best in Chrome/Edge — Safari's video recording support is limited.
-          </p>
+              {status === "done" && resultUrl && (
+                <a
+                  href={resultUrl}
+                  download="before-after.webm"
+                  className="rounded-xl border border-accent-500/50 bg-accent-500/10 px-4 py-2 text-sm font-medium text-accent-200 transition hover:bg-accent-500/20"
+                >
+                  Download video (.webm)
+                </a>
+              )}
+
+              <p className="max-w-xs text-center text-xs text-slate-500">
+                {timeline ? `~${timeline.totalSeconds.toFixed(1)}s clip, ${readyPairs.length} pair${readyPairs.length > 1 ? "s" : ""}.` : "Add photos to see the estimated length."}
+                {" "}Works best in Chrome/Edge — Safari's video recording support is limited.
+              </p>
+            </>
+          ) : (
+            <>
+              <div
+                className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-card"
+                style={{ aspectRatio: "4 / 3", width: 360 }}
+              >
+                {readyPairs[0] ? (
+                  <BeforeAfterSlider
+                    before={<img src={URL.createObjectURL(readyPairs[0].beforeFile)} alt="Before" className="h-full w-full object-cover" draggable={false} />}
+                    after={<img src={URL.createObjectURL(readyPairs[0].afterFile)} alt="After" className="h-full w-full object-cover" draggable={false} />}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center px-8 text-center text-sm text-slate-500">
+                    Upload a before + after pair to preview the widget
+                  </div>
+                )}
+              </div>
+
+              {readyPairs[0] && (
+                <button
+                  type="button"
+                  onClick={handleDownloadWidget}
+                  className="rounded-xl border border-accent-500/50 bg-accent-500/10 px-4 py-2 text-sm font-medium text-accent-200 transition hover:bg-accent-500/20"
+                >
+                  {widgetStatus === "building" ? "Building…" : "Download embeddable widget (.html)"}
+                </button>
+              )}
+
+              <p className="max-w-xs text-center text-xs text-slate-500">
+                A single self-contained HTML file — paste it into your website's "embed code" block
+                (Wix, Squarespace, etc.) and visitors can drag to compare, live on your own site.
+                {readyPairs.length > 1 && " Uses the first pair only — one widget per pair."}
+              </p>
+            </>
+          )}
         </section>
       </main>
     </div>
