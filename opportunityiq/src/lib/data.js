@@ -16,6 +16,8 @@ export const WORLD_REGIONS = ["New Zealand", "Singapore", "India", "United Arab 
 
 export const REGIONS = [...AU_REGIONS, ...WORLD_REGIONS];
 
+import { generateOpportunities } from "./generated.js";
+
 export { INDUSTRIES, INDUSTRY_GROUPS } from "./industries.js";
 
 export const CONTRACT_BANDS = [
@@ -410,5 +412,8 @@ const COORDS = {
   "op-608": [49.28, -123.12],
 };
 for (const o of OPPORTUNITIES) [o.lat, o.lng] = COORDS[o.id];
+
+// Plus a generated worldwide set, so every industry has jobs around the world.
+OPPORTUNITIES.push(...generateOpportunities());
 
 export const PIPELINE_STAGES = ["Interested", "Contacted", "Bidding", "Won", "Lost"];

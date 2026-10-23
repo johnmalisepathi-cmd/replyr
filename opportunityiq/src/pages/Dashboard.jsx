@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { go } from "../lib/router.js";
 import { countryOf, homeOf, opportunitiesFor } from "../lib/geo.js";
+import { INDUSTRIES } from "../lib/data.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { daysUntil, formatMoney, scoreOpportunity, searchOpportunities } from "../lib/match.js";
 import { FitBadge, FitBar, KindBadge } from "../components/ui.jsx";
@@ -25,18 +26,34 @@ export default function Dashboard({ profile, pipeline }) {
   useEffect(() => () => ctl.current?.abort(), []);
   const [kind, setKind] = useState("all");
   const [minFit, setMinFit] = useState(0);
+  const [scope, setScope] = useState("mine"); // mine | all industries
+  const [area, setArea] = useState("anywhere"); // anywhere | country | range
+  const [shown, setShown] = useState(12);
 
   const scored = useMemo(
     () => opportunitiesFor(profile).map((op) => ({ op, ...scoreOpportunity(op, profile) })).sort((a, b) => b.score - a.score),
     [profile]
   );
 
+  // The pool is everything in scope (your industry, or all) and area.
+  const myCountry = countryOf(profile.region);
+  const pool = useMemo(
+    () =>
+      scored.filter(
+        (s) =>
+          (scope === "all" || s.op.industry === profile.industry) &&
+          (area === "anywhere" || (area === "country" ? countryOf(s.op.region) === myCountry : s.op.distanceKm <= profile.maxDistanceKm))
+      ),
+    [scored, scope, area, profile.industry, profile.maxDistanceKm, myCountry]
+  );
+
   // With live AI the assistant picks the opportunities; without it, a keyword
   // and distance filter runs as you type.
   const visible = useMemo(() => {
-    const ids = ai ? (aiIds ? new Set(aiIds) : null) : new Set(searchOpportunities(scored.map((s) => s.op), query).map((o) => o.id));
-    return scored.filter((s) => (!ids || ids.has(s.op.id)) && (kind === "all" || s.op.kind === kind) && s.score >= minFit);
-  }, [scored, query, kind, minFit, ai, aiIds]);
+    const ids = ai ? (aiIds ? new Set(aiIds) : null) : new Set(searchOpportunities(pool.map((s) => s.op), query).map((o) => o.id));
+    return pool.filter((s) => (!ids || ids.has(s.op.id)) && (kind === "all" || s.op.kind === kind) && s.score >= minFit);
+  }, [pool, query, kind, minFit, ai, aiIds]);
+  useEffect(() => setShown(12), [scope, area, kind, minFit, aiIds, query]);
 
   const ask = async (q = query) => {
     if (!ai || !q.trim()) return;
@@ -47,7 +64,7 @@ export default function Dashboard({ profile, pipeline }) {
     setAnswer("");
     setAiNote("");
     try {
-      const text = await ai.text(askPrompt(q, profile, scored), {
+      const text = await ai.text(askPrompt(q, profile, pool.slice(0, 40)), {
         signal: ctl.current.signal,
         onText: ({ text: t }) => setAnswer(splitIds(t).body),
       });
@@ -159,6 +176,15 @@ export default function Dashboard({ profile, pipeline }) {
           )}
         </h2>
         <div className="flex flex-wrap gap-2 text-sm">
+          <select value={scope} onChange={(e) => setScope(e.target.value)} className="rounded-full bg-white px-3 py-1.5 ring-1 ring-slate-200" aria-label="Industries">
+            <option value="mine">{INDUSTRIES[profile.industry].label}</option>
+            <option value="all">All industries</option>
+          </select>
+          <select value={area} onChange={(e) => setArea(e.target.value)} className="rounded-full bg-white px-3 py-1.5 ring-1 ring-slate-200" aria-label="Area">
+            <option value="anywhere">Worldwide</option>
+            <option value="country">{myCountry} only</option>
+            <option value="range">Within {profile.maxDistanceKm} km</option>
+          </select>
           {[["all", "All"], ["tender", "Formal tenders"], ["signal", "Early signals"]].map(([k, l]) => (
             <button key={k} onClick={() => setKind(k)} className={`rounded-full px-3 py-1.5 ${kind === k ? "bg-navy-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}>
               {l}
@@ -185,7 +211,7 @@ export default function Dashboard({ profile, pipeline }) {
       </div>
 
       <ul className="mt-6 grid gap-4 md:grid-cols-2">
-        {visible.map(({ op, score, reasons, gaps }) => {
+        {visible.slice(0, shown).map(({ op, score, reasons, gaps }) => {
           const days = daysUntil(op.deadline);
           return (
             <li key={op.id}>
@@ -196,7 +222,7 @@ export default function Dashboard({ profile, pipeline }) {
                 </div>
                 <p className="mt-3 font-semibold leading-snug">{op.title}</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {op.location} · est. {formatMoney(op.value)} · {days === null ? "No deadline yet" : `Closes in ${days} days`}
+                  {op.location}{countryOf(op.region) !== "Australia" ? `, ${op.region}` : ""} · est. {formatMoney(op.value)} · {days === null ? "No deadline yet" : `Closes in ${days} days`}
                 </p>
                 <div className="mt-4 flex items-center gap-3">
                   <FitBar score={score} />
@@ -208,6 +234,13 @@ export default function Dashboard({ profile, pipeline }) {
           );
         })}
       </ul>
+      {visible.length > shown && (
+        <div className="mt-6 text-center">
+          <button onClick={() => setShown((n) => n + 12)} className="btn-ghost">
+            Show more ({visible.length - shown} left)
+          </button>
+        </div>
+      )}
       {!visible.length && <p className="card mt-4 p-8 text-center text-slate-500">No matches for those filters. Try clearing the search.</p>}
     </main>
   );

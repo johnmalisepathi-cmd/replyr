@@ -125,6 +125,12 @@ const ICONS = {
       <path d="M30 14v8M27 22h6v5h-6z" />
     </>
   ),
+  painting: (
+    <>
+      <rect x="8" y="8" width="28" height="12" rx="2" />
+      <path d="M36 14h4v10H24v6M22 30h4v12h-4z" />
+    </>
+  ),
   electrical: <path d="M27 4L11 27h12l-3 17 17-24H25l2-16z" />,
   plumbing: (
     <>

@@ -65,6 +65,15 @@ export const INDUSTRIES = {
     "Licences, service area, response times",
     ["plumb", "hvac", "air con", "aircon", "gas fit", "refrigerat"]
   ),
+  painting: ind(
+    "Building & trades",
+    "Painting & decorating",
+    ["Commercial painting", "Residential repaints", "Protective coatings", "Line marking", "Graffiti removal", "Wallpaper & finishes"],
+    ["Painting contractor licence", "ISO 45001", "Working at heights", "SSPC / ACA coatings inspector"],
+    "Building repaints, protective coatings, line marking",
+    "Crew size, access equipment, coating systems",
+    ["paint", "decorat", "coating", "line mark", "graffiti"]
+  ),
   landscaping: ind(
     "Building & trades",
     "Landscaping & grounds",
