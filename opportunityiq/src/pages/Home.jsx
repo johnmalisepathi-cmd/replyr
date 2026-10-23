@@ -4,6 +4,8 @@ import { INDUSTRIES, OPPORTUNITIES } from "../lib/data.js";
 import AICore from "../components/AICore.jsx";
 import AIDemo from "../components/AIDemo.jsx";
 import PilotForm from "../components/PilotForm.jsx";
+import WhyDifferent from "../components/WhyDifferent.jsx";
+import RoiCalculator from "../components/RoiCalculator.jsx";
 import { DocScan, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 
 const STEPS = [
@@ -57,6 +59,10 @@ const PLANS = [
 ];
 
 const FAQ = [
+  {
+    q: "Why not just use ChatGPT or Claude?",
+    a: "They're great at reading a document you already have. But they only work when you ask, they don't watch tender portals and planning approvals every day, they forget your business between chats, and they can invent a deadline. OpportunityIQ does the finding, checking and tracking for you, and uses AI to explain each match.",
+  },
   {
     q: "Is the AI real?",
     a: "Yes. In this preview, the \"Describe your business\" box, the dashboard assistant and the tender analysis are answered by a real AI model, live. The opportunities it reasons about are sample data until the pilot connects real sources.",
@@ -168,6 +174,33 @@ export default function Home({ hasProfile, setProfile }) {
         </div>
       </section>
 
+      {/* WHY DIFFERENT */}
+      <section id="why" className="section scroll-mt-20 py-16">
+        <Eyebrow>Why OpportunityIQ</Eyebrow>
+        <h2 className="mt-2 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl" style={{ textWrap: "balance" }}>
+          "Can't I just ask ChatGPT?" You can. Here's what it won't do.
+        </h2>
+        <p className="mt-4 max-w-2xl text-slate-400">
+          Chatbots answer questions. They don't go looking. Free portals list tenders. They don't know your business. OpportunityIQ
+          does both, every day, and only interrupts you when a job fits.
+        </p>
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {[
+            ["It finds work, so you don't have to search", "Every source checked daily. New matches arrive in your inbox before you've had coffee."],
+            ["It knows your workshop", "Your machines, certifications, distance and job size are scored against every opportunity."],
+            ["It sees work before it's a tender", "Planning approvals and budget announcements flagged months early, so you can call the builder first."],
+          ].map(([t, b]) => (
+            <div key={t} className="glass p-5">
+              <p className="font-semibold text-white">{t}</p>
+              <p className="mt-2 text-sm text-slate-400">{b}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10">
+          <WhyDifferent />
+        </div>
+      </section>
+
       {/* PROBLEM */}
       <section className="section py-16">
         <div className="grid gap-4 md:grid-cols-3">
@@ -265,6 +298,21 @@ export default function Home({ hasProfile, setProfile }) {
               <p className="mt-1 text-xs text-slate-500">AI matches on: {ind.factors}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ROI */}
+      <section id="worth-it" className="section scroll-mt-20 py-16">
+        <Eyebrow>Is it worth $99 a month?</Eyebrow>
+        <h2 className="mt-2 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl" style={{ textWrap: "balance" }}>
+          One extra job pays for years of OpportunityIQ.
+        </h2>
+        <p className="mt-4 max-w-2xl text-slate-400">
+          Example: a $60,000 job at a 15% margin is $9,000 profit. That covers the Pro plan for more than seven years. Move the
+          sliders to try your own numbers.
+        </p>
+        <div className="mt-10">
+          <RoiCalculator />
         </div>
       </section>
 
