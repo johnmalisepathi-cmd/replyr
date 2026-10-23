@@ -3,43 +3,45 @@ import { go } from "../lib/router.js";
 import { fitLabel } from "../lib/match.js";
 import { CONTACT_EMAIL } from "../lib/config.js";
 
-const PIN = "M24 5c-7.7 0-13.5 6-13.5 13.4C10.5 28.2 24 41 24 41s13.5-12.8 13.5-22.6C37.5 11 31.7 5 24 5z";
-
-// The Gem Pin mark: a map pin cut into three facets, lit by an AI spark.
-// `small` drops the fine facet lines so it stays crisp at icon sizes.
-export function LogoMark({ className = "h-8 w-8", small = false }) {
+// The Signature logo: the Q's tail sweeps back under the whole name.
+function Swoosh({ className }) {
   const id = useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+    <svg viewBox="0 0 300 22" preserveAspectRatio="none" className={className} aria-hidden="true">
       <defs>
-        <clipPath id={`${id}l`}><polygon points="24,19 24,-10 -10,-10 -10,30 10,23" /></clipPath>
-        <clipPath id={`${id}r`}><polygon points="24,19 24,-10 58,-10 58,30 38,23" /></clipPath>
-        <clipPath id={`${id}p`}><path d={PIN} /></clipPath>
+        <linearGradient id={`${id}sw`} x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0" stopColor="#8bc34a" />
+          <stop offset="0.5" stopColor="#3b82f6" />
+          <stop offset="1" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
       </defs>
-      <rect width="48" height="48" rx="12" fill="#122039" />
-      <path d={PIN} fill="#5b4fd6" />
-      <path d={PIN} fill="#a78bfa" clipPath={`url(#${id}l)`} />
-      <path d={PIN} fill="#22d3ee" clipPath={`url(#${id}r)`} />
-      {!small && (
-        <g clipPath={`url(#${id}p)`} stroke="#e0f2fe" strokeOpacity="0.7" strokeWidth="0.9">
-          <path d="M24 19 L24 4" />
-          <path d="M24 19 L9 23.4" />
-          <path d="M24 19 L39 23.4" />
-          <path d="M24 19 L24 41" />
-        </g>
-      )}
-      <path d="M24 13.5l1.6 3.9 3.9 1.6-3.9 1.6L24 24.5l-1.6-3.9-3.9-1.6 3.9-1.6z" fill="#e0f2fe" />
-      {!small && <circle cx="24" cy="19" r="1.3" fill="#34d399" />}
+      <path d="M296 3 C 215 19, 95 18, 4 9" fill="none" stroke={`url(#${id}sw)`} strokeWidth="2.4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+// App-icon version: "IQ" with the same sweep, for tight spaces.
+export function LogoMark({ className = "h-9 w-9" }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <rect width="64" height="64" rx="15" fill="#0b1530" stroke="#24375c" />
+      <rect x="15" y="20" width="6" height="22" rx="1" fill="#f5f7fa" />
+      <circle cx="37" cy="31" r="9.5" fill="none" stroke="#8bc34a" strokeWidth="5.5" />
+      <path d="M41.5 35.5 L48 42" stroke="#8bc34a" strokeWidth="5.5" strokeLinecap="round" />
+      <path d="M51 49 C 41 55, 25 55, 13 51" fill="none" stroke="#8bc34a" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
 
 export function Logo({ compact = false }) {
   return (
-    <button onClick={() => go("/")} className="flex items-center gap-2" aria-label="OpportunityIQ home">
-      <LogoMark className="h-9 w-9" small />
-      <span className={`${compact ? "hidden min-[400px]:inline" : ""} text-lg font-extrabold tracking-tight text-white`}>
-        Opportunity<span className="text-ai-cyan">IQ</span>
+    <button onClick={() => go("/")} className="flex items-center" aria-label="OpportunityIQ home">
+      {compact && <LogoMark className="h-9 w-9 min-[400px]:hidden" />}
+      <span className={`${compact ? "hidden min-[400px]:inline-flex" : "inline-flex"} flex-col items-stretch`}>
+        <span className="font-brand text-[22px] font-semibold leading-none tracking-[-0.035em] text-white">
+          Opportunity<span className="font-extrabold text-[#8bc34a]">IQ</span>
+        </span>
+        <Swoosh className="mt-px block h-[7px] w-full" />
       </span>
     </button>
   );

@@ -26,6 +26,7 @@ export default {
         },
       },
       fontFamily: {
+        brand: ["Outfit", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Arial", "sans-serif"],
       },
       keyframes: {
