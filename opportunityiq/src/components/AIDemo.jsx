@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { go } from "../lib/router.js";
-import { INDUSTRIES, OPPORTUNITIES } from "../lib/data.js";
+import { INDUSTRIES } from "../lib/data.js";
+import { opportunitiesFor } from "../lib/geo.js";
 import { scoreOpportunity } from "../lib/match.js";
 import { aiErrorText, getAI, matchBriefPrompt, profileFromText, useAI } from "../lib/ai.js";
 import { FitBar } from "./ui.jsx";
@@ -54,7 +55,7 @@ export default function AIDemo({ setProfile }) {
     if (signal.aborted) return;
     setLocalProfile(p);
     setNote(n);
-    const ranked = OPPORTUNITIES.map((op) => ({ op, ...scoreOpportunity(op, p) }))
+    const ranked = opportunitiesFor(p).map((op) => ({ op, ...scoreOpportunity(op, p) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
     setTop(ranked);

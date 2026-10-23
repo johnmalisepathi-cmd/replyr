@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { go } from "../lib/router.js";
-import { OPPORTUNITIES, PIPELINE_STAGES } from "../lib/data.js";
+import { PIPELINE_STAGES } from "../lib/data.js";
+import { opportunitiesFor } from "../lib/geo.js";
 import { daysUntil, formatMoney, scoreOpportunity } from "../lib/match.js";
 import { FitBadge, FitBar, KindBadge } from "../components/ui.jsx";
 import { aiErrorText, analysisPrompt, emailPrompt, useAI } from "../lib/ai.js";
@@ -51,7 +52,7 @@ ${company}`;
 }
 
 export default function Opportunity({ id, profile, pipeline, setStage }) {
-  const op = OPPORTUNITIES.find((o) => o.id === id);
+  const op = opportunitiesFor(profile).find((o) => o.id === id);
   const [tab, setTab] = useState("brief");
   const [copied, setCopied] = useState(false);
   const [checks, setChecks] = useState({});
@@ -114,7 +115,7 @@ export default function Opportunity({ id, profile, pipeline, setStage }) {
           <div className="mt-6 grid grid-cols-3 gap-3 text-center">
             <div className="card p-3"><p className="text-xs text-slate-500">Est. value</p><p className="font-bold">{formatMoney(op.value)}</p></div>
             <div className="card p-3"><p className="text-xs text-slate-500">Deadline</p><p className="font-bold">{days === null ? "None yet" : `${days} days`}</p></div>
-            <div className="card p-3"><p className="text-xs text-slate-500">Distance</p><p className="font-bold">{op.distanceKm.toLocaleString()} km</p></div>
+            <div className="card p-3"><p className="text-xs text-slate-500">From you</p><p className="font-bold">{op.distanceKm.toLocaleString()} km</p></div>
           </div>
 
           <div className="mt-6 flex gap-1 overflow-x-auto border-b border-slate-200">

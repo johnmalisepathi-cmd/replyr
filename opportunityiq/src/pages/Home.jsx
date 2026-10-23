@@ -7,6 +7,13 @@ import PilotForm from "../components/PilotForm.jsx";
 import WhyDifferent from "../components/WhyDifferent.jsx";
 import RoiCalculator from "../components/RoiCalculator.jsx";
 import IndustryGrid from "../components/IndustryGrid.jsx";
+import WorldMap from "../components/WorldMap.jsx";
+import { COUNTRY_COUNT, opportunitiesFor } from "../lib/geo.js";
+import { DEFAULT_PROFILE } from "../lib/store.js";
+import { scoreOpportunity } from "../lib/match.js";
+
+// The home map shows how the sample jobs score for a typical Perth workshop.
+const MAP_ITEMS = opportunitiesFor(DEFAULT_PROFILE).map((op) => ({ op, ...scoreOpportunity(op, DEFAULT_PROFILE) }));
 import { DocScan, Sparkle } from "../components/ai-ui.jsx";
 
 const STEPS = [
@@ -173,6 +180,24 @@ export default function Home({ hasProfile, setProfile }) {
             <AIDemo setProfile={setProfile} />
           </div>
         </div>
+      </section>
+
+      {/* WORLD MAP */}
+      <section id="map" className="section scroll-mt-20 py-16">
+        <Eyebrow>Opportunities everywhere</Eyebrow>
+        <h2 className="mt-2 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl" style={{ textWrap: "balance" }}>
+          Your next contract might be down the road, or across the world.
+        </h2>
+        <p className="mt-4 max-w-2xl text-slate-400">
+          The AI scans sources city by city and pins every opportunity it finds. Here are{" "}
+          {MAP_ITEMS.length} sample jobs in {COUNTRY_COUNT} countries, across many industries. Zoom in, then tap a pin. Once you sign up, the pins are coloured by how well each job fits your business.
+        </p>
+        <div className="mt-8">
+          <WorldMap items={MAP_ITEMS} colorBy="kind" onOpen={(op) => go(hasProfile ? `/opportunity/${op.id}` : "/onboarding")} title="Live opportunity map" />
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Sample data. The pilot starts in Western Australia; other states and countries open as we connect their tender sources.
+        </p>
       </section>
 
       {/* WHY DIFFERENT */}

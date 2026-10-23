@@ -103,6 +103,10 @@ const CITY_REGION = {
   sydney: "New South Wales", newcastle: "New South Wales", melbourne: "Victoria", geelong: "Victoria",
   brisbane: "Queensland", "gold coast": "Queensland", townsville: "Queensland", adelaide: "South Australia",
   hobart: "Tasmania", darwin: "Northern Territory", canberra: "ACT",
+  auckland: "New Zealand", wellington: "New Zealand", singapore: "Singapore", mumbai: "India", bengaluru: "India",
+  bangalore: "India", delhi: "India", chennai: "India", dubai: "United Arab Emirates", "abu dhabi": "United Arab Emirates",
+  london: "United Kingdom", manchester: "United Kingdom", houston: "United States", "new york": "United States",
+  vancouver: "Canada", toronto: "Canada",
 };
 
 const KEYWORDS = {

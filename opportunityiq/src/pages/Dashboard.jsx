@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { go } from "../lib/router.js";
-import { OPPORTUNITIES } from "../lib/data.js";
+import { countryOf, homeOf, opportunitiesFor } from "../lib/geo.js";
+import WorldMap from "../components/WorldMap.jsx";
 import { daysUntil, formatMoney, scoreOpportunity, searchOpportunities } from "../lib/match.js";
 import { FitBadge, FitBar, KindBadge } from "../components/ui.jsx";
 import { aiErrorText, askPrompt, splitIds, useAI } from "../lib/ai.js";
@@ -26,14 +27,14 @@ export default function Dashboard({ profile, pipeline }) {
   const [minFit, setMinFit] = useState(0);
 
   const scored = useMemo(
-    () => OPPORTUNITIES.map((op) => ({ op, ...scoreOpportunity(op, profile) })).sort((a, b) => b.score - a.score),
+    () => opportunitiesFor(profile).map((op) => ({ op, ...scoreOpportunity(op, profile) })).sort((a, b) => b.score - a.score),
     [profile]
   );
 
   // With live AI the assistant picks the opportunities; without it, a keyword
   // and distance filter runs as you type.
   const visible = useMemo(() => {
-    const ids = ai ? (aiIds ? new Set(aiIds) : null) : new Set(searchOpportunities(OPPORTUNITIES, query).map((o) => o.id));
+    const ids = ai ? (aiIds ? new Set(aiIds) : null) : new Set(searchOpportunities(scored.map((s) => s.op), query).map((o) => o.id));
     return scored.filter((s) => (!ids || ids.has(s.op.id)) && (kind === "all" || s.op.kind === kind) && s.score >= minFit);
   }, [scored, query, kind, minFit, ai, aiIds]);
 
@@ -81,7 +82,7 @@ export default function Dashboard({ profile, pipeline }) {
 
       <div className="mt-6 grid grid-cols-3 gap-3">
         {[
-          [OPPORTUNITIES.length, "Discovered"],
+          [scored.length, "Discovered"],
           [good.length, "High-fit matches"],
           [toReview.length, "To review"],
         ].map(([n, l]) => (
@@ -171,7 +172,19 @@ export default function Dashboard({ profile, pipeline }) {
         </div>
       </div>
 
-      <ul className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="mt-4">
+        <WorldMap
+          key={profile.region}
+          items={visible}
+          home={homeOf(profile)}
+          radiusKm={profile.maxDistanceKm}
+          initialView={countryOf(profile.region) === "Australia" ? "Australia" : "World"}
+          onOpen={(op) => go(`/opportunity/${op.id}`)}
+          title="Your opportunity map"
+        />
+      </div>
+
+      <ul className="mt-6 grid gap-4 md:grid-cols-2">
         {visible.map(({ op, score, reasons, gaps }) => {
           const days = daysUntil(op.deadline);
           return (

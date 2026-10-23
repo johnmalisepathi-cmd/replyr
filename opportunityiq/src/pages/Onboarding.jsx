@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { go } from "../lib/router.js";
-import { CONTRACT_BANDS, INDUSTRIES, INDUSTRY_GROUPS, REGIONS } from "../lib/data.js";
+import { AU_REGIONS, CONTRACT_BANDS, INDUSTRIES, INDUSTRY_GROUPS, WORLD_REGIONS } from "../lib/data.js";
 import { DEFAULT_PROFILE } from "../lib/store.js";
 import { profileFromText, useAI } from "../lib/ai.js";
 import { AIBadge, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
@@ -136,7 +136,8 @@ export default function Onboarding({ profile, setProfile }) {
               <div>
                 <label className="label" htmlFor="ob-region">Service region</label>
                 <select id="ob-region" className="input" value={p.region} onChange={(e) => update({ region: e.target.value })}>
-                  {REGIONS.map((r) => <option key={r}>{r}</option>)}
+                  <optgroup label="Australia">{AU_REGIONS.map((r) => <option key={r}>{r}</option>)}</optgroup>
+                  <optgroup label="International">{WORLD_REGIONS.map((r) => <option key={r}>{r}</option>)}</optgroup>
                 </select>
               </div>
               <div>

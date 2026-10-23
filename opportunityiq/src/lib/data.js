@@ -1,7 +1,7 @@
 // Industry vocabularies and the sample opportunities used by the prototype.
 // Every opportunity here is FICTIONAL and labelled as sample data in the UI.
 
-export const REGIONS = [
+export const AU_REGIONS = [
   "Western Australia",
   "New South Wales",
   "Victoria",
@@ -11,6 +11,10 @@ export const REGIONS = [
   "Northern Territory",
   "ACT",
 ];
+
+export const WORLD_REGIONS = ["New Zealand", "Singapore", "India", "United Arab Emirates", "United Kingdom", "United States", "Canada"];
+
+export const REGIONS = [...AU_REGIONS, ...WORLD_REGIONS];
 
 export { INDUSTRIES, INDUSTRY_GROUPS } from "./industries.js";
 
@@ -34,7 +38,7 @@ export const OPPORTUNITIES = [
     title: "Transport facility — structural steel & access platforms",
     buyer: "Sample State Transport Agency",
     region: "Western Australia",
-    location: "Perth metro (≈25 km from CBD)",
+    location: "Perth metro",
     distanceKm: 25,
     value: 1_800_000,
     deadline: d(19),
@@ -118,7 +122,7 @@ export const OPPORTUNITIES = [
     title: "Rolled handrail & stair stringers — school upgrade",
     buyer: "Sample Education Department",
     region: "Western Australia",
-    location: "Bunbury (≈175 km south)",
+    location: "Bunbury",
     distanceKm: 175,
     value: 95_000,
     deadline: d(6),
@@ -145,7 +149,7 @@ export const OPPORTUNITIES = [
     title: "Precision machined shafts & bushes — mine site spares",
     buyer: "Sample Mining Operations",
     region: "Western Australia",
-    location: "Pilbara (≈1,200 km north)",
+    location: "Pilbara",
     distanceKm: 1200,
     value: 140_000,
     deadline: d(24),
@@ -276,7 +280,7 @@ OPPORTUNITIES.push(
     ["Cybersecurity", "IT support", "Cloud services"], ["ISO 27001", "Essential Eight"],
     "Assess current maturity against the Essential Eight, then deliver a 12-month uplift program across 900 devices.",
     ext("Government IT", "Perth CBD, Western Australia", "Security assessment and remediation", "Not specified", "ISO 27001; Baseline security clearance", "Clearance timing not specified"), "Sample tender portal record"),
-  op("op-403", "tender", "electrical", "Solar PV & batteries for 9 regional schools", "Sample Education Department", "Western Australia", "Geraldton region (≈420 km north)", 420, 1_200_000, 26,
+  op("op-403", "tender", "electrical", "Solar PV & batteries for 9 regional schools", "Sample Education Department", "Western Australia", "Geraldton region", 420, 1_200_000, 26,
     ["Solar PV", "Battery storage", "Electrical installation"], ["CEC accreditation", "Electrical contractor licence"],
     "Design, supply and install rooftop solar and battery systems at nine schools during term breaks.",
     ext("Education energy upgrade", "Mid West, Western Australia", "Solar PV, batteries, switchboard upgrades", "Tier 1 panels; battery brand not specified", "CEC-accredited designers and installers", "Work limited to school holidays"), "Sample tender portal record"),
@@ -288,7 +292,7 @@ OPPORTUNITIES.push(
     ["Event security", "Static guarding"], ["Security agent licence"],
     "Licensed crowd controllers and guards for six weekend festivals, up to 40 staff per event.",
     ext("Event services", "Perth, Western Australia", "Crowd control, gate and static guarding", "Not specified", "Licensed security agents; RSA for bar areas", "Short notice rostering"), "Sample tender portal record"),
-  op("op-406", "tender", "agriculture", "Fresh produce supply for regional hospitals", "Sample Country Health", "Western Australia", "South West (≈175 km)", 175, 300_000, 14,
+  op("op-406", "tender", "agriculture", "Fresh produce supply for regional hospitals", "Sample Country Health", "Western Australia", "South West", 175, 300_000, 14,
     ["Fresh produce"], ["Freshcare", "HACCP"],
     "Twice-weekly supply of seasonal fruit and vegetables to four regional hospital kitchens.",
     ext("Food supply", "South West, Western Australia", "Fresh fruit and vegetable supply", "Seasonal produce; grade not specified", "Freshcare or HACCP", "Refrigerated transport required"), "Sample tender portal record"),
@@ -296,7 +300,7 @@ OPPORTUNITIES.push(
     ["Concrete & formwork", "Commercial fit-out", "Roofing & cladding"], ["Builder registration"],
     "Development approval granted for 180 apartments. A head contractor will be appointed first; trade packages usually follow 3–6 months later.",
     ext("Residential construction", "Perth, Western Australia", "Possible trade subcontracts", "Not specified", "Not specified", "Prediction only; timing depends on finance", "No tender published yet"), "Sample planning announcement"),
-  op("op-408", "tender", "landscaping", "Grounds maintenance — 40 parks and reserves", "Sample Shire", "Western Australia", "Mandurah (≈70 km south)", 70, 600_000, 18,
+  op("op-408", "tender", "landscaping", "Grounds maintenance — 40 parks and reserves", "Sample Shire", "Western Australia", "Mandurah", 70, 600_000, 18,
     ["Grounds maintenance", "Irrigation", "Weed control"], ["ChemCert"],
     "Mowing, irrigation repairs and weed control across 40 parks on a two-year term.",
     ext("Council maintenance", "Mandurah, Western Australia", "Mowing, irrigation, weed control", "Not specified", "ChemCert for chemical application", "Irrigation asset data not supplied"), "Sample tender portal record"),
@@ -304,7 +308,7 @@ OPPORTUNITIES.push(
     ["Video production", "Branding & design"], [],
     "Produce one 60-second hero film and twelve social cut-downs showcasing regional WA.",
     ext("Marketing services", "Perth and regional WA", "Video production and editing", "Not specified", "Showreel of tourism work", "Regional travel costs not specified"), "Sample tender portal record"),
-  op("op-410", "tender", "hospitality", "Staff canteen catering — 3-year contract", "Sample Mining Operations", "Western Australia", "Pilbara (≈1,200 km north)", 1200, 3_600_000, 28,
+  op("op-410", "tender", "hospitality", "Staff canteen catering — 3-year contract", "Sample Mining Operations", "Western Australia", "Pilbara", 1200, 3_600_000, 28,
     ["Staff canteens", "Event catering"], ["HACCP", "Food safety supervisor"],
     "Run a 24/7 canteen for a 400-person camp, including crib room supplies.",
     ext("Remote catering", "Pilbara, Western Australia", "Canteen operation and supplies", "Not specified", "HACCP; site inductions", "FIFO staff rosters required"), "Sample procurement website"),
@@ -317,5 +321,94 @@ OPPORTUNITIES.push(
     "Deliver accredited first aid, manual handling and fire warden training to 2,000 staff.",
     ext("Training panel", "Perth and online", "Accredited safety courses", "Not specified", "RTO registration", "Mix of online and face-to-face not specified"), "Sample tender portal record"),
 );
+
+OPPORTUNITIES.push(
+  // Elsewhere in Australia
+  op("op-501", "tender", "electrical", "Metro station fit-out — electrical & data cabling", "Sample Metro Authority", "New South Wales", "Parramatta, Sydney", 0, 3_200_000, 24,
+    ["Electrical installation", "Data cabling", "Switchboards"], ["Electrical contractor licence", "ACMA cabling registration"],
+    "Electrical, lighting and data cabling packages for two new underground stations.",
+    ext("Transport infrastructure", "Parramatta, New South Wales", "Power, lighting, data cabling", "Not specified", "NSW electrical licence; ACMA registration", "Night works in live rail corridor"), "Sample tender portal record"),
+  op("op-502", "tender", "it", "Council digital services platform rebuild", "Sample City of Melbourne Council", "Victoria", "Melbourne CBD", 0, 900_000, 19,
+    ["Software development", "Cloud services", "Data & analytics"], ["ISO 27001"],
+    "Rebuild the council's online permits and payments portal on modern cloud services.",
+    ext("Government software", "Melbourne, Victoria", "Web platform build and hosting", "Not specified", "ISO 27001; accessibility (WCAG 2.2)", "Legacy data migration not scoped"), "Sample tender portal record"),
+  op("op-503", "tender", "defence", "Army vehicle maintenance support", "Sample Defence Logistics Group", "Queensland", "Townsville", 0, 5_000_000, 35,
+    ["Maintenance & repair", "Precision manufacturing"], ["DISP membership", "ISO 9001"],
+    "Field and workshop maintenance for a light vehicle fleet based at Townsville.",
+    ext("Defence sustainment", "Townsville, Queensland", "Vehicle maintenance and parts", "Not specified", "DISP membership; Baseline clearances", "Surge capacity requirements unclear"), "Sample procurement website"),
+  op("op-504", "tender", "steel", "Shipbuilding precinct — fabricated steel packages", "Sample Naval Shipbuilding Co.", "South Australia", "Osborne, Adelaide", 0, 2_400_000, 22,
+    ["Structural fabrication", "Welding", "Laser cutting", "Galvanising / coating"], ["AS/NZS 5131", "ISO 9001"],
+    "Fabricated steel platforms, stairs and supports for a new shipyard workshop.",
+    ext("Defence industrial", "Osborne, South Australia", "Platforms, stairs, steel supports", "Grade 350 sections; HDG finish", "AS/NZS 5131 CC2; ISO 9001", "Interstate delivery and site access"), "Sample tender portal record"),
+  op("op-505", "tender", "construction", "Defence housing repairs & maintenance", "Sample Housing Agency", "Northern Territory", "Darwin", 0, 700_000, 15,
+    ["Carpentry", "Roofing & cladding"], ["Builder registration"],
+    "Responsive repairs and cyclone preparation for 220 homes across greater Darwin.",
+    ext("Housing maintenance", "Darwin, Northern Territory", "Repairs, roofing, carpentry", "Not specified", "NT builder registration", "Wet-season scheduling"), "Sample tender portal record"),
+  op("op-506", "tender", "cleaning", "Hospital cleaning services", "Sample Tasmanian Health Service", "Tasmania", "Hobart", 0, 1_100_000, 27,
+    ["Commercial cleaning", "Washroom services"], ["ISO 9001", "Police clearance"],
+    "Clinical and general cleaning for a 300-bed hospital, 24/7.",
+    ext("Health facilities", "Hobart, Tasmania", "Clinical and general cleaning", "Hospital-grade consumables", "Infection control training; police checks", "Staffing for night shifts"), "Sample tender portal record"),
+  op("op-507", "tender", "professional", "Internal audit services panel", "Sample Federal Department", "ACT", "Canberra", 0, 400_000, 13,
+    ["Accounting & audit"], ["CPA / CA membership"],
+    "Three-year panel for internal audits, fraud control reviews and assurance work.",
+    ext("Government professional services", "Canberra, ACT", "Internal audit and assurance", "Not specified", "CPA/CA; security clearances for some audits", "Panel does not guarantee work"), "Sample tender portal record"),
+  op("op-508", "tender", "mining", "Gold mill shutdown maintenance", "Sample Goldfields Mining", "Western Australia", "Kalgoorlie", 0, 850_000, 10,
+    ["Shutdown labour", "Equipment maintenance", "Conveyor repair"], ["ISO 45001", "Site inductions"],
+    "10-day planned shutdown of a processing mill: liners, conveyors and pump overhauls.",
+    ext("Mining maintenance", "Kalgoorlie, Western Australia", "Shutdown crews and maintenance", "Not specified", "ISO 45001; site inductions", "Fixed shutdown window"), "Sample procurement website"),
+  op("op-509", "signal", "energy", "Offshore wind zone declared — supply chain registrations open", "Sample Energy Department (announcement)", "New South Wales", "Hunter coast, Newcastle", 0, 50_000_000, null,
+    ["Wind services", "High-voltage electrical"], ["ISO 45001"],
+    "A new offshore wind zone was declared. Developers are inviting local suppliers to register interest ahead of construction.",
+    ext("Renewable energy", "Newcastle, New South Wales", "Possible fabrication, port and HV work", "Not specified", "Not specified", "Prediction only; multi-year timeline", "No tender published yet"), "Sample government announcement"),
+
+  // International
+  op("op-601", "tender", "steel", "Transport hub — structural steel package", "Sample Auckland Transport Agency", "New Zealand", "Auckland", 0, 1_500_000, 30,
+    ["Structural fabrication", "Welding", "Installation"], ["ISO 9001"],
+    "Steel canopy and platform structures for a new bus and rail interchange.",
+    ext("Transport infrastructure", "Auckland, New Zealand", "Steel canopy, platforms", "Grade 300 sections", "ISO 9001; NZ welding certification", "Import duties and shipping not specified"), "Sample government e-tender"),
+  op("op-602", "tender", "logistics", "Cold-chain warehousing for healthcare products", "Sample Health Supply Agency", "Singapore", "Singapore", 0, 1_800_000, 21,
+    ["Cold storage", "Warehousing", "Last-mile delivery"], ["ISO 9001"],
+    "Temperature-controlled storage and island-wide delivery of vaccines and medicines.",
+    ext("Healthcare logistics", "Singapore", "Cold storage and distribution", "2–8°C storage", "GDP compliance; ISO 9001", "Local entity required"), "Sample government e-tender"),
+  op("op-603", "tender", "textiles", "Railway staff uniforms — 5-year supply", "Sample Railway Corporation", "India", "Mumbai", 0, 4_000_000, 34,
+    ["Workwear", "Embroidery", "Hi-vis garments"], ["OEKO-TEX"],
+    "Supply of 120,000 uniform sets per year, with embroidered logos and hi-vis jackets.",
+    ext("Uniform supply", "Mumbai, India", "Uniforms, embroidery, hi-vis", "Poly-cotton blend", "Factory audit; OEKO-TEX preferred", "Very high volumes; local presence preferred"), "Sample government e-tender"),
+  op("op-604", "tender", "it", "State e-governance cloud migration", "Sample State IT Department", "India", "Bengaluru", 0, 2_200_000, 25,
+    ["Cloud services", "Cybersecurity", "Software development"], ["ISO 27001", "SOC 2"],
+    "Migrate 40 citizen services to a government cloud and run 24/7 security monitoring.",
+    ext("Government IT", "Bengaluru, India", "Cloud migration and security operations", "Not specified", "ISO 27001; empanelled cloud provider", "Data residency rules apply"), "Sample government e-tender"),
+  op("op-605", "signal", "construction", "District expansion approved — façade and steel packages expected", "Sample Dubai Developer (announcement)", "United Arab Emirates", "Dubai", 0, 20_000_000, null,
+    ["Commercial fit-out", "Roofing & cladding"], [],
+    "A master developer announced a new mixed-use district. Main contractor tenders are expected next year, followed by trade packages.",
+    ext("Mixed-use development", "Dubai, United Arab Emirates", "Possible façade, steel and fit-out work", "Not specified", "Not specified", "Prediction only; local partner usually required", "No tender published yet"), "Sample developer announcement"),
+  op("op-606", "tender", "engineering", "Rail bridge inspection framework", "Sample Rail Infrastructure Authority", "United Kingdom", "London & South East", 0, 3_000_000, 29,
+    ["Inspection & certification", "Structural design"], ["ISO 9001"],
+    "Four-year framework for examinations and assessments of 600 rail bridges.",
+    ext("Rail asset management", "London, United Kingdom", "Bridge inspections and assessments", "Not specified", "Chartered engineers; ISO 9001", "Possession times limited"), "Sample public contracts notice"),
+  op("op-607", "tender", "oilgas", "Refinery turnaround inspection services", "Sample Energy Refining Co.", "United States", "Houston, Texas", 0, 2_600_000, 18,
+    ["Inspection & testing", "Shutdown maintenance", "Rope access"], ["ISO 45001", "IRATA rope access"],
+    "Non-destructive testing and inspection crews for a 30-day refinery turnaround.",
+    ext("Oil & gas maintenance", "Houston, United States", "NDT inspection crews", "Not specified", "API inspector certifications", "Visa and mobilisation lead times"), "Sample procurement website"),
+  op("op-608", "tender", "environmental", "Port stormwater remediation", "Sample Port Authority", "Canada", "Vancouver", 0, 1_300_000, 23,
+    ["Remediation", "Environmental assessment"], ["ISO 14001"],
+    "Assess and treat contaminated stormwater outfalls across three port terminals.",
+    ext("Environmental remediation", "Vancouver, Canada", "Assessment and treatment works", "Not specified", "ISO 14001; provincial permits", "Tidal work windows"), "Sample public tender notice"),
+);
+
+// Map coordinates for every sample opportunity.
+const COORDS = {
+  "op-101": [-31.92, 115.92], "op-102": [-32.24, 115.77], "op-103": [-31.745, 115.766], "op-104": [-33.33, 115.64],
+  "op-105": [-23.36, 119.73], "op-201": [-31.96, 115.84], "op-202": [-32.05, 115.75], "op-301": [-27.47, 153.03],
+  "op-401": [-31.9, 115.8], "op-402": [-31.953, 115.857], "op-403": [-28.78, 114.61], "op-404": [-31.97, 115.82],
+  "op-405": [-31.96, 115.87], "op-406": [-33.65, 115.35], "op-407": [-31.94, 115.88], "op-408": [-32.53, 115.72],
+  "op-409": [-31.95, 115.86], "op-410": [-22.69, 117.79], "op-411": [-31.98, 115.95], "op-412": [-31.95, 115.86],
+  "op-501": [-33.81, 150.99], "op-502": [-37.81, 144.96], "op-503": [-19.26, 146.82], "op-504": [-34.79, 138.5],
+  "op-505": [-12.46, 130.84], "op-506": [-42.88, 147.33], "op-507": [-35.28, 149.13], "op-508": [-30.75, 121.47],
+  "op-509": [-32.93, 151.78], "op-601": [-36.85, 174.76], "op-602": [1.35, 103.82], "op-603": [19.08, 72.88],
+  "op-604": [12.97, 77.59], "op-605": [25.2, 55.27], "op-606": [51.51, -0.13], "op-607": [29.76, -95.37],
+  "op-608": [49.28, -123.12],
+};
+for (const o of OPPORTUNITIES) [o.lat, o.lng] = COORDS[o.id];
 
 export const PIPELINE_STAGES = ["Interested", "Contacted", "Bidding", "Won", "Lost"];

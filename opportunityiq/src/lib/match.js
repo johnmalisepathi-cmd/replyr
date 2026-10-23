@@ -23,14 +23,17 @@ export function scoreOpportunity(op, profile) {
   if (matched.length) reasons.push(`You offer ${matched.join(", ")}`);
   if (missing.length) gaps.push(`Not in your profile: ${missing.join(", ")}`);
 
-  // Region and travel distance.
-  if (op.region === profile.region) {
-    const far = op.distanceKm > (profile.maxDistanceKm || 300);
-    score += far ? WEIGHTS.region * 0.4 : WEIGHTS.region;
-    if (far) gaps.push(`${op.distanceKm.toLocaleString()} km away — beyond your ${profile.maxDistanceKm} km range`);
-    else reasons.push(`Within your service area (${op.location})`);
+  // Travel distance from the business (op.distanceKm is measured from its
+  // home city), with partial credit for its own region beyond that range.
+  const range = profile.maxDistanceKm || 300;
+  if (op.distanceKm <= range) {
+    score += WEIGHTS.region;
+    reasons.push(`Within your ${range} km range (${op.distanceKm.toLocaleString()} km away)`);
+  } else if (op.region === profile.region) {
+    score += WEIGHTS.region * 0.4;
+    gaps.push(`${op.distanceKm.toLocaleString()} km away — beyond your ${range} km range`);
   } else {
-    gaps.push(`Outside your service region (${op.region})`);
+    gaps.push(`Outside your service area: ${op.location}, ${op.distanceKm.toLocaleString()} km away`);
   }
 
   // Contract size vs. preferred band (one band either side earns partial credit).

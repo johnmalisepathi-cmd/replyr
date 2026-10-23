@@ -1,9 +1,10 @@
 import { go } from "../lib/router.js";
-import { OPPORTUNITIES, PIPELINE_STAGES } from "../lib/data.js";
+import { PIPELINE_STAGES } from "../lib/data.js";
+import { opportunitiesFor } from "../lib/geo.js";
 import { formatMoney, scoreOpportunity } from "../lib/match.js";
 
 export default function Pipeline({ profile, pipeline, setStage }) {
-  const tracked = OPPORTUNITIES.filter((o) => pipeline[o.id]);
+  const tracked = opportunitiesFor(profile).filter((o) => pipeline[o.id]);
   const value = (stage) => tracked.filter((o) => pipeline[o.id] === stage).reduce((t, o) => t + o.value, 0);
 
   return (

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CONTACT_EMAIL, WAITLIST_ENDPOINT } from "../lib/config.js";
-import { INDUSTRIES, INDUSTRY_GROUPS, REGIONS } from "../lib/data.js";
+import { AU_REGIONS, INDUSTRIES, INDUSTRY_GROUPS, WORLD_REGIONS } from "../lib/data.js";
 
 // Sends pilot sign-ups to WAITLIST_ENDPOINT as JSON. With no endpoint set,
 // it falls back to opening an email to CONTACT_EMAIL so no lead is lost.
@@ -76,8 +76,11 @@ export default function PilotForm() {
         <div>
           <label className="label" htmlFor="pf-reg">Region</label>
           <select id="pf-reg" className="input" value={form.region} onChange={set("region")}>
-            {REGIONS.map((r) => <option key={r}>{r}</option>)}
-            <option>Outside Australia</option>
+            <optgroup label="Australia">{AU_REGIONS.map((r) => <option key={r}>{r}</option>)}</optgroup>
+            <optgroup label="International">
+              {WORLD_REGIONS.map((r) => <option key={r}>{r}</option>)}
+              <option>Another country</option>
+            </optgroup>
           </select>
         </div>
       </div>
