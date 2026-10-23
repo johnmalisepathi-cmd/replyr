@@ -112,7 +112,9 @@ const KEYWORDS = {
   "Structural design": ["structural engineer", "structural design", "bridge"], "Mechanical design": ["mechanical"],
   "Electrical design": ["electrical"], "Drafting / BIM": ["draft", "bim", "cad"], "Project management": ["project manag"],
   "Inspection & certification": ["inspect", "certif"], "Hi-vis garments": ["hi-vis", "hi vis", "high vis"],
-  Embroidery: ["embroider"], "Screen printing": ["screen print"], Workwear: ["workwear", "uniform"],
+  Embroidery: ["embroider"], "Window cleaning": ["window"], "Washroom services": ["washroom"],
+  "Commercial cleaning": ["clean"], "Static guarding": ["guard"], "Cybersecurity": ["cyber"], "IT support": ["it support", "helpdesk"],
+  "Cloud services": ["cloud"], "Solar PV": ["solar"], "Fresh produce": ["produce", "fruit", "vegetable"], "Screen printing": ["screen print"], Workwear: ["workwear", "uniform"],
 };
 
 function localProfile(desc) {
@@ -121,13 +123,17 @@ function localProfile(desc) {
   let best = "steel";
   let bestN = -1;
   for (const [id, ind] of Object.entries(INDUSTRIES)) {
-    const n = ind.capabilities.filter(hits).length;
+    const n = ind.capabilities.filter(hits).length + 2 * ind.keywords.filter((k) => t.includes(k)).length;
     if (n > bestN) [best, bestN] = [id, n];
   }
   const ind = INDUSTRIES[best];
   const city = Object.keys(CITY_REGION).find((c) => t.includes(c));
   const region = REGIONS.find((r) => t.includes(r.toLowerCase())) || (city && CITY_REGION[city]) || DEFAULT_PROFILE.region;
-  const certs = ind.certifications.filter((c) => t.includes(c.toLowerCase().split(" ")[0].replace("(", "")));
+  // Match a certification by its full name, or by its standard number ("9001").
+  const certs = ind.certifications.filter((c) => {
+    const num = c.match(/\d{3,5}/)?.[0];
+    return t.includes(c.toLowerCase()) || (num && t.includes(num));
+  });
   return {
     ...DEFAULT_PROFILE,
     industry: best,

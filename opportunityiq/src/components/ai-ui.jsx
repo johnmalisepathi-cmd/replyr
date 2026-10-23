@@ -119,12 +119,152 @@ const ICONS = {
       <circle cx="36" cy="35" r="3.5" />
     </>
   ),
+  construction: (
+    <>
+      <path d="M10 42V8h4l20 6H14M14 14v28M8 42h14" />
+      <path d="M30 14v8M27 22h6v5h-6z" />
+    </>
+  ),
+  electrical: <path d="M27 4L11 27h12l-3 17 17-24H25l2-16z" />,
+  plumbing: (
+    <>
+      <path d="M8 14h16v8h10v18h-8V30h-6v-8H8z" />
+      <path d="M8 10v8M16 6v6" />
+    </>
+  ),
+  landscaping: (
+    <>
+      <path d="M24 44V22" />
+      <path d="M24 30c-8 0-12-6-12-12 6 0 12 4 12 12zM24 24c0-8 5-14 12-14 0 8-5 14-12 14z" />
+      <path d="M10 44h28" />
+    </>
+  ),
+  furniture: (
+    <>
+      <path d="M12 22V10h24v12M8 22h32v8H8zM12 30v10M36 30v10" />
+    </>
+  ),
+  defence: <path d="M24 4l16 6v12c0 10-7 17-16 22-9-5-16-12-16-22V10z" />,
+  chemicals: (
+    <>
+      <path d="M18 6h12M20 6v12L9 38a3 3 0 003 4h24a3 3 0 003-4L28 18V6" />
+      <path d="M14 30h20" />
+    </>
+  ),
+  oilgas: (
+    <>
+      <path d="M24 6c6 9 12 15 12 23a12 12 0 01-24 0c0-8 6-14 12-23z" />
+      <path d="M19 32a5 5 0 005 5" />
+    </>
+  ),
+  energy: (
+    <>
+      <path d="M24 26v18M18 44h12" />
+      <path d="M24 26L14 8M24 26l18-4M24 26L12 34" />
+      <circle cx="24" cy="26" r="2.5" />
+    </>
+  ),
+  environmental: (
+    <>
+      <path d="M16 12l4-6h8l4 6M38 24l2 7-4 6h-7M10 24l-2 7 4 6h7" />
+      <path d="M30 10l2 4-4 1M34 37l-4 2 1-4M14 37l-1-4 4 2" />
+    </>
+  ),
+  automotive: (
+    <>
+      <path d="M6 30v-6l5-10h26l5 10v6z" />
+      <circle cx="14" cy="32" r="4" />
+      <circle cx="34" cy="32" r="4" />
+      <path d="M12 22h24" />
+    </>
+  ),
+  marine: (
+    <>
+      <path d="M24 6v28M24 10l12 18H24" />
+      <path d="M6 34h36l-5 8H11z" />
+    </>
+  ),
+  agriculture: (
+    <>
+      <path d="M24 44V12" />
+      <path d="M24 18c-5 0-8-3-8-8 5 0 8 3 8 8zM24 18c5 0 8-3 8-8-5 0-8 3-8 8zM24 28c-5 0-8-3-8-8 5 0 8 3 8 8zM24 28c5 0 8-3 8-8-5 0-8 3-8 8z" />
+    </>
+  ),
+  hospitality: (
+    <>
+      <path d="M8 34h32M10 34a14 14 0 0128 0" />
+      <path d="M24 16v4M6 40h36" />
+    </>
+  ),
+  cleaning: (
+    <>
+      <path d="M30 6l-8 18M14 24h16l4 18H10z" />
+      <path d="M16 32v8M22 32v8M28 32v8" />
+    </>
+  ),
+  security: (
+    <>
+      <rect x="12" y="20" width="24" height="20" rx="3" />
+      <path d="M17 20v-6a7 7 0 0114 0v6M24 28v5" />
+    </>
+  ),
+  labour: (
+    <>
+      <path d="M10 26a14 14 0 0128 0M8 26h32v4H8z" />
+      <path d="M24 12v6M24 36v6" />
+    </>
+  ),
+  it: (
+    <>
+      <rect x="6" y="8" width="36" height="24" rx="2" />
+      <path d="M18 18l-4 4 4 4M30 18l4 4-4 4M26 16l-4 12M16 40h16" />
+    </>
+  ),
+  telecoms: (
+    <>
+      <path d="M24 20l-8 24M24 20l8 24M18 36h12" />
+      <circle cx="24" cy="16" r="3" />
+      <path d="M14 8a14 14 0 000 16M34 8a14 14 0 010 16" />
+    </>
+  ),
+  professional: (
+    <>
+      <rect x="6" y="14" width="36" height="26" rx="3" />
+      <path d="M18 14v-4h12v4M6 26h36" />
+    </>
+  ),
+  healthcare: <path d="M19 8h10v11h11v10H29v11H19V29H8V19h11z" />,
+  education: (
+    <>
+      <path d="M4 18l20-10 20 10-20 10z" />
+      <path d="M12 22v10c0 3 5 6 12 6s12-3 12-6V22M40 20v12" />
+    </>
+  ),
+  community: (
+    <>
+      <circle cx="16" cy="14" r="5" />
+      <circle cx="32" cy="14" r="5" />
+      <path d="M6 38c0-7 4-12 10-12s10 5 10 12M22 38c0-7 4-12 10-12s10 5 10 12" />
+    </>
+  ),
+  marketing: (
+    <>
+      <path d="M8 20v8h6l16 10V10L14 20z" />
+      <path d="M36 18a8 8 0 010 12M14 28l3 10h5l-3-10" />
+    </>
+  ),
+  supplies: (
+    <>
+      <path d="M24 4l18 9v22l-18 9-18-9V13z" />
+      <path d="M6 13l18 9 18-9M24 22v22" />
+    </>
+  ),
 };
 
 export function IndustryIcon({ id, className = "h-10 w-10" }) {
   return (
     <svg viewBox="0 0 48 48" className={className} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {ICONS[id]}
+      {ICONS[id] || <circle cx="24" cy="24" r="14" />}
     </svg>
   );
 }

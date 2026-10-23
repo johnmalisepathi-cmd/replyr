@@ -12,72 +12,7 @@ export const REGIONS = [
   "ACT",
 ];
 
-export const INDUSTRIES = {
-  steel: {
-    label: "Steel fabrication",
-    pilot: true,
-    capabilities: [
-      "Laser cutting",
-      "CNC folding",
-      "Welding",
-      "Rolling",
-      "Structural fabrication",
-      "Installation",
-      "Machining",
-      "Galvanising / coating",
-    ],
-    certifications: ["AS/NZS 5131", "ISO 9001", "AS/NZS 1554 welding", "ISO 45001"],
-    examples: "Structural packages, brackets, platforms",
-    factors: "Machinery, materials, welding capability",
-  },
-  engineering: {
-    label: "Engineering services",
-    pilot: true,
-    capabilities: [
-      "Structural design",
-      "Mechanical design",
-      "Electrical design",
-      "Drafting / BIM",
-      "Project management",
-      "Inspection & certification",
-    ],
-    certifications: ["Engineers Australia (CPEng)", "NER registration", "ISO 9001", "ISO 45001"],
-    examples: "Design and consulting contracts",
-    factors: "Disciplines, licences, technical expertise",
-  },
-  mining: {
-    label: "Mining services",
-    pilot: false,
-    capabilities: ["Equipment maintenance", "Shutdown labour", "Conveyor repair", "Hydraulics", "Site services"],
-    certifications: ["ISO 45001", "Site inductions", "ISO 14001"],
-    examples: "Equipment maintenance, shutdown work",
-    factors: "Certifications, workforce, equipment",
-  },
-  textiles: {
-    label: "Textiles & uniforms",
-    pilot: false,
-    capabilities: ["Workwear", "Hi-vis garments", "Embroidery", "Screen printing", "Linen supply"],
-    certifications: ["AS/NZS 4602 hi-vis", "OEKO-TEX"],
-    examples: "Uniforms, workwear, linen contracts",
-    factors: "Fabrics, quantities, lead times",
-  },
-  food: {
-    label: "Food manufacturing",
-    pilot: false,
-    capabilities: ["Bulk meals", "Packaged goods", "Cold chain", "Contract packing"],
-    certifications: ["HACCP", "SQF", "ISO 22000"],
-    examples: "Institutional food supply, packaging",
-    factors: "Food safety, production volume, delivery",
-  },
-  logistics: {
-    label: "Logistics",
-    pilot: false,
-    capabilities: ["Road freight", "Warehousing", "Oversize transport", "Last-mile delivery"],
-    certifications: ["NHVAS accreditation", "ISO 9001"],
-    examples: "Freight and warehousing contracts",
-    factors: "Fleet, routes, storage capacity",
-  },
-};
+export { INDUSTRIES, INDUSTRY_GROUPS } from "./industries.js";
 
 export const CONTRACT_BANDS = [
   { id: "xs", label: "Under $50k", min: 0, max: 50_000 },
@@ -312,5 +247,75 @@ export const OPPORTUNITIES = [
     sourceLabel: "Sample tender portal record",
   },
 ];
+
+
+// Shorthand for the AI-extracted tender fields of the newer samples.
+const ext = (type, location, work, materials, requirements, risks, deadline = "Verified submission date (see portal)") => ({
+  "Project type": type,
+  Location: location,
+  "Potential work": work,
+  Materials: materials,
+  Requirements: requirements,
+  Deadline: deadline,
+  Contact: deadline.startsWith("No") ? "Not specified" : "Published procurement contact",
+  Risks: risks,
+});
+
+const op = (id, kind, industry, title, buyer, region, location, distanceKm, value, deadlineDays, needs, certifications, summary, extraction, sourceLabel) => ({
+  id, kind, industry, title, buyer, region, location, distanceKm, value,
+  deadline: deadlineDays === null ? null : d(deadlineDays),
+  published: d(-2), needs, certifications, summary, extraction, sourceLabel,
+});
+
+OPPORTUNITIES.push(
+  op("op-401", "tender", "cleaning", "Commercial cleaning — 14 council buildings", "Sample City Council", "Western Australia", "Perth metro", 15, 480_000, 21,
+    ["Commercial cleaning", "Window cleaning", "Washroom services"], ["ISO 9001", "Police clearance"],
+    "Three-year contract for daily cleaning of offices, libraries and community centres, with periodic window cleaning.",
+    ext("Facilities services", "Perth metro, Western Australia", "Daily cleaning, windows, washrooms", "Not specified", "ISO 9001; police clearances for all staff", "After-hours access only; 14 sites"), "Sample tender portal record"),
+  op("op-402", "tender", "it", "Cybersecurity uplift & Essential Eight assessment", "Sample State Department", "Western Australia", "Perth CBD", 2, 350_000, 17,
+    ["Cybersecurity", "IT support", "Cloud services"], ["ISO 27001", "Essential Eight"],
+    "Assess current maturity against the Essential Eight, then deliver a 12-month uplift program across 900 devices.",
+    ext("Government IT", "Perth CBD, Western Australia", "Security assessment and remediation", "Not specified", "ISO 27001; Baseline security clearance", "Clearance timing not specified"), "Sample tender portal record"),
+  op("op-403", "tender", "electrical", "Solar PV & batteries for 9 regional schools", "Sample Education Department", "Western Australia", "Geraldton region (≈420 km north)", 420, 1_200_000, 26,
+    ["Solar PV", "Battery storage", "Electrical installation"], ["CEC accreditation", "Electrical contractor licence"],
+    "Design, supply and install rooftop solar and battery systems at nine schools during term breaks.",
+    ext("Education energy upgrade", "Mid West, Western Australia", "Solar PV, batteries, switchboard upgrades", "Tier 1 panels; battery brand not specified", "CEC-accredited designers and installers", "Work limited to school holidays"), "Sample tender portal record"),
+  op("op-404", "tender", "healthcare", "Medical consumables supply panel", "Sample Health Service", "Western Australia", "Perth metro hospitals", 10, 2_500_000, 33,
+    ["Medical consumables", "Medical equipment"], ["TGA registration", "ISO 13485"],
+    "Panel for wound care, gloves and procedure packs across five hospitals, with weekly delivery.",
+    ext("Health supply panel", "Perth metro, Western Australia", "Consumables supply and delivery", "TGA-listed products only", "TGA registration; ISO 13485", "Panel does not guarantee volume"), "Sample procurement website"),
+  op("op-405", "tender", "security", "Event security — summer festival series", "Sample Events Authority", "Western Australia", "Perth foreshore", 3, 160_000, 9,
+    ["Event security", "Static guarding"], ["Security agent licence"],
+    "Licensed crowd controllers and guards for six weekend festivals, up to 40 staff per event.",
+    ext("Event services", "Perth, Western Australia", "Crowd control, gate and static guarding", "Not specified", "Licensed security agents; RSA for bar areas", "Short notice rostering"), "Sample tender portal record"),
+  op("op-406", "tender", "agriculture", "Fresh produce supply for regional hospitals", "Sample Country Health", "Western Australia", "South West (≈175 km)", 175, 300_000, 14,
+    ["Fresh produce"], ["Freshcare", "HACCP"],
+    "Twice-weekly supply of seasonal fruit and vegetables to four regional hospital kitchens.",
+    ext("Food supply", "South West, Western Australia", "Fresh fruit and vegetable supply", "Seasonal produce; grade not specified", "Freshcare or HACCP", "Refrigerated transport required"), "Sample tender portal record"),
+  op("op-407", "signal", "construction", "Approved 12-storey residential tower — trade packages likely", "Sample Developments (planning approval)", "Western Australia", "Perth inner suburbs", 6, 45_000_000, null,
+    ["Concrete & formwork", "Commercial fit-out", "Roofing & cladding"], ["Builder registration"],
+    "Development approval granted for 180 apartments. A head contractor will be appointed first; trade packages usually follow 3–6 months later.",
+    ext("Residential construction", "Perth, Western Australia", "Possible trade subcontracts", "Not specified", "Not specified", "Prediction only; timing depends on finance", "No tender published yet"), "Sample planning announcement"),
+  op("op-408", "tender", "landscaping", "Grounds maintenance — 40 parks and reserves", "Sample Shire", "Western Australia", "Mandurah (≈70 km south)", 70, 600_000, 18,
+    ["Grounds maintenance", "Irrigation", "Weed control"], ["ChemCert"],
+    "Mowing, irrigation repairs and weed control across 40 parks on a two-year term.",
+    ext("Council maintenance", "Mandurah, Western Australia", "Mowing, irrigation, weed control", "Not specified", "ChemCert for chemical application", "Irrigation asset data not supplied"), "Sample tender portal record"),
+  op("op-409", "tender", "marketing", "Tourism campaign video production", "Sample Tourism Agency", "Western Australia", "Perth + regional shoots", 30, 120_000, 12,
+    ["Video production", "Branding & design"], [],
+    "Produce one 60-second hero film and twelve social cut-downs showcasing regional WA.",
+    ext("Marketing services", "Perth and regional WA", "Video production and editing", "Not specified", "Showreel of tourism work", "Regional travel costs not specified"), "Sample tender portal record"),
+  op("op-410", "tender", "hospitality", "Staff canteen catering — 3-year contract", "Sample Mining Operations", "Western Australia", "Pilbara (≈1,200 km north)", 1200, 3_600_000, 28,
+    ["Staff canteens", "Event catering"], ["HACCP", "Food safety supervisor"],
+    "Run a 24/7 canteen for a 400-person camp, including crib room supplies.",
+    ext("Remote catering", "Pilbara, Western Australia", "Canteen operation and supplies", "Not specified", "HACCP; site inductions", "FIFO staff rosters required"), "Sample procurement website"),
+  op("op-411", "tender", "logistics", "Warehousing & distribution for school supplies", "Sample Education Department", "Western Australia", "Kewdale", 12, 750_000, 20,
+    ["Warehousing", "Road freight", "Last-mile delivery"], ["NHVAS accreditation"],
+    "Store and deliver supplies to 300 schools statewide, with peak volumes before each term.",
+    ext("Government logistics", "Kewdale, Western Australia", "Warehousing and statewide delivery", "Not specified", "NHVAS accreditation", "Peak volumes not quantified"), "Sample tender portal record"),
+  op("op-412", "tender", "education", "Workplace safety training panel", "Sample Government Agency", "Western Australia", "Perth + online", 5, 200_000, 16,
+    ["Safety training", "Accredited training", "eLearning content"], ["RTO registration"],
+    "Deliver accredited first aid, manual handling and fire warden training to 2,000 staff.",
+    ext("Training panel", "Perth and online", "Accredited safety courses", "Not specified", "RTO registration", "Mix of online and face-to-face not specified"), "Sample tender portal record"),
+);
 
 export const PIPELINE_STAGES = ["Interested", "Contacted", "Bidding", "Won", "Lost"];

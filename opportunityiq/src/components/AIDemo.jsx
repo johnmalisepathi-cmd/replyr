@@ -16,6 +16,14 @@ const EXAMPLES = [
     text: "Fremantle structural engineering consultancy. NER-registered engineers doing bridge inspections, structural design and drafting/BIM for councils and industry.",
   },
   {
+    label: "Cleaning company",
+    text: "Perth commercial cleaning company, 60 police-cleared staff, ISO 9001. We clean offices, schools and council buildings, plus windows and washrooms.",
+  },
+  {
+    label: "IT & cyber firm",
+    text: "Perth IT company doing cybersecurity, cloud services and IT support for government. ISO 27001 certified, Essential Eight specialists.",
+  },
+  {
     label: "Uniform maker",
     text: "Brisbane uniform manufacturer: hi-vis workwear with embroidery and screen printing for big employers.",
   },

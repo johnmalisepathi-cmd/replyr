@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { go } from "../lib/router.js";
-import { CONTRACT_BANDS, INDUSTRIES, REGIONS } from "../lib/data.js";
+import { CONTRACT_BANDS, INDUSTRIES, INDUSTRY_GROUPS, REGIONS } from "../lib/data.js";
 import { DEFAULT_PROFILE } from "../lib/store.js";
 import { profileFromText, useAI } from "../lib/ai.js";
-import { AIBadge, AIThinking, Sparkle } from "../components/ai-ui.jsx";
+import { AIBadge, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 
 const STEPS = ["Business", "Capabilities", "Preferences"];
 
@@ -107,20 +107,30 @@ export default function Onboarding({ profile, setProfile }) {
               <input id="ob-name" className="input" placeholder="e.g. Swan Valley Steel" value={p.companyName} onChange={(e) => update({ companyName: e.target.value })} />
             </div>
             <div>
-              <p className="label">Industry</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {Object.entries(INDUSTRIES).map(([id, i]) => (
-                  <Toggle key={id} on={p.industry === id} onClick={() => changeIndustry(id)}>
-                    <span className="flex-1">{i.label}</span>
-                    {!i.pilot && <span className="text-[10px] uppercase opacity-60">Preview</span>}
-                  </Toggle>
-                ))}
+              <label className="label" htmlFor="ob-ind">Industry</label>
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-ai-cyan">
+                  <IndustryIcon id={p.industry} className="h-7 w-7" />
+                </span>
+                <select id="ob-ind" className="input" value={p.industry} onChange={(e) => changeIndustry(e.target.value)}>
+                  {INDUSTRY_GROUPS.map((g) => (
+                    <optgroup key={g} label={g}>
+                      {Object.entries(INDUSTRIES)
+                        .filter(([, i]) => i.group === g)
+                        .map(([id, i]) => (
+                          <option key={id} value={id}>
+                            {i.label}{i.pilot ? " (pilot)" : ""}
+                          </option>
+                        ))}
+                    </optgroup>
+                  ))}
+                </select>
               </div>
-              {!ind.pilot && (
-                <p className="mt-2 text-xs text-amber-700">
-                  {ind.label} isn't in the pilot yet, so you'll see very few sample matches. Steel and engineering have the most demo data.
-                </p>
-              )}
+              <p className="mt-2 text-xs text-slate-500">
+                {ind.pilot
+                  ? "In the WA pilot now, with the most sample opportunities."
+                  : `${ind.label} isn't in the pilot yet. You'll see a few sample matches for it in the demo.`}
+              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>

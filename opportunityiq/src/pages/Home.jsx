@@ -6,7 +6,8 @@ import AIDemo from "../components/AIDemo.jsx";
 import PilotForm from "../components/PilotForm.jsx";
 import WhyDifferent from "../components/WhyDifferent.jsx";
 import RoiCalculator from "../components/RoiCalculator.jsx";
-import { DocScan, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
+import IndustryGrid from "../components/IndustryGrid.jsx";
+import { DocScan, Sparkle } from "../components/ai-ui.jsx";
 
 const STEPS = [
   {
@@ -87,7 +88,7 @@ const FAQ = [
 
 const STATS = [
   ["180 pages", "read in seconds"],
-  ["5 factors", "in every fit score"],
+  [`${Object.keys(INDUSTRIES).length} industries`, "one AI engine"],
   ["24/7", "source monitoring"],
   ["0", "bids sent without you"],
 ];
@@ -114,7 +115,7 @@ export default function Home({ hasProfile, setProfile }) {
         <div className="section relative grid items-center gap-10 pb-10 pt-12 sm:pt-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
           <div className="min-w-0">
             <span className="inline-flex items-center gap-2 rounded-full border border-ai-violet/40 bg-ai-violet/10 px-3 py-1 text-xs font-medium text-violet-200">
-              <Sparkle className="h-3.5 w-3.5 text-ai-cyan" /> AI pilot open · WA steel & engineering
+              <Sparkle className="h-3.5 w-3.5 text-ai-cyan" /> AI pilot open in WA · 31 industries on the way
             </span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.04] tracking-tight text-white sm:text-5xl lg:text-6xl" style={{ textWrap: "balance" }}>
               Your AI business development manager. <span className="ai-text">Finding work 24/7.</span>
@@ -275,29 +276,17 @@ export default function Home({ hasProfile, setProfile }) {
       </section>
 
       {/* INDUSTRIES */}
-      <section className="section py-16">
+      <section id="industries" className="section scroll-mt-20 py-16">
         <Eyebrow>Industries</Eyebrow>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">One AI engine. Every industry's language.</h2>
+        <h2 className="mt-2 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl" style={{ textWrap: "balance" }}>
+          One AI engine. {Object.keys(INDUSTRIES).length} industries. Each in its own language.
+        </h2>
         <p className="mt-3 max-w-2xl text-slate-400">
-          Each industry gets its own vocabulary, sources and matching factors. We open an industry once we can support its data
-          reliably.
+          From steel and solar to cleaning, IT, catering and healthcare. The AI learns each trade's capabilities, certifications and
+          sources. The pilot starts with WA steel and engineering, and other industries open as we connect their data.
         </p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(INDUSTRIES).map(([id, ind]) => (
-            <div key={id} className={`group relative overflow-hidden rounded-2xl border p-5 transition ${ind.pilot ? "border-brand-400/40 bg-brand-500/[0.07]" : "border-white/10 bg-white/[0.03]"}`}>
-              <div className="flex items-start justify-between gap-3">
-                <span className={`flex h-14 w-14 items-center justify-center rounded-xl ${ind.pilot ? "bg-brand-500/15 text-brand-300" : "bg-white/5 text-slate-400"}`}>
-                  <IndustryIcon id={id} className="h-9 w-9" />
-                </span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${ind.pilot ? "bg-brand-500 text-white" : "bg-white/10 text-slate-400"}`}>
-                  {ind.pilot ? "Pilot now" : "Coming later"}
-                </span>
-              </div>
-              <p className="mt-4 font-semibold text-white">{ind.label}</p>
-              <p className="mt-1 text-sm text-slate-300">{ind.examples}</p>
-              <p className="mt-1 text-xs text-slate-500">AI matches on: {ind.factors}</p>
-            </div>
-          ))}
+        <div className="mt-8">
+          <IndustryGrid />
         </div>
       </section>
 

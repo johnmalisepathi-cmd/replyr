@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CONTACT_EMAIL, WAITLIST_ENDPOINT } from "../lib/config.js";
-import { INDUSTRIES, REGIONS } from "../lib/data.js";
+import { INDUSTRIES, INDUSTRY_GROUPS, REGIONS } from "../lib/data.js";
 
 // Sends pilot sign-ups to WAITLIST_ENDPOINT as JSON. With no endpoint set,
 // it falls back to opening an email to CONTACT_EMAIL so no lead is lost.
@@ -62,8 +62,14 @@ export default function PilotForm() {
         <div>
           <label className="label" htmlFor="pf-ind">Industry</label>
           <select id="pf-ind" className="input" value={form.industry} onChange={set("industry")}>
-            {Object.entries(INDUSTRIES).map(([id, i]) => (
-              <option key={id} value={id}>{i.label}</option>
+            {INDUSTRY_GROUPS.map((g) => (
+              <optgroup key={g} label={g}>
+                {Object.entries(INDUSTRIES)
+                  .filter(([, i]) => i.group === g)
+                  .map(([id, i]) => (
+                    <option key={id} value={id}>{i.label}</option>
+                  ))}
+              </optgroup>
             ))}
           </select>
         </div>
