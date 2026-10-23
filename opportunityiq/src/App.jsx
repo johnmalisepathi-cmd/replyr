@@ -29,7 +29,7 @@ export default function App() {
   else if (route.startsWith("/opportunity/"))
     page = <Opportunity id={route.split("/")[2]} profile={profile} pipeline={pipeline} setStage={setStage} />;
   else if (route === "/privacy") page = <Privacy />;
-  else page = <Home hasProfile={!!profile} />;
+  else page = <Home hasProfile={!!profile} setProfile={setProfile} />;
 
   const inApp = route !== "/" && route !== "/privacy";
 
@@ -37,7 +37,7 @@ export default function App() {
     <div className="flex min-h-screen flex-col">
       <Nav route={route} hasProfile={!!profile} />
       {inApp && <SampleBanner />}
-      <div className="flex-1">{page}</div>
+      <div className={`flex-1 ${route === "/" || route === "" ? "bg-navy-950 pb-16" : "pb-20"}`}>{page}</div>
       <Footer />
     </div>
   );

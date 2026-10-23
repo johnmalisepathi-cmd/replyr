@@ -5,6 +5,11 @@
 // VITE_WAITLIST_ENDPOINT in a .env file (e.g. https://formspree.io/f/xxxx).
 export const WAITLIST_ENDPOINT = import.meta.env.VITE_WAITLIST_ENDPOINT || "";
 
+// Optional: your own AI server (it keeps the API key secret). Without it, the
+// public site uses the rule-based matcher; the claude.ai preview uses Claude.
+// Contract: POST {prompt, format: "text"|"json"} -> {text}.
+export const AI_ENDPOINT = import.meta.env.VITE_AI_ENDPOINT || "";
+
 // Shown in the footer and used as the fallback if no endpoint is configured.
 export const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
 

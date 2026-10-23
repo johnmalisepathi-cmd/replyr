@@ -23,16 +23,16 @@ export function Nav({ route, hasProfile }) {
     <button
       onClick={() => go(path)}
       className={`shrink-0 rounded-full px-2.5 py-1.5 text-sm font-medium transition sm:px-3 ${
-        route.startsWith(path) ? "bg-navy-900 text-white" : "text-slate-600 hover:text-slate-900"
+        route.startsWith(path) ? "bg-white/15 text-white" : "text-slate-300 hover:text-white"
       }`}
     >
       {text}
     </button>
   );
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/85 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-navy-950/90 backdrop-blur">
       <div className="section flex h-16 items-center justify-between gap-3">
-        <Logo compact={inApp} />
+        <Logo dark compact={inApp} />
         {inApp ? (
           <nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
             {link("/dashboard", "Dashboard")}
@@ -41,7 +41,7 @@ export function Nav({ route, hasProfile }) {
           </nav>
         ) : (
           <div className="flex items-center gap-2">
-            <button onClick={() => go(hasProfile ? "/dashboard" : "/onboarding")} className="btn-ghost hidden sm:inline-flex">
+            <button onClick={() => go(hasProfile ? "/dashboard" : "/onboarding")} className="btn hidden border border-white/20 text-white hover:bg-white/10 sm:inline-flex">
               Try the demo
             </button>
             <button
@@ -68,10 +68,10 @@ export function SampleBanner() {
   );
 }
 
-export function FitBar({ score }) {
+export function FitBar({ score, dark = false }) {
   const color = score >= 75 ? "bg-brand-500" : score >= 50 ? "bg-amber-400" : "bg-slate-300";
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100" role="meter" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
+    <div className={`h-2 w-full overflow-hidden rounded-full ${dark ? "bg-white/10" : "bg-slate-100"}`} role="meter" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
       <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${score}%` }} />
     </div>
   );
@@ -94,7 +94,7 @@ export function KindBadge({ kind }) {
 
 export function Footer() {
   return (
-    <footer className="mt-24 bg-navy-950 text-slate-400">
+    <footer className="border-t border-white/10 bg-navy-950 text-slate-400">
       <div className="section grid gap-8 py-12 sm:grid-cols-3">
         <div>
           <Logo dark />

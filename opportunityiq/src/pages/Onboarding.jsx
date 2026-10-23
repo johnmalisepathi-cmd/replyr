@@ -2,6 +2,8 @@ import { useState } from "react";
 import { go } from "../lib/router.js";
 import { CONTRACT_BANDS, INDUSTRIES, REGIONS } from "../lib/data.js";
 import { DEFAULT_PROFILE } from "../lib/store.js";
+import { profileFromText, useAI } from "../lib/ai.js";
+import { AIBadge, AIThinking, Sparkle } from "../components/ai-ui.jsx";
 
 const STEPS = ["Business", "Capabilities", "Preferences"];
 
@@ -26,6 +28,20 @@ function Toggle({ on, children, onClick }) {
 export default function Onboarding({ profile, setProfile }) {
   const [p, setP] = useState(profile || DEFAULT_PROFILE);
   const [step, setStep] = useState(0);
+  const ai = useAI();
+  const [desc, setDesc] = useState("");
+  const [filling, setFilling] = useState(false);
+  const [aiNote, setAiNote] = useState("");
+
+  const fillWithAI = async () => {
+    setFilling(true);
+    setAiNote("");
+    const { profile: filled, usedAI, note } = await profileFromText(desc);
+    setP((x) => ({ ...filled, companyName: filled.companyName || x.companyName }));
+    setAiNote(note || (usedAI ? "AI filled in your profile. Check each step and adjust anything it missed." : "Filled in from keywords. Check each step."));
+    setFilling(false);
+    setStep(1);
+  };
   const ind = INDUSTRIES[p.industry];
   const update = (patch) => setP((x) => ({ ...x, ...patch }));
   const toggleIn = (key, val) =>
@@ -57,6 +73,31 @@ export default function Onboarding({ profile, setProfile }) {
           </li>
         ))}
       </ol>
+
+      <div className="ai-panel mt-6 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-2 font-semibold text-white">
+            <Sparkle className="h-5 w-5 text-ai-cyan" /> Skip the form: describe your business
+          </p>
+          <AIBadge live={!!ai} />
+        </div>
+        <label htmlFor="ob-ai" className="sr-only">Describe your business</label>
+        <textarea
+          id="ob-ai"
+          rows={2}
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          placeholder="e.g. Swan Valley Steel, Perth. Laser cutting, press brakes, coded welders, ISO 9001. Jobs up to $250k."
+          className="mt-3 w-full resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-ai-cyan focus:outline-none focus:ring-2 focus:ring-ai-cyan/30"
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button onClick={fillWithAI} disabled={filling || !desc.trim()} className="btn-ai">
+            <Sparkle /> Fill my profile with AI
+          </button>
+          {filling && <AIThinking label="Building your profile" />}
+        </div>
+        {aiNote && !filling && <p className="mt-3 text-xs text-cyan-200">{aiNote}</p>}
+      </div>
 
       <div className="card mt-6 p-6">
         {step === 0 && (

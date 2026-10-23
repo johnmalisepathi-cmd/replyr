@@ -1,8 +1,34 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { go } from "../lib/router.js";
 import { OPPORTUNITIES, PIPELINE_STAGES } from "../lib/data.js";
 import { daysUntil, formatMoney, scoreOpportunity } from "../lib/match.js";
 import { FitBadge, FitBar, KindBadge } from "../components/ui.jsx";
+import { aiErrorText, analysisPrompt, emailPrompt, useAI } from "../lib/ai.js";
+import { AIBadge, AIText, AIThinking, Sparkle } from "../components/ai-ui.jsx";
+
+// One streaming AI task (analysis or email) with its own Stop control.
+function useAITask() {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  const ctl = useRef(null);
+  useEffect(() => () => ctl.current?.abort(), []);
+  const run = async (ai, prompt) => {
+    ctl.current?.abort();
+    ctl.current = new AbortController();
+    setBusy(true);
+    setNote("");
+    setText("");
+    try {
+      await ai.text(prompt, { signal: ctl.current.signal, onText: ({ text: t }) => setText(t) });
+    } catch (e) {
+      setText(e?.text || "");
+      setNote(aiErrorText(e));
+    }
+    setBusy(false);
+  };
+  return { text, busy, note, run, stop: () => ctl.current?.abort() };
+}
 
 function draftEmail(op, profile, matched) {
   const company = profile.companyName || "[Your company]";
@@ -29,6 +55,9 @@ export default function Opportunity({ id, profile, pipeline, setStage }) {
   const [tab, setTab] = useState("brief");
   const [copied, setCopied] = useState(false);
   const [checks, setChecks] = useState({});
+  const ai = useAI();
+  const analysis = useAITask();
+  const aiEmail = useAITask();
 
   if (!op) {
     return (
@@ -41,7 +70,7 @@ export default function Opportunity({ id, profile, pipeline, setStage }) {
 
   const s = scoreOpportunity(op, profile);
   const days = daysUntil(op.deadline);
-  const email = draftEmail(op, profile, s.matched);
+  const email = aiEmail.text && !aiEmail.busy ? aiEmail.text : draftEmail(op, profile, s.matched);
   const checklist = [
     "Read full tender documents on the source portal",
     "Confirm scope split (supply / install)",
@@ -58,7 +87,7 @@ export default function Opportunity({ id, profile, pipeline, setStage }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setCopied(false);
+      setCopied("manual");
     }
   };
 
@@ -89,7 +118,7 @@ export default function Opportunity({ id, profile, pipeline, setStage }) {
           </div>
 
           <div className="mt-6 flex gap-1 overflow-x-auto border-b border-slate-200">
-            {[["brief", "AI brief"], ["email", "Draft enquiry"], ["checklist", "Submission checklist"]].map(([k, l]) => (
+            {[["brief", "AI analysis"], ["email", "AI enquiry email"], ["checklist", "Submission checklist"]].map(([k, l]) => (
               <button key={k} onClick={() => setTab(k)} className={`whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium ${tab === k ? "border-brand-500 text-slate-900" : "border-transparent text-slate-500"}`}>
                 {l}
               </button>
@@ -97,7 +126,37 @@ export default function Opportunity({ id, profile, pipeline, setStage }) {
           </div>
 
           {tab === "brief" && (
+            <div className="ai-panel mt-4 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="flex items-center gap-2 font-semibold text-white">
+                  <Sparkle className="h-5 w-5 text-ai-cyan" /> AI bid analysis
+                </p>
+                <AIBadge live={!!ai} />
+              </div>
+              {!analysis.text && !analysis.busy && (
+                <>
+                  <p className="mt-2 text-sm text-slate-400">
+                    The AI compares this opportunity with your profile and gives a bid / consider / skip verdict, risks, and the
+                    questions to ask the buyer.
+                  </p>
+                  <button disabled={!ai} onClick={() => analysis.run(ai, analysisPrompt(op, profile, s))} className="btn-ai mt-4">
+                    <Sparkle /> {ai ? "Analyse with AI" : "AI not connected in this view"}
+                  </button>
+                </>
+              )}
+              {analysis.busy && !analysis.text && <div className="mt-4"><AIThinking label="Reading the tender against your capabilities" /></div>}
+              {analysis.text && <div className="mt-4"><AIText text={analysis.text} streaming={analysis.busy} /></div>}
+              {analysis.busy && <button onClick={analysis.stop} className="mt-3 text-xs text-slate-400 hover:text-white">Stop</button>}
+              {!analysis.busy && analysis.text && (
+                <button onClick={() => analysis.run(ai, analysisPrompt(op, profile, s))} className="mt-3 text-xs font-medium text-ai-cyan hover:text-white">Run again</button>
+              )}
+              {analysis.note && <p className="mt-3 text-xs text-amber-300">{analysis.note}</p>}
+            </div>
+          )}
+
+          {tab === "brief" && (
             <div className="card mt-4 p-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Extracted from the tender documents</p>
               <p className="text-sm text-slate-700">{op.summary}</p>
               <dl className="mt-4 divide-y divide-slate-100 text-sm">
                 {Object.entries(op.extraction).map(([k, v]) => (
@@ -112,9 +171,23 @@ export default function Opportunity({ id, profile, pipeline, setStage }) {
 
           {tab === "email" && (
             <div className="card mt-4 p-5">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-slate-800">{email}</pre>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {ai && (
+                  <button disabled={aiEmail.busy} onClick={() => aiEmail.run(ai, emailPrompt(op, profile, s.matched))} className="btn-ai">
+                    <Sparkle /> {aiEmail.busy ? "Writing…" : aiEmail.text ? "Rewrite with AI" : "Write it with AI"}
+                  </button>
+                )}
+                <span className="text-xs text-slate-500">{aiEmail.text && !aiEmail.busy ? "Written by AI. Check before sending." : "Template draft"}</span>
+              </div>
+              {aiEmail.busy && !aiEmail.text && <div className="rounded-xl bg-navy-950 p-4"><AIThinking label="Drafting your enquiry" /></div>}
+              {aiEmail.busy && aiEmail.text ? (
+                <pre className="whitespace-pre-wrap rounded-xl bg-navy-950 p-4 font-sans text-sm text-slate-200">{aiEmail.text}<span className="ml-0.5 inline-block h-4 w-2 animate-blink bg-ai-cyan align-middle" /></pre>
+              ) : (
+                !aiEmail.busy && <pre className="whitespace-pre-wrap font-sans text-sm text-slate-800">{email}</pre>
+              )}
+              {aiEmail.note && <p className="mt-2 text-xs text-amber-700">{aiEmail.note}</p>}
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button onClick={copy} className="btn-dark">{copied ? "Copied ✓" : "Copy draft"}</button>
+                <button onClick={copy} disabled={aiEmail.busy} className="btn-dark">{copied === "manual" ? "Select the text to copy" : copied ? "Copied ✓" : "Copy draft"}</button>
                 <p className="text-xs text-slate-500">OpportunityIQ never sends this for you. Review it, then send from your own email.</p>
               </div>
             </div>
