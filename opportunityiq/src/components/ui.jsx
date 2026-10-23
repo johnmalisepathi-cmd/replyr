@@ -1,17 +1,45 @@
+import { useId } from "react";
 import { go } from "../lib/router.js";
 import { fitLabel } from "../lib/match.js";
 import { CONTACT_EMAIL } from "../lib/config.js";
 
-export function Logo({ dark = false, compact = false }) {
+const PIN = "M24 5c-7.7 0-13.5 6-13.5 13.4C10.5 28.2 24 41 24 41s13.5-12.8 13.5-22.6C37.5 11 31.7 5 24 5z";
+
+// The Gem Pin mark: a map pin cut into three facets, lit by an AI spark.
+// `small` drops the fine facet lines so it stays crisp at icon sizes.
+export function LogoMark({ className = "h-8 w-8", small = false }) {
+  const id = useId().replace(/:/g, "");
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+      <defs>
+        <clipPath id={`${id}l`}><polygon points="24,19 24,-10 -10,-10 -10,30 10,23" /></clipPath>
+        <clipPath id={`${id}r`}><polygon points="24,19 24,-10 58,-10 58,30 38,23" /></clipPath>
+        <clipPath id={`${id}p`}><path d={PIN} /></clipPath>
+      </defs>
+      <rect width="48" height="48" rx="12" fill="#122039" />
+      <path d={PIN} fill="#5b4fd6" />
+      <path d={PIN} fill="#a78bfa" clipPath={`url(#${id}l)`} />
+      <path d={PIN} fill="#22d3ee" clipPath={`url(#${id}r)`} />
+      {!small && (
+        <g clipPath={`url(#${id}p)`} stroke="#e0f2fe" strokeOpacity="0.7" strokeWidth="0.9">
+          <path d="M24 19 L24 4" />
+          <path d="M24 19 L9 23.4" />
+          <path d="M24 19 L39 23.4" />
+          <path d="M24 19 L24 41" />
+        </g>
+      )}
+      <path d="M24 13.5l1.6 3.9 3.9 1.6-3.9 1.6L24 24.5l-1.6-3.9-3.9-1.6 3.9-1.6z" fill="#e0f2fe" />
+      {!small && <circle cx="24" cy="19" r="1.3" fill="#34d399" />}
+    </svg>
+  );
+}
+
+export function Logo({ compact = false }) {
   return (
     <button onClick={() => go("/")} className="flex items-center gap-2" aria-label="OpportunityIQ home">
-      <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden="true">
-        <rect width="32" height="32" rx="8" fill={dark ? "#ffffff" : "#0b1426"} />
-        <circle cx="16" cy="16" r="7" fill="none" stroke="#10b981" strokeWidth="3" />
-        <circle cx="16" cy="16" r="2.5" fill="#10b981" />
-      </svg>
-      <span className={`${compact ? "hidden min-[400px]:inline" : ""} text-lg font-bold tracking-tight ${dark ? "text-white" : "text-navy-900"}`}>
-        Opportunity<span className="text-brand-500">IQ</span>
+      <LogoMark className="h-9 w-9" small />
+      <span className={`${compact ? "hidden min-[400px]:inline" : ""} text-lg font-extrabold tracking-tight text-white`}>
+        Opportunity<span className="text-ai-cyan">IQ</span>
       </span>
     </button>
   );
@@ -32,7 +60,7 @@ export function Nav({ route, hasProfile }) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-navy-950/90 backdrop-blur">
       <div className="section flex h-16 items-center justify-between gap-3">
-        <Logo dark compact={inApp} />
+        <Logo compact={inApp} />
         {inApp ? (
           <nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
             {link("/dashboard", "Dashboard")}
@@ -97,7 +125,7 @@ export function Footer() {
     <footer className="border-t border-white/10 bg-navy-950 text-slate-400">
       <div className="section grid gap-8 py-12 sm:grid-cols-3">
         <div>
-          <Logo dark />
+          <Logo />
           <p className="mt-3 max-w-xs text-sm">
             AI opportunity discovery and capability matching for businesses that make, build and supply.
           </p>
