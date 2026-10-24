@@ -1,0 +1,364 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>@font-face{font-family:Outfit;src:url(outfit-latin.woff2) format("woff2");font-weight:300 800;}html,body{margin:0;background:#0b1530}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script>
+const TL = __TL__;
+const GEO = __GEO__;
+const W = 1080, H = 1080;
+const C = { navy: "#0b1530", ink: "#f5f7fa", mute: "#9aa6c2", green: "#8bc34a", blue: "#3b82f6", blue2: "#60a5fa", amber: "#fbbf24", violet: "#a78bfa", skin: "#c98b5c", hair: "#2b1d16", hoodie: "#14b8a6" };
+const ctx = document.getElementById("c").getContext("2d");
+const land = new Path2D(GEO.land);
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+const back = (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, k) => a + (b - a) * k;
+const mix = (c1, c2, k) => {
+  const p = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+  const a = p(c1), b = p(c2);
+  return `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], k))).join(",")})`;
+};
+
+// Scene windows come from the voice timeline.
+const L = TL.lines;
+const first = (s) => L.find((l) => l.scene === s).start;
+const SC = {};
+["meet", "tabs", "tell", "watch", "alerts", "done", "logo"].forEach((s, i, arr) => {
+  SC[s] = [i === 0 ? 0 : first(s) - 0.35, i === arr.length - 1 ? TL.duration + 1 : first(arr[i + 1]) - 0.35];
+});
+const vis = (t, s, f = 0.45) => Math.min(prog(t, SC[s][0], SC[s][0] + f), 1 - prog(t, SC[s][1] - f, SC[s][1]));
+const at = (s, i) => L.filter((l) => l.scene === s)[i];
+
+function font(w, s) { ctx.font = `${w} ${s}px Outfit, sans-serif`; }
+function text(str, x, y, { w = 600, s = 40, c = C.ink, a = "center", alpha = 1, ls = 0 } = {}) {
+  ctx.save(); ctx.globalAlpha *= alpha; font(w, s); ctx.fillStyle = c; ctx.textAlign = a; ctx.letterSpacing = ls + "px"; ctx.fillText(str, x, y); ctx.restore();
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function wrap(str, maxW) {
+  const words = str.split(" "), lines = []; let cur = "";
+  for (const w of words) { const test = cur ? cur + " " + w : w; if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test; }
+  if (cur) lines.push(cur); return lines;
+}
+
+// Sky changes with the story: morning, day, sunset, night.
+function background(t) {
+  const k = prog(t, SC.alerts[0], SC.done[0] + 1.5);
+  const top = k < 0.6 ? mix("#10204a", "#1b3a7a", k / 0.6) : mix("#1b3a7a", "#3a1f4d", (k - 0.6) / 0.4);
+  const bot = k < 0.6 ? mix("#0b1530", "#123063", k / 0.6) : mix("#123063", "#0b1530", (k - 0.6) / 0.4);
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, top); g.addColorStop(1, bot);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const r = ctx.createRadialGradient(820, 180, 0, 820, 180, 620);
+  r.addColorStop(0, "rgba(96,165,250,0.18)"); r.addColorStop(1, "rgba(96,165,250,0)");
+  ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
+}
+
+// Sam: a simple, friendly character. mood: 1 happy, 0 neutral, -1 stressed.
+function sam(x, y, s, mood, t) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  const bob = Math.sin(t * 2.2) * 3;
+  ctx.translate(0, bob);
+  // body
+  ctx.fillStyle = C.hoodie; rr(-95, 70, 190, 190, 80); ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,0.12)"; rr(-30, 70, 60, 40, 20); ctx.fill();
+  // neck + head
+  ctx.fillStyle = C.skin; rr(-22, 40, 44, 40, 12); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -10, 78, 0, Math.PI * 2); ctx.fill();
+  // hair
+  ctx.fillStyle = C.hair; ctx.beginPath(); ctx.arc(0, -30, 80, Math.PI * 1.05, Math.PI * 1.95); ctx.quadraticCurveTo(60, -60, -10, -55); ctx.quadraticCurveTo(-60, -50, -78, -20); ctx.closePath(); ctx.fill();
+  // eyes (blink)
+  const blink = (t % 3.7) < 0.12 ? 0.15 : 1;
+  ctx.fillStyle = "#1a1210";
+  [-28, 28].forEach((ex) => { ctx.beginPath(); ctx.ellipse(ex, -8, 7, 9 * blink, 0, 0, Math.PI * 2); ctx.fill(); });
+  // brows
+  ctx.strokeStyle = C.hair; ctx.lineWidth = 6; ctx.lineCap = "round";
+  [-1, 1].forEach((side) => { ctx.beginPath(); ctx.moveTo(side * 18, -30 + (mood < 0 ? side * -4 : 0)); ctx.lineTo(side * 40, -32 + (mood < 0 ? side * 4 : 0)); ctx.stroke(); });
+  // mouth
+  ctx.strokeStyle = "#5a2a1a"; ctx.lineWidth = 6;
+  ctx.beginPath();
+  if (mood > 0) ctx.arc(0, 16, 22, 0.15 * Math.PI, 0.85 * Math.PI);
+  else if (mood < 0) ctx.arc(0, 40, 18, 1.2 * Math.PI, 1.8 * Math.PI);
+  else { ctx.moveTo(-14, 26); ctx.lineTo(14, 26); }
+  ctx.stroke();
+  // cheeks
+  if (mood > 0) { ctx.fillStyle = "rgba(255,120,120,0.35)"; [-48, 48].forEach((cx) => { ctx.beginPath(); ctx.arc(cx, 14, 11, 0, Math.PI * 2); ctx.fill(); }); }
+  // sweat drop when stressed
+  if (mood < 0) { ctx.fillStyle = "#93c5fd"; ctx.beginPath(); ctx.moveTo(66, -40); ctx.quadraticCurveTo(78, -20, 66, -14); ctx.quadraticCurveTo(54, -20, 66, -40); ctx.fill(); }
+  ctx.restore();
+}
+
+// Little icons for Sam's wishes.
+function icon(kind, x, y, s) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  if (kind === "bali") {
+    ctx.fillStyle = "#fde68a"; ctx.beginPath(); ctx.arc(18, -16, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#a16207"; ctx.beginPath(); ctx.moveTo(-6, 30); ctx.quadraticCurveTo(-2, 0, -10, -18); ctx.stroke();
+    ctx.strokeStyle = C.green; [[-40, -14], [-30, -34], [10, -30], [16, -10]].forEach(([lx, ly]) => { ctx.beginPath(); ctx.moveTo(-10, -18); ctx.quadraticCurveTo((lx - 10) / 2, ly - 12, lx, ly); ctx.stroke(); });
+    ctx.strokeStyle = C.blue2; ctx.beginPath(); ctx.moveTo(-34, 32); ctx.quadraticCurveTo(0, 24, 34, 32); ctx.stroke();
+  } else if (kind === "phone") {
+    ctx.strokeStyle = C.ink; rr(-20, -34, 40, 68, 8); ctx.stroke();
+    ctx.fillStyle = "#ef4444"; rr(-10, -6, 9, 14, 2); ctx.fill(); ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; rr(-12, -8, 24, 18, 3); ctx.stroke();
+  } else if (kind === "home") {
+    ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.moveTo(-34, 0); ctx.lineTo(0, -30); ctx.lineTo(34, 0); ctx.moveTo(-26, -6); ctx.lineTo(-26, 30); ctx.lineTo(26, 30); ctx.lineTo(26, -6); ctx.stroke();
+    ctx.fillStyle = C.amber; rr(-8, 8, 16, 22, 3); ctx.fill();
+  } else if (kind === "food") {
+    ctx.fillStyle = "#f97316"; ctx.beginPath(); ctx.arc(0, 4, 30, 0, Math.PI); ctx.fill();
+    ctx.strokeStyle = "rgba(245,247,250,0.8)"; ctx.lineWidth = 3; [-12, 0, 12].forEach((sx) => { ctx.beginPath(); ctx.moveTo(sx, -4); ctx.quadraticCurveTo(sx + 6, -14, sx, -24); ctx.stroke(); });
+    ctx.strokeStyle = "#fde68a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(18, -30); ctx.lineTo(4, 2); ctx.moveTo(26, -28); ctx.lineTo(10, 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function bubble(x, y, r, kind, k) {
+  if (k <= 0) return;
+  const s = back(k);
+  ctx.save(); ctx.globalAlpha *= clamp(k * 2);
+  ctx.fillStyle = "rgba(245,247,250,0.12)"; ctx.strokeStyle = "rgba(245,247,250,0.35)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, r * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  icon(kind, x, y, s * 1.25);
+  ctx.restore();
+}
+
+function phone(x, y, w, h) {
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 18;
+  rr(x, y, w, h, 46); ctx.fillStyle = "#050a16"; ctx.fill(); ctx.restore();
+  rr(x + 12, y + 12, w - 24, h - 24, 36); ctx.fillStyle = "#0f1a38"; ctx.fill();
+  rr(x + w / 2 - 50, y + 22, 100, 22, 11); ctx.fillStyle = "#050a16"; ctx.fill();
+}
+
+function wordmark(x, y, size, alpha = 1) {
+  ctx.save(); ctx.globalAlpha *= alpha; font(600, size); ctx.letterSpacing = `${-size * 0.03}px`;
+  const w1 = ctx.measureText("Opportunity").width; font(800, size); const w2 = ctx.measureText("IQ").width;
+  const x0 = x - (w1 + w2) / 2;
+  font(600, size); ctx.fillStyle = C.ink; ctx.textAlign = "left"; ctx.fillText("Opportunity", x0, y);
+  font(800, size); ctx.fillStyle = C.green; ctx.fillText("IQ", x0 + w1, y);
+  ctx.restore();
+  return { x0, w: w1 + w2 };
+}
+
+function swoosh(x0, w, y, k, lw) {
+  if (k <= 0) return;
+  const x1 = x0 + w - 4, x2 = x0 + 4;
+  const g = ctx.createLinearGradient(x1, 0, x2, 0); g.addColorStop(0, C.green); g.addColorStop(0.5, C.blue); g.addColorStop(1, "rgba(59,130,246,0)");
+  ctx.strokeStyle = g; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.beginPath();
+  for (let i = 0; i <= 60 * k; i++) {
+    const u = i / 60;
+    const bx = Math.pow(1 - u, 3) * x1 + 3 * Math.pow(1 - u, 2) * u * (x1 - w * 0.27) + 3 * (1 - u) * u * u * (x2 + w * 0.3) + u * u * u * x2;
+    const by = Math.pow(1 - u, 3) * (y - 14) + 3 * Math.pow(1 - u, 2) * u * (y + 12) + 3 * (1 - u) * u * u * (y + 11) + u * u * u * (y - 2);
+    i === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by);
+  }
+  ctx.stroke();
+}
+
+// ---------- scenes ----------
+function sceneMeet(t) {
+  const v = vis(t, "meet"); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const l1 = at("meet", 1), l2 = at("meet", 2);
+  text("Meet Sam", W / 2, 170, { w: 800, s: 76, alpha: ease(prog(t, 0.5, 1.2)) });
+  sam(W / 2, 640, 1.25, 0, t);
+  const span = l1.end - l1.start;
+  bubble(250, 380, 78, "bali", prog(t, l1.start + span * 0.22, l1.start + span * 0.22 + 0.45));
+  bubble(830, 380, 78, "phone", prog(t, l1.start + span * 0.5, l1.start + span * 0.5 + 0.45));
+  bubble(190, 650, 70, "home", prog(t, l1.start + span * 0.85, l1.start + span * 0.85 + 0.45));
+  bubble(890, 650, 70, "food", prog(t, l2.start + 1.0, l2.start + 1.45));
+  ctx.restore();
+}
+
+function sceneTabs(t) {
+  const v = vis(t, "tabs"); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const s = SC.tabs[0];
+  const tabs = ["Flights compare", "Bali villas", "Phone prices", "Phone reviews", "Home listings", "Interest rates", "Thai near me", "Reviews"];
+  tabs.forEach((name, i) => {
+    const k = ease(prog(t, s + 0.2 + i * 0.28, s + 0.6 + i * 0.28));
+    const ang = (i / tabs.length) * Math.PI * 2 + 0.3;
+    const x = W / 2 + Math.cos(ang) * 330 - 150, y = 560 + Math.sin(ang) * 300 - 50;
+    ctx.save(); ctx.globalAlpha *= k; ctx.translate(x + 150, y + 50); ctx.rotate(Math.sin(i * 1.7) * 0.08); ctx.scale(0.7 + 0.3 * k, 0.7 + 0.3 * k); ctx.translate(-150, -50);
+    rr(0, 0, 300, 100, 14); ctx.fillStyle = "#16244c"; ctx.fill(); ctx.strokeStyle = "rgba(148,163,184,0.35)"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = ["#ef4444", "#f59e0b", "#22c55e"][0]; [16, 32, 48].forEach((cx, j) => { ctx.fillStyle = ["#ef4444", "#f59e0b", "#22c55e"][j]; ctx.beginPath(); ctx.arc(cx, 18, 5, 0, Math.PI * 2); ctx.fill(); });
+    text(name, 16, 62, { w: 500, s: 24, c: C.mute, a: "left" });
+    ctx.restore();
+  });
+  sam(W / 2, 600, 0.95, -1, t * 2.5);
+  text("20 tabs. Still no answer.", W / 2, 160, { w: 700, s: 56, c: C.amber, alpha: ease(prog(t, s + 0.6, s + 1.2)) });
+  ctx.restore();
+}
+
+function sceneTell(t) {
+  const v = vis(t, "tell"); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const quote = at("tell", 1);
+  const px = 300, py = 130, pw = 480, ph = 800;
+  phone(px, py, pw, ph);
+  const m = wordmark(px + pw / 2, py + 112, 34);
+  swoosh(m.x0, m.w, py + 124, 1, 3);
+  // Sam's words typing into a bubble
+  const chars = Math.floor(prog(t, quote.start, quote.end - 0.2) * quote.caption.length);
+  const shown = quote.caption.slice(0, chars);
+  font(500, 26);
+  const lines = wrap(shown || " ", pw - 110);
+  const bh = 40 + lines.length * 36;
+  if (chars > 0) {
+    rr(px + 40, py + 170, pw - 80, bh, 22); ctx.fillStyle = "rgba(59,130,246,0.25)"; ctx.fill();
+    lines.forEach((ln, i) => text(ln, px + 62, py + 214 + i * 36, { w: 500, s: 26, a: "left" }));
+  }
+  // goal chips
+  const goals = [["bali", "Bali holiday · $4,000"], ["phone", "New phone · great camera"], ["home", "3-bed near the train"], ["food", "Spicy Thai · tonight"]];
+  goals.forEach(([k, label], i) => {
+    const qs = quote.start + (quote.end - quote.start) * (i + 0.55) / 4; const g = back(prog(t, qs, qs + 0.4));
+    if (g <= 0) return;
+    const y = py + 400 + i * 66;
+    ctx.save(); ctx.globalAlpha *= clamp(g * 2); ctx.translate(px + pw / 2, y); ctx.scale(g, g); ctx.translate(-(px + pw / 2), -y);
+    rr(px + 40, y - 28, pw - 80, 56, 18); ctx.fillStyle = "rgba(139,195,74,0.18)"; ctx.fill(); ctx.strokeStyle = "rgba(139,195,74,0.6)"; ctx.lineWidth = 2; ctx.stroke();
+    icon(k, px + 80, y, 0.45);
+    text(label, px + 112, y + 9, { w: 600, s: 24, a: "left" });
+    ctx.restore();
+  });
+  // mic
+  const mk = 1 + Math.sin(t * 9) * 0.08;
+  ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(px + pw / 2, py + ph - 80, 34 * mk, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.navy; ctx.lineWidth = 5; rr(px + pw / 2 - 9, py + ph - 100, 18, 30, 9); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px + pw / 2, py + ph - 62); ctx.lineTo(px + pw / 2, py + ph - 54); ctx.stroke();
+  sam(150, 700, 0.62, 1, t);
+  ctx.restore();
+}
+
+function sceneWatch(t) {
+  const v = vis(t, "watch"); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const s = SC.watch[0], e = SC.watch[1];
+  text("Watching for you, 24/7", W / 2, 170, { w: 700, s: 60, alpha: ease(prog(t, s + 0.2, s + 0.8)) });
+  ctx.save(); ctx.translate(40, 300);
+  ctx.fillStyle = "#16264f"; ctx.fill(land); ctx.strokeStyle = "rgba(96,165,250,0.35)"; ctx.lineWidth = 0.8; ctx.stroke(land);
+  const sx = -150 + prog(t, s + 0.3, e - 0.3) * 1300;
+  const g = ctx.createLinearGradient(sx - 160, 0, sx, 0); g.addColorStop(0, "rgba(96,165,250,0)"); g.addColorStop(1, "rgba(96,165,250,0.35)");
+  ctx.fillStyle = g; ctx.fillRect(sx - 160, -10, 160, 490);
+  ctx.fillStyle = "rgba(147,197,253,0.9)"; ctx.fillRect(sx - 1.5, -10, 3, 490);
+  GEO.pins.forEach(([x, y], i) => {
+    const lit = clamp((sx - x) / 40); if (lit <= 0) return;
+    const pulse = ((sx - x) / 300) % 1;
+    const col = i % 4 === 0 ? C.green : C.blue2;
+    ctx.globalAlpha = v * (1 - pulse) * 0.6; ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 6 + pulse * 22, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = v * lit; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.restore();
+  const tags = ["Flights", "Prices", "Listings", "Rates", "Restaurants"];
+  const line = at("watch", 0);
+  tags.forEach((tag, i) => {
+    const k = ease(prog(t, line.start + 2.6 + i * 0.55, line.start + 3.0 + i * 0.55));
+    const x = 140 + i * 200;
+    ctx.save(); ctx.globalAlpha *= k;
+    rr(x - 84, 860 - (1 - k) * 20, 168, 56, 28); ctx.fillStyle = "rgba(59,130,246,0.2)"; ctx.fill(); ctx.strokeStyle = "rgba(96,165,250,0.6)"; ctx.lineWidth = 2; ctx.stroke();
+    text(tag, x, 897 - (1 - k) * 20, { w: 600, s: 24 });
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+function sceneAlerts(t) {
+  const v = vis(t, "alerts"); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const lines = L.filter((l) => l.scene === "alerts");
+  const cur = Math.max(0, lines.filter((l) => t >= l.start - 0.1).length - 1);
+  const times = ["7:00", "11:00", "2:00", "5:30"];
+  const ampm = ["AM", "AM", "PM", "PM"];
+  // clock
+  text(times[cur], 300, 210, { w: 800, s: 110, c: C.ink });
+  text(ampm[cur], 300, 270, { w: 600, s: 34, c: C.mute, ls: 6 });
+  const px = 560, py = 90, pw = 440, ph = 820;
+  phone(px, py, pw, ph);
+  text("Today", px + 40, py + 110, { w: 700, s: 34, a: "left" });
+  const notes = [
+    ["bali", "Bali flights −22%", "Lowest in 60 days. Book this week."],
+    ["phone", "Pixel Pro 9: $200 off", "Perth CBD store, 2 km away."],
+    ["home", "New 3-bed listing", "Bayswater, 4 min to the train."],
+    ["food", "Spicy Thai, 4.7★", "Table for 2 at 7pm. Open till 10."],
+  ];
+  notes.forEach(([k, title, body], i) => {
+    const kk = back(prog(t, lines[i].start - 0.05, lines[i].start + 0.45));
+    if (kk <= 0) return;
+    const y = py + 150 + i * 150;
+    ctx.save(); ctx.globalAlpha *= clamp(kk * 2); ctx.translate((1 - clamp(kk)) * 120, 0);
+    rr(px + 30, y, pw - 60, 128, 22); ctx.fillStyle = i === cur ? "rgba(139,195,74,0.22)" : "rgba(245,247,250,0.08)"; ctx.fill();
+    if (i === cur) { ctx.strokeStyle = "rgba(139,195,74,0.7)"; ctx.lineWidth = 2; ctx.stroke(); }
+    ctx.save(); ctx.fillStyle = "rgba(245,247,250,0.1)"; ctx.beginPath(); ctx.arc(px + 86, y + 64, 34, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    icon(k, px + 86, y + 64, 0.55);
+    text(title, px + 136, y + 56, { w: 700, s: 27, a: "left" });
+    font(400, 21); const bl = wrap(body, pw - 190);
+    bl.forEach((b, j) => text(b, px + 136, y + 88 + j * 26, { w: 400, s: 21, c: C.mute, a: "left" }));
+    ctx.restore();
+  });
+  sam(300, 690, 0.95, 1, t);
+  ctx.restore();
+}
+
+function sceneDone(t) {
+  const v = vis(t, "done"); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const s = SC.done[0];
+  text("One day. Every wish moving.", W / 2, 160, { w: 700, s: 58, alpha: ease(prog(t, s + 0.2, s + 0.8)) });
+  sam(300, 620, 1.05, 1, t);
+  // table + dinner
+  ctx.fillStyle = "#3b2a4a"; rr(110, 830, 400, 26, 13); ctx.fill();
+  icon("food", 420, 800, 1.1);
+  const items = ["Bali flights booked", "New phone ordered", "Home inspection Saturday", "Thai dinner, table for 2"];
+  rr(590, 330, 420, 400, 26); ctx.fillStyle = "rgba(245,247,250,0.08)"; ctx.fill(); ctx.strokeStyle = "rgba(245,247,250,0.2)"; ctx.lineWidth = 2; ctx.stroke();
+  items.forEach((it, i) => {
+    const k = ease(prog(t, s + 0.6 + i * 0.5, s + 1.0 + i * 0.5));
+    const y = 405 + i * 85;
+    ctx.save(); ctx.globalAlpha *= 0.35 + 0.65 * k;
+    ctx.strokeStyle = C.green; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(640, y, 20, 0, Math.PI * 2); ctx.stroke();
+    if (k > 0) { ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(640, y, 20 * k, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = C.navy; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(630, y); ctx.lineTo(637, y + 7); ctx.lineTo(651, y - 8); ctx.stroke(); }
+    text(it, 676, y + 9, { w: 600, s: 26, a: "left" });
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+function sceneLogo(t) {
+  const v = vis(t, "logo"); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const s = SC.logo[0];
+  const p = ease(prog(t, s + 0.2, s + 1.0));
+  ctx.save(); ctx.globalAlpha *= p; ctx.translate(0, (1 - p) * 20);
+  const m = wordmark(W / 2, 470, 110);
+  ctx.restore();
+  swoosh(m.x0, m.w, 504, prog(t, s + 0.8, s + 1.8), 8);
+  text("Tell it what you want.", W / 2, 620, { w: 500, s: 40, alpha: ease(prog(t, s + 1.6, s + 2.2)) });
+  text("It watches the world for you.", W / 2, 672, { w: 500, s: 40, c: C.green, alpha: ease(prog(t, s + 2.2, s + 2.8)) });
+  const b = ease(prog(t, s + 2.8, s + 3.4));
+  ctx.save(); ctx.globalAlpha *= b; rr(W / 2 - 210, 750, 420, 90, 45); ctx.fillStyle = C.green; ctx.fill(); ctx.restore();
+  text("Get early access", W / 2, 808, { w: 700, s: 36, c: C.navy, alpha: b });
+  ctx.restore();
+}
+
+function captions(t) {
+  const line = L.find((l) => t >= l.start - 0.05 && t <= l.end + 0.25);
+  if (!line || line.scene === "logo") return;
+  const a = Math.min(prog(t, line.start - 0.05, line.start + 0.15), 1 - prog(t, line.end + 0.05, line.end + 0.25));
+  font(500, 32); const lines = wrap(line.caption, 880);
+  const h = 26 + lines.length * 42;
+  ctx.save(); ctx.globalAlpha = a;
+  rr(W / 2 - 470, H - 40 - h, 940, h, 18); ctx.fillStyle = "rgba(5,10,22,0.72)"; ctx.fill();
+  lines.forEach((ln, i) => text(ln, W / 2, H - 40 - h + 48 + i * 42, { w: 500, s: 32 }));
+  ctx.restore();
+}
+
+window.render = (t) => {
+  background(t);
+  sceneMeet(t); sceneTabs(t); sceneTell(t); sceneWatch(t); sceneAlerts(t); sceneDone(t); sceneLogo(t);
+  captions(t);
+};
+window.DURATION = TL.duration + 0.6;
+window.render(0);
+</script>
+</body>
+</html>
