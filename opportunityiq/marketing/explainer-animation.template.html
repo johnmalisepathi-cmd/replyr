@@ -1,0 +1,220 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>@font-face{font-family:Outfit;src:url(outfit-latin.woff2) format("woff2");font-weight:300 800;}</style>
+<style>html,body{margin:0;background:#0b1530}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script>
+const GEO = __GEO__;
+const W = 1080, H = 1080;
+const C = { bg: "#0b1530", bg2: "#122046", ink: "#f5f7fa", mute: "#8a97b5", green: "#8bc34a", green2: "#5b9b3a", blue: "#3b82f6", blue2: "#60a5fa", amber: "#fbbf24", grey: "#94a3b8" };
+const ctx = document.getElementById("c").getContext("2d");
+const land = new Path2D(GEO.land);
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+const easeIO = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+// Scene visibility with fade in/out
+const vis = (t, a, b, f = 0.45) => Math.min(prog(t, a, a + f), 1 - prog(t, b - f, b));
+
+function font(w, s) { ctx.font = `${w} ${s}px Outfit, sans-serif`; }
+function text(str, x, y, { w = 600, s = 40, c = C.ink, a = "center", ls = 0, alpha = 1 } = {}) {
+  ctx.save(); ctx.globalAlpha *= alpha; font(w, s); ctx.fillStyle = c; ctx.textAlign = a; ctx.textBaseline = "alphabetic";
+  if (ls) ctx.letterSpacing = ls + "px";
+  ctx.fillText(str, x, y); ctx.restore();
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+function background(t) {
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(780, 220 + Math.sin(t * 0.6) * 30, 0, 780, 220, 700);
+  g.addColorStop(0, "rgba(59,130,246,0.22)"); g.addColorStop(1, "rgba(59,130,246,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const g2 = ctx.createRadialGradient(200, 950, 0, 200, 950, 600);
+  g2.addColorStop(0, "rgba(139,195,74,0.13)"); g2.addColorStop(1, "rgba(139,195,74,0)");
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+  // subtle grid
+  ctx.strokeStyle = "rgba(148,163,184,0.06)"; ctx.lineWidth = 1;
+  for (let i = 0; i <= W; i += 60) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
+}
+
+// Scene 1 (0–4s): the problem
+function scene1(t) {
+  const v = vis(t, 0, 4.1); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  const tabs = ["Tenders portal", "Council notices", "Planning approvals", "Supplier portal", "Tender_RFT-2291.pdf"];
+  tabs.forEach((name, i) => {
+    const p = ease(prog(t, 0.3 + i * 0.28, 0.9 + i * 0.28));
+    const x = 190 + i * 34, y = 300 + i * 46 + (1 - p) * 60;
+    ctx.save(); ctx.globalAlpha *= p;
+    rr(x, y, 640, 300, 18); ctx.fillStyle = i === 4 ? "#1b2b57" : "#15234a"; ctx.fill();
+    ctx.strokeStyle = "rgba(148,163,184,0.25)"; ctx.stroke();
+    text(name, x + 28, y + 46, { w: 500, s: 24, c: C.mute, a: "left" });
+    for (let k = 0; k < 4; k++) { rr(x + 28, y + 80 + k * 38, 420 + ((k * 97 + i * 53) % 160), 12, 6); ctx.fillStyle = "rgba(245,247,250,0.08)"; ctx.fill(); }
+    ctx.restore();
+  });
+  const pt = ease(prog(t, 1.6, 2.4));
+  text("180 pages", 790, 760, { w: 800, s: 46, c: C.amber, alpha: pt });
+  text("Still searching tender", W / 2, 150, { w: 700, s: 64, alpha: ease(prog(t, 0.2, 0.8)) });
+  text("portals at 9pm?", W / 2, 228, { w: 700, s: 64, c: C.amber, alpha: ease(prog(t, 0.5, 1.1)) });
+  text("And still missing the jobs that fit you.", W / 2, 930, { w: 400, s: 34, c: C.mute, alpha: ease(prog(t, 2.2, 2.9)) });
+  ctx.restore();
+}
+
+// Scene 2 (4–8.5s): AI scans the world
+function scene2(t) {
+  const v = vis(t, 3.9, 8.6); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  text("OpportunityIQ's AI scans", W / 2, 150, { w: 700, s: 60, alpha: ease(prog(t, 4.1, 4.7)) });
+  text("sources worldwide, 24/7", W / 2, 224, { w: 700, s: 60, c: C.green, alpha: ease(prog(t, 4.3, 4.9)) });
+  const ox = 40, oy = 330;
+  ctx.save(); ctx.translate(ox, oy);
+  ctx.fillStyle = "#16264f"; ctx.fill(land); ctx.strokeStyle = "rgba(96,165,250,0.35)"; ctx.lineWidth = 0.8; ctx.stroke(land);
+  // sweep
+  const sx = -150 + prog(t, 4.6, 8.0) * 1300;
+  const sg = ctx.createLinearGradient(sx - 160, 0, sx, 0);
+  sg.addColorStop(0, "rgba(96,165,250,0)"); sg.addColorStop(1, "rgba(96,165,250,0.35)");
+  ctx.fillStyle = sg; ctx.fillRect(sx - 160, -10, 160, 490);
+  ctx.fillStyle = "rgba(147,197,253,0.9)"; ctx.fillRect(sx - 1.5, -10, 3, 490);
+  // pins light up when the sweep passes
+  GEO.pins.forEach(([x, y], i) => {
+    const lit = clamp((sx - x) / 40);
+    if (lit <= 0) return;
+    const age = (sx - x) / 300;
+    const pulse = (age % 1);
+    const col = i % 4 === 0 ? C.green : C.blue2;
+    ctx.globalAlpha = v * (1 - pulse) * 0.6; ctx.strokeStyle = col; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, 6 + pulse * 22, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = v * lit; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.restore();
+  ctx.globalAlpha = v;
+  const n = Math.floor(ease(prog(t, 4.6, 8.0)) * 1248);
+  rr(W / 2 - 230, 880, 460, 70, 35); ctx.fillStyle = "rgba(59,130,246,0.16)"; ctx.fill(); ctx.strokeStyle = "rgba(96,165,250,0.5)"; ctx.stroke();
+  ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(W / 2 - 190, 915, 7 + Math.sin(t * 8) * 2, 0, Math.PI * 2); ctx.fill();
+  text(`Scanning ${n.toLocaleString("en-AU")} sources`, W / 2 + 14, 926, { w: 500, s: 30 });
+  ctx.restore();
+}
+
+// Scene 3 (8.5–13s): reads the tender
+function scene3(t) {
+  const v = vis(t, 8.4, 13.1); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  text("It reads a 180-page tender", W / 2, 150, { w: 700, s: 58, alpha: ease(prog(t, 8.6, 9.2)) });
+  text("into a one-page brief", W / 2, 222, { w: 700, s: 58, c: C.green, alpha: ease(prog(t, 8.9, 9.5)) });
+  // document
+  const dx = 90, dy = 320, dw = 380, dh = 560;
+  rr(dx, dy, dw, dh, 16); ctx.fillStyle = "#f5f7fa"; ctx.fill();
+  for (let k = 0; k < 14; k++) {
+    const w = [300, 260, 280, 140, 0, 310, 230, 290, 200, 0, 300, 250, 270, 180][k];
+    if (!w) continue;
+    const hl = [2, 6, 11].includes(k) && prog(t, 9.4 + k * 0.12, 9.6 + k * 0.12) > 0;
+    rr(dx + 36, dy + 50 + k * 34, w, 12, 6); ctx.fillStyle = hl ? "rgba(139,195,74,0.8)" : "rgba(13,27,76,0.16)"; ctx.fill();
+  }
+  const sy = dy + 20 + ((t - 8.8) / 1.6 % 1) * (dh - 40);
+  if (t > 8.8 && t < 12.6) {
+    const g = ctx.createLinearGradient(0, sy - 50, 0, sy);
+    g.addColorStop(0, "rgba(59,130,246,0)"); g.addColorStop(1, "rgba(59,130,246,0.35)");
+    ctx.fillStyle = g; ctx.fillRect(dx, sy - 50, dw, 50);
+    ctx.fillStyle = C.blue; ctx.fillRect(dx, sy - 2, dw, 3);
+  }
+  text("p. 47 / 180", dx + dw - 30, dy + dh - 24, { w: 500, s: 20, c: "#5b6b8c", a: "right" });
+  // brief
+  const fields = [["Project", "Transport depot"], ["Your work", "Structural steel, platforms"], ["Standard", "AS/NZS 5131 CC2"], ["Deadline", "Verified · 19 days"], ["Risk", "Install not specified"]];
+  const bx = 520, by = 320;
+  rr(bx, by, 470, 560, 18); ctx.fillStyle = "#15234a"; ctx.fill(); ctx.strokeStyle = "rgba(96,165,250,0.4)"; ctx.stroke();
+  text("AI BRIEF", bx + 32, by + 52, { w: 700, s: 20, c: C.blue2, a: "left", ls: 4 });
+  fields.forEach(([k, val], i) => {
+    const p = ease(prog(t, 9.6 + i * 0.45, 10.1 + i * 0.45));
+    const y = by + 110 + i * 88;
+    ctx.save(); ctx.globalAlpha *= p; ctx.translate((1 - p) * 30, 0);
+    ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(bx + 44, y - 8, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.bg; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx + 38, y - 8); ctx.lineTo(bx + 43, y - 3); ctx.lineTo(bx + 51, y - 13); ctx.stroke();
+    text(k, bx + 72, y - 16, { w: 500, s: 20, c: C.mute, a: "left" });
+    text(val, bx + 72, y + 14, { w: 600, s: 28, a: "left" });
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+// Scene 4 (13–17s): matches with fit scores
+function scene4(t) {
+  const v = vis(t, 12.9, 17.1); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  text("Then shows only the work", W / 2, 150, { w: 700, s: 58, alpha: ease(prog(t, 13.1, 13.7)) });
+  text("that fits your business", W / 2, 222, { w: 700, s: 58, c: C.green, alpha: ease(prog(t, 13.3, 13.9)) });
+  const cards = [["Equipment support frames", "Kwinana · $220k", 91, C.green, "Cutting, folding and welding: all yours"], ["Access platforms", "Perth · $1.8M", 74, C.amber, "Check installation scope"], ["Car park steel (early signal)", "Joondalup · $6.5M", 38, C.grey, "Mostly outside your work"]];
+  cards.forEach(([title, meta, score, col, why], i) => {
+    const p = ease(prog(t, 13.6 + i * 0.4, 14.2 + i * 0.4));
+    const x = 110, y = 310 + i * 190, w = 860, h = 160;
+    ctx.save(); ctx.globalAlpha *= p; ctx.translate((1 - p) * 80, 0);
+    rr(x, y, w, h, 18); ctx.fillStyle = i === 0 ? "#17305e" : "#15234a"; ctx.fill();
+    ctx.strokeStyle = i === 0 ? "rgba(139,195,74,0.7)" : "rgba(148,163,184,0.25)"; ctx.lineWidth = i === 0 ? 2.5 : 1; ctx.stroke();
+    text(title, x + 32, y + 52, { w: 600, s: 32, a: "left" });
+    text(meta, x + 32, y + 88, { w: 400, s: 22, c: C.mute, a: "left" });
+    const fill = ease(prog(t, 14.0 + i * 0.4, 15.2 + i * 0.4));
+    rr(x + 32, y + 112, 430, 14, 7); ctx.fillStyle = "rgba(245,247,250,0.1)"; ctx.fill();
+    rr(x + 32, y + 112, Math.max(14, 430 * (score / 100) * fill), 14, 7); ctx.fillStyle = col; ctx.fill();
+    text(`${Math.round(score * fill)}%`, x + w - 32, y + 70, { w: 800, s: 52, c: col, a: "right" });
+    text(why, x + w - 32, y + 124, { w: 400, s: 19, c: C.mute, a: "right" });
+    ctx.restore();
+  });
+  text("Illustrative example", W - 40, H - 30, { w: 400, s: 18, c: "rgba(138,151,181,0.7)", a: "right" });
+  ctx.restore();
+}
+
+// Scene 5 (17–20s): logo + call to action
+function scene5(t) {
+  const v = prog(t, 16.9, 17.4); if (v <= 0) return;
+  ctx.save(); ctx.globalAlpha = v;
+  font(600, 112); ctx.letterSpacing = "-3.5px";
+  const w1 = ctx.measureText("Opportunity").width; font(800, 112);
+  const w2 = ctx.measureText("IQ").width;
+  const total = w1 + w2, x0 = (W - total) / 2, y0 = 520;
+  const p = ease(prog(t, 17.0, 17.9));
+  ctx.save(); ctx.globalAlpha *= p; ctx.translate(0, (1 - p) * 24);
+  font(600, 112); ctx.fillStyle = C.ink; ctx.textAlign = "left"; ctx.fillText("Opportunity", x0, y0);
+  font(800, 112); ctx.fillStyle = C.green; ctx.fillText("IQ", x0 + w1, y0);
+  ctx.restore();
+  ctx.letterSpacing = "0px";
+  // swoosh draws from under the Q back to the left
+  const s = easeIO(prog(t, 17.6, 18.6));
+  if (s > 0) {
+    const x1 = x0 + total - 6, x2 = x0 + 6, yb = y0 + 34;
+    const sw = ctx.createLinearGradient(x1, 0, x2, 0);
+    sw.addColorStop(0, C.green); sw.addColorStop(0.5, C.blue); sw.addColorStop(1, "rgba(59,130,246,0)");
+    ctx.strokeStyle = sw; ctx.lineWidth = 8; ctx.lineCap = "round";
+    ctx.beginPath();
+    const steps = 60;
+    for (let k = 0; k <= steps * s; k++) {
+      const u = k / steps;
+      // cubic from (x1, yb-14) via controls to (x2, yb)
+      const bx = Math.pow(1 - u, 3) * x1 + 3 * Math.pow(1 - u, 2) * u * (x1 - total * 0.27) + 3 * (1 - u) * u * u * (x2 + total * 0.3) + u * u * u * x2;
+      const by = Math.pow(1 - u, 3) * (yb - 16) + 3 * Math.pow(1 - u, 2) * u * (yb + 14) + 3 * (1 - u) * u * u * (yb + 13) + u * u * u * (yb - 2);
+      k === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by);
+    }
+    ctx.stroke();
+  }
+  text("INTELLIGENCE BEFORE OPPORTUNITY", W / 2, 640, { w: 400, s: 24, c: C.mute, ls: 9, alpha: ease(prog(t, 18.3, 18.9)) });
+  const b = ease(prog(t, 18.8, 19.4));
+  ctx.save(); ctx.globalAlpha *= b;
+  rr(W / 2 - 230, 740, 460, 92, 46); ctx.fillStyle = C.green; ctx.fill();
+  text("Join the free WA pilot", W / 2, 799, { w: 700, s: 34, c: "#0b1530" });
+  ctx.restore();
+  text("Find the work that fits you. First.", W / 2, 920, { w: 400, s: 30, c: C.ink, alpha: ease(prog(t, 19.1, 19.6)) });
+  ctx.restore();
+}
+
+window.render = (t) => {
+  background(t);
+  scene1(t); scene2(t); scene3(t); scene4(t); scene5(t);
+};
+window.render(0);
+</script>
+</body>
+</html>
