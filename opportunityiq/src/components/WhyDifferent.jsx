@@ -1,18 +1,17 @@
 import { useState } from "react";
 
-// "Why not just use ChatGPT?" — the comparison every visitor is thinking.
-const COLS = ["Free tender portals", "ChatGPT / Claude", "OpportunityIQ"];
+// "Why not just ask ChatGPT or Google?" — the comparison every visitor is thinking.
+const COLS = ["Google / ChatGPT", "Price-alert apps", "OpportunityIQ"];
 
 // Each cell: [level, text]. level: 2 = yes, 1 = partly, 0 = no.
 const ROWS = [
-  ["Finds new work without you asking", [1, "Keyword email alerts, per portal"], [0, "Only when you ask"], [2, "Checks every source daily"]],
-  ["All sources in one place", [0, "One portal at a time"], [1, "Patchy web search"], [2, "Tenders, pipelines, planning, supplier pages"]],
-  ["Knows what your business can do", [1, "Category codes"], [0, "Starts from scratch each chat"], [2, "Saved capability profile"]],
-  ["Finds hidden work inside big tenders", [0, "Title and summary only"], [1, "If you find and upload the PDF"], [2, "Reads every document for you"]],
-  ["Early signals before a tender exists", [0, "No"], [0, "Rarely"], [2, "Planning approvals and budgets flagged"]],
-  ["Deadlines you can trust", [2, "Official source"], [0, "Can invent details"], [2, "Verified, with a source link"]],
-  ["Explains why a job fits you", [0, "No"], [1, "If you write the right prompt"], [2, "Fit score with reasons and gaps"]],
-  ["Pipeline, reminders and follow-ups", [0, "No"], [0, "No"], [2, "Built in"]],
+  ["Remembers all your goals", [0, "Starts fresh each time"], [1, "One product at a time"], [2, "Every goal in one place"]],
+  ["Watches 24/7 without you asking", [0, "Only when you ask"], [1, "Price drops only"], [2, "Prices, listings, rates, openings"]],
+  ["Tells you the right moment", [0, "No"], [1, "When the price changes"], [2, "\"Book now\" or \"wait for the sale\""]],
+  ["Knows your budget and taste", [1, "If you type it again"], [0, "No"], [2, "Scores every find for you"]],
+  ["Travel, tech, homes, food and more", [2, "Broad"], [0, "Usually one category"], [2, "All your goals together"]],
+  ["Real places and prices", [1, "Can make things up"], [2, "Yes"], [2, "With a link to the source"]],
+  ["Plans it through to done", [0, "No"], [0, "No"], [2, "Saved → Booked → Done"]],
 ];
 
 function Mark({ level }) {
@@ -30,11 +29,10 @@ function Mark({ level }) {
 }
 
 export default function WhyDifferent() {
-  const [mobileCol, setMobileCol] = useState(1);
+  const [mobileCol, setMobileCol] = useState(0);
 
   return (
     <div className="space-y-10">
-      {/* Desktop: full comparison table */}
       <div className="glass hidden overflow-x-auto md:block">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
@@ -65,7 +63,6 @@ export default function WhyDifferent() {
         </table>
       </div>
 
-      {/* Phone: OpportunityIQ vs one chosen alternative */}
       <div className="md:hidden">
         <div className="flex gap-2" role="tablist" aria-label="Compare OpportunityIQ with">
           {[0, 1].map((i) => (
@@ -99,30 +96,29 @@ export default function WhyDifferent() {
         </ul>
       </div>
 
-      {/* Your week, with and without */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Your week without it</p>
           <ul className="mt-4 space-y-3 text-sm text-slate-400">
-            <li className="flex gap-3"><span className="text-slate-600">✕</span>Log in to 6+ portals and council sites after work</li>
-            <li className="flex gap-3"><span className="text-slate-600">✕</span>Open 180-page PDFs to find out it's not your kind of job</li>
-            <li className="flex gap-3"><span className="text-slate-600">✕</span>Paste documents into ChatGPT, one at a time, and double-check every date</li>
-            <li className="flex gap-3"><span className="text-slate-600">✕</span>Hear about the big project after competitors are already talking to the builder</li>
+            <li className="flex gap-3"><span className="text-slate-600">✕</span>20 tabs open comparing flights and villas</li>
+            <li className="flex gap-3"><span className="text-slate-600">✕</span>Missing the phone sale by one day</li>
+            <li className="flex gap-3"><span className="text-slate-600">✕</span>Reading about interest rates without knowing what it means for you</li>
+            <li className="flex gap-3"><span className="text-slate-600">✕</span>Hungry at 7pm, scrolling reviews</li>
           </ul>
-          <p className="mt-5 text-2xl font-extrabold text-slate-300">≈ 4 hours a week</p>
+          <p className="mt-5 text-2xl font-extrabold text-slate-300">≈ 5 hours a week</p>
         </div>
         <div className="ai-panel p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ai-cyan">Your week with OpportunityIQ</p>
           <ul className="mt-4 space-y-3 text-sm text-slate-200">
-            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>7am email: "3 new jobs fit you, here's why"</li>
-            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>Each job already read, scored and summarised on one page</li>
-            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>Enquiry email and submission checklist drafted for you</li>
-            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>Early warning on approved projects, months before the tender</li>
+            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>One morning briefing for all your goals</li>
+            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>"Bali flights down 22%. Book this week."</li>
+            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>"Rates decision in 12 days. Here's what it means for you."</li>
+            <li className="flex gap-3"><span className="text-ai-cyan">✓</span>"3 spicy Thai places open near you, 4.7★"</li>
           </ul>
           <p className="mt-5 text-2xl font-extrabold text-white">≈ 15 minutes a week</p>
         </div>
       </div>
-      <p className="text-center text-xs text-slate-500">Time figures are typical estimates for a small workshop owner. Your experience will vary.</p>
+      <p className="text-center text-xs text-slate-500">Time figures are typical estimates. Your experience will vary.</p>
     </div>
   );
 }

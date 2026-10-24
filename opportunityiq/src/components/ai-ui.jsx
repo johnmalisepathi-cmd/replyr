@@ -84,6 +84,55 @@ export function Sparkle({ className = "h-4 w-4" }) {
 
 // Line-art industry icons, drawn on a 48px grid.
 const ICONS = {
+  holiday: (
+    <>
+      <path d="M6 30l14-4 12-14c2-2 5-2 6 0s0 4-2 6L26 30l-4 14-4 1-2-12-8-1z" />
+    </>
+  ),
+  tech: (
+    <>
+      <rect x="15" y="5" width="18" height="38" rx="4" />
+      <path d="M21 37h6" />
+    </>
+  ),
+  home: (
+    <>
+      <path d="M6 22L24 7l18 15" />
+      <path d="M11 19v22h26V19M20 41V29h8v12" />
+    </>
+  ),
+  dining: (
+    <>
+      <path d="M15 5v14a5 5 0 0010 0V5M20 5v38" />
+      <path d="M34 43V5c-4 3-6 9-6 15h6" />
+    </>
+  ),
+  car: (
+    <>
+      <path d="M6 32v-7l5-10h26l5 10v7z" />
+      <circle cx="14" cy="34" r="4" />
+      <circle cx="34" cy="34" r="4" />
+      <path d="M11 24h26" />
+    </>
+  ),
+  events: (
+    <>
+      <path d="M6 14h36v6a4 4 0 000 8v6H6v-6a4 4 0 000-8z" />
+      <path d="M30 14v20" strokeDasharray="3 3" />
+    </>
+  ),
+  career: (
+    <>
+      <rect x="6" y="14" width="36" height="26" rx="3" />
+      <path d="M18 14v-4h12v4M6 26h36" />
+    </>
+  ),
+  money: (
+    <>
+      <circle cx="24" cy="24" r="17" />
+      <path d="M29 17h-7a4 4 0 000 8h4a4 4 0 010 8h-8M24 13v4M24 33v4" />
+    </>
+  ),
   steel: (
     <>
       <path d="M10 10h28M10 38h28M24 10v28" />

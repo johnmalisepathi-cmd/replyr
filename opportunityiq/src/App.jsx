@@ -5,18 +5,18 @@ import { Footer, Nav, SampleBanner } from "./components/ui.jsx";
 import Home from "./pages/Home.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
-import Opportunity from "./pages/Opportunity.jsx";
+import Goal from "./pages/Goal.jsx";
 import Pipeline from "./pages/Pipeline.jsx";
 import Privacy from "./pages/Privacy.jsx";
 
-const NEEDS_PROFILE = ["/dashboard", "/pipeline", "/opportunity"];
+const NEEDS_PROFILE = ["/dashboard", "/pipeline", "/goal"];
 
 export default function App() {
   const route = useRoute();
   const { profile, setProfile, pipeline, setStage } = useAppState();
   const blocked = !profile && NEEDS_PROFILE.some((p) => route.startsWith(p));
 
-  // App screens need a capability profile — send first-time visitors to set one up.
+  // App screens need goals — send first-time visitors to add some.
   useEffect(() => {
     if (blocked) go("/onboarding");
   }, [blocked]);
@@ -26,8 +26,8 @@ export default function App() {
   else if (route === "/onboarding") page = <Onboarding profile={profile} setProfile={setProfile} />;
   else if (route === "/dashboard") page = <Dashboard profile={profile} pipeline={pipeline} />;
   else if (route === "/pipeline") page = <Pipeline profile={profile} pipeline={pipeline} setStage={setStage} />;
-  else if (route.startsWith("/opportunity/"))
-    page = <Opportunity id={route.split("/")[2]} profile={profile} pipeline={pipeline} setStage={setStage} />;
+  else if (route.startsWith("/goal/"))
+    page = <Goal id={route.split("/")[2]} profile={profile} pipeline={pipeline} setStage={setStage} />;
   else if (route === "/privacy") page = <Privacy />;
   else page = <Home hasProfile={!!profile} setProfile={setProfile} />;
 

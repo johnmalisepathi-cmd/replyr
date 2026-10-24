@@ -1,18 +1,15 @@
 import { useEffect, useState } from "react";
+import { DEMO_GOALS } from "./goals.js";
 
-// Prototype persistence: the profile and pipeline are kept in this browser
-// only. A launched product would store them in a database behind a login.
-const KEY = "opportunityiq:v1";
+// Prototype persistence: the profile (with goals) and plan are kept in this
+// browser only. A launched product would store them behind a login.
+const KEY = "opportunityiq:personal:v1";
 
 export const DEFAULT_PROFILE = {
-  companyName: "",
-  industry: "steel",
+  name: "",
+  city: "Perth",
   region: "Western Australia",
-  maxDistanceKm: 300,
-  capabilities: ["Laser cutting", "CNC folding", "Welding"],
-  certifications: ["ISO 9001"],
-  contractBand: "s",
-  excluded: "",
+  goals: DEMO_GOALS,
 };
 
 function load() {

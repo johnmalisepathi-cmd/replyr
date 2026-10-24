@@ -1,19 +1,20 @@
-# OpportunityIQ — website + clickable prototype
+# OpportunityIQ — your personal AI assistant
 
-AI business opportunity discovery and capability matching. This folder holds
-the launch website and a clickable product demo for the **WA steel &
-engineering pilot**.
+Tell it what you want: a holiday in 6 months, a new phone, your first home,
+dinner tonight. OpportunityIQ turns your words into goals, watches prices,
+listings, interest rates and places 24/7, and tells you the right moment to act.
 
 ## What's real and what's sample
 
 | Part | Status |
 | --- | --- |
-| Marketing site (hero, how it works, industries, pricing, roadmap, FAQ) | Real, ready to publish |
-| Pilot sign-up form | Real once `VITE_WAITLIST_ENDPOINT` is set |
-| Fit scoring (`src/lib/match.js`) | Real rule-based logic, explained per match |
-| Opportunities, buyers, tender briefs | **Fictional sample data**, labelled in the UI |
-| AI features (describe-your-business, Ask OpportunityIQ, bid analysis, enquiry email) | Real AI in the claude.ai preview; on your own host they need `VITE_AI_ENDPOINT`, otherwise they fall back to the rule-based matcher |
-| Profile & pipeline storage | Browser only (localStorage) |
+| Website (home, goals, dashboard, goal pages, plan, map) | Real, ready to publish |
+| Early-access form | Real once `VITE_WAITLIST_ENDPOINT` is set |
+| AI (understanding goals, daily briefing, ask your assistant, goal advice) | Real AI in the claude.ai preview; on your own host it needs `VITE_AI_ENDPOINT`, otherwise a keyword-based assistant answers |
+| Fit scores (`src/lib/match.js`) | Real rule-based logic, explained per find |
+| Places, prices, listings, rates, grants (`src/lib/goals.js`) | **Fictional sample data**, labelled in the UI |
+| Voice input | Uses the browser's speech recognition where available |
+| Goals and plan storage | Browser only (localStorage) |
 
 ## Run it
 
@@ -24,8 +25,8 @@ npm run dev      # local
 npm run build    # static site in dist/
 ```
 
-Screens: `#/` home · `#/onboarding` · `#/dashboard` · `#/opportunity/:id` ·
-`#/pipeline` · `#/privacy`. Hash routing means `dist/` works on any static
+Screens: `#/` home · `#/onboarding` (my goals) · `#/dashboard` · `#/goal/:id` ·
+`#/pipeline` (my plan) · `#/privacy`. Hash routing means `dist/` works on any static
 host (GitHub Pages, Netlify, Vercel, Cloudflare Pages) with no rewrites.
 
 ## Launch checklist
@@ -43,11 +44,12 @@ host (GitHub Pages, Netlify, Vercel, Cloudflare Pages) with no rewrites.
    terms of use before taking payments.
 6. **Analytics.** Add a privacy-friendly tracker (Plausible, Umami) to measure
    visits → demo → sign-ups.
-7. **Recruit.** Message 20–30 WA fabricators directly; aim for 10 pilot spots.
+7. **Recruit.** Share the explainer video and invite 50 friends, family and followers to early access.
 
-## Next build steps (after the pilot proves demand)
+## Next build steps (after early access proves demand)
 
-- Real data connectors for public tender portals (check each site's terms)
-- Database + login (e.g. Supabase) for profiles and pipelines
-- LLM tender summaries with "Not specified" guardrails + human review
-- Email alerts, then Stripe billing for Starter ($49) / Pro ($99)
+- Live data: travel (flights, hotels), retail prices, property listings,
+  restaurant places and reviews, and official interest-rate sources
+- Accounts and a database (e.g. Supabase) so goals sync across devices
+- Background monitoring with daily briefings by email and phone alerts
+- Stripe billing for Plus ($9.99) and Family ($19.99)

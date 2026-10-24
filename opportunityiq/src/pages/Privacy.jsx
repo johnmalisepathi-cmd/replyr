@@ -4,32 +4,31 @@ export default function Privacy() {
   return (
     <main className="section max-w-3xl py-12">
       <button onClick={() => go("/")} className="text-sm text-slate-500 hover:text-slate-900">← Home</button>
-      <h1 className="mt-4 text-3xl font-bold tracking-tight">Privacy & data sources</h1>
+      <h1 className="mt-4 text-3xl font-bold tracking-tight">Privacy & how it works</h1>
       <div className="mt-6 space-y-6 text-slate-700">
         <section>
           <h2 className="text-lg font-semibold text-slate-900">What we collect on this website</h2>
           <p className="mt-2">
-            If you submit the pilot form, we receive your name, work email, company, industry, region and any note you add.
-            We use it only to contact you about the pilot. We don't sell it or share it for marketing.
+            If you join early access, we receive your first name, email, where you live, the first goal you'd like watched and any
+            note you add. We use it only to contact you about early access. We don't sell it or share it for marketing.
           </p>
           <p className="mt-2">
-            The interactive demo stores your sample profile and pipeline in your own browser (local storage). It is not sent to us.
+            The demo keeps your goals and plan in your own browser (local storage). They are not sent to us. When you use the AI
+            features, your words and goals are sent to the AI service to produce the answer.
           </p>
         </section>
         <section>
-          <h2 className="text-lg font-semibold text-slate-900">Where opportunity data comes from</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Where suggestions come from</h2>
           <p className="mt-2">
-            OpportunityIQ uses publicly published information, such as government tender portals, procurement notices, project
-            pipelines and planning announcements, and links back to the original source. We only use private or paywalled
-            sources where we have permission or a licence, and we respect each site's terms of use.
+            At launch, OpportunityIQ will use licensed travel, retail, property and restaurant data, plus official sources for things
+            like interest rates and grants, and will link back to each source. The demo uses fictional sample data.
           </p>
         </section>
         <section>
           <h2 className="text-lg font-semibold text-slate-900">AI limitations</h2>
           <p className="mt-2">
-            AI summaries and fit scores help you decide where to look. They aren't professional advice. Always check the
-            original tender documents before bidding. We never contact buyers or submit bids on your behalf, and we can't
-            guarantee you will win work.
+            AI suggestions help you decide where to look. They aren't professional, financial or legal advice. Check prices, terms
+            and availability with the provider before you book or buy. OpportunityIQ never books, buys or pays on your behalf.
           </p>
         </section>
         <section>

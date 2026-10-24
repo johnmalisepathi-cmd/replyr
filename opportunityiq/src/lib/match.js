@@ -1,100 +1,98 @@
-import { CONTRACT_BANDS } from "./data.js";
+import { distanceKm } from "./geo.js";
 
-// Transparent, rule-based fit score. Every point is explained, so a customer
-// can see WHY something matches. Weights sum to 100.
-const WEIGHTS = { capability: 50, region: 15, size: 15, certification: 10, timing: 10 };
+// Transparent fit score for a find against one goal. Every point is
+// explained, so people can see WHY the assistant suggested it.
+// Weights: budget 40, preferences 30, place 20, quality 10.
 
 export function daysUntil(date) {
   if (!date) return null;
   return Math.ceil((new Date(date) - new Date()) / 86_400_000);
 }
 
-export function scoreOpportunity(op, profile) {
+export function formatMoney(n) {
+  if (n === null || n === undefined) return "";
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`;
+  if (n >= 10_000) return `$${Math.round(n / 1_000)}k`;
+  return `$${Math.round(n).toLocaleString("en-AU")}`;
+}
+
+export const priceOf = (find) => find.priceLabel || formatMoney(find.value);
+
+export function scoreFind(find, goal, home) {
   const reasons = [];
   const gaps = [];
   let score = 0;
 
-  // Capability overlap — the heart of the match.
-  const have = new Set(profile.capabilities);
-  const matched = op.needs.filter((n) => have.has(n));
-  const missing = op.needs.filter((n) => !have.has(n));
-  const capShare = op.needs.length ? matched.length / op.needs.length : 0;
-  score += WEIGHTS.capability * capShare;
-  if (matched.length) reasons.push(`You offer ${matched.join(", ")}`);
-  if (missing.length) gaps.push(`Not in your profile: ${missing.join(", ")}`);
+  // Budget: only for finds that have a price comparable to the goal's budget.
+  const priced = find.kind === "option" && typeof find.value === "number" && goal.budget && !find.priceLabel?.includes("Save") && !find.priceLabel?.includes("%");
+  if (priced) {
+    if (find.value <= goal.budget) {
+      score += 40;
+      reasons.push(`Within your budget (${priceOf(find)})`);
+    } else if (find.value <= goal.budget * 1.1) {
+      score += 20;
+      gaps.push(`A little over budget (${priceOf(find)})`);
+    } else gaps.push(`Over your budget (${priceOf(find)})`);
+  } else score += find.kind === "watch" ? 30 : 34;
 
-  // Travel distance from the business (op.distanceKm is measured from its
-  // home city), with partial credit for its own region beyond that range.
-  const range = profile.maxDistanceKm || 300;
-  if (op.distanceKm <= range) {
-    score += WEIGHTS.region;
-    reasons.push(`Within your ${range} km range (${op.distanceKm.toLocaleString()} km away)`);
-  } else if (op.region === profile.region) {
-    score += WEIGHTS.region * 0.4;
-    gaps.push(`${op.distanceKm.toLocaleString()} km away — beyond your ${range} km range`);
-  } else {
-    gaps.push(`Outside your service area: ${op.location}, ${op.distanceKm.toLocaleString()} km away`);
-  }
+  // Preferences: words from the wish that the find matches.
+  const prefs = (goal.prefs || []).map((p) => p.toLowerCase());
+  const hay = `${find.title} ${find.tags.join(" ")} ${find.tag}`.toLowerCase();
+  const hits = prefs.filter((p) => hay.includes(p));
+  if (prefs.length) {
+    score += 30 * (hits.length / prefs.length);
+    if (hits.length) reasons.push(`Has what you asked for: ${hits.join(", ")}`);
+    const missing = prefs.filter((p) => !hits.includes(p));
+    if (missing.length && find.kind === "option") gaps.push(`Doesn't mention: ${missing.join(", ")}`);
+  } else score += 20;
 
-  // Contract size vs. preferred band (one band either side earns partial credit).
-  const bandIdx = CONTRACT_BANDS.findIndex((b) => b.id === profile.contractBand);
-  const opIdx = CONTRACT_BANDS.findIndex((b) => op.value >= b.min && op.value < b.max);
-  const diff = Math.abs(bandIdx - opIdx);
-  score += diff === 0 ? WEIGHTS.size : diff === 1 ? WEIGHTS.size * 0.5 : 0;
-  if (diff === 0) reasons.push("Contract size matches your preferred range");
-  else if (diff > 1) gaps.push(`Estimated value (${formatMoney(op.value)}) is well outside your preferred range`);
+  // Place: near you for local goals, in your chosen destination for travel.
+  const where = (goal.location || "").toLowerCase();
+  if (goal.type === "dining" && home) {
+    const km = distanceKm(home, find);
+    score += km <= 2 ? 20 : km <= 5 ? 14 : 6;
+    reasons.push(`${km < 1 ? "Under 1" : km.toFixed(1)} km away`);
+  } else if (where && hay.concat(" ", find.location.toLowerCase(), " ", find.region.toLowerCase()).includes(where.split(" ")[0])) {
+    score += 20;
+    reasons.push(`In ${goal.location}`);
+  } else if (goal.type === "holiday" && where) {
+    score += 10;
+    gaps.push(`An alternative to ${goal.location}`);
+  } else score += 14;
 
-  // Certifications.
-  const certs = new Set(profile.certifications);
-  const certMissing = op.certifications.filter((c) => !certs.has(c));
-  const certShare = op.certifications.length ? 1 - certMissing.length / op.certifications.length : 1;
-  score += WEIGHTS.certification * certShare;
-  if (certMissing.length) gaps.push(`Check certification: ${certMissing.join(", ")}`);
-  else if (op.certifications.length) reasons.push("You hold the listed certifications");
+  // Quality.
+  if (find.rating >= 4.6) {
+    score += 10;
+    reasons.push(`Rated ${find.rating} ★`);
+  } else if (find.rating) score += 6;
+  else score += 6;
 
-  // Time to respond. Early signals have no deadline, so they score neutral.
-  const days = daysUntil(op.deadline);
-  if (days === null) score += WEIGHTS.timing * 0.5;
-  else if (days >= 10) score += WEIGHTS.timing;
-  else if (days >= 5) {
-    score += WEIGHTS.timing * 0.5;
-    gaps.push(`Only ${days} days to respond`);
-  } else gaps.push(`Closes in ${days} days — tight turnaround`);
-
-  // Wrong industry entirely → cap the score.
-  if (op.industry !== profile.industry && capShare === 0) score = Math.min(score, 15);
-
-  return { score: Math.round(score), matched, missing, reasons, gaps };
+  return { score: Math.round(Math.min(100, score)), reasons, gaps };
 }
 
 export function fitLabel(score) {
-  if (score >= 75) return { text: "High fit", tone: "bg-brand-100 text-brand-700" };
-  if (score >= 50) return { text: "Possible fit", tone: "bg-amber-100 text-amber-800" };
-  return { text: "Low fit", tone: "bg-slate-100 text-slate-600" };
+  if (score >= 75) return { text: "Great match", tone: "bg-brand-100 text-brand-700" };
+  if (score >= 50) return { text: "Good option", tone: "bg-amber-100 text-amber-800" };
+  return { text: "Worth a look", tone: "bg-slate-100 text-slate-600" };
 }
 
-export function formatMoney(n) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`;
-  if (n >= 1_000) return `$${Math.round(n / 1_000)}k`;
-  return `$${n}`;
+/** Monthly repayment for a loan (principal and interest). */
+export function monthlyRepayment(principal, annualRatePct, years = 30) {
+  const r = annualRatePct / 100 / 12;
+  const n = years * 12;
+  if (!r) return principal / n;
+  return (principal * r) / (1 - Math.pow(1 + r, -n));
 }
 
-// Plain-language search: "6-20 mm plate cutting within 250 km of Perth".
-// Pulls out a distance limit and keywords; matches against title, needs and summary.
-export function searchOpportunities(list, query) {
+// Keyword search for when live AI isn't connected.
+export function searchFinds(list, query) {
   const q = query.trim().toLowerCase();
   if (!q) return list;
-  const km = q.match(/(\d[\d,]*)\s*km/);
-  const maxKm = km ? Number(km[1].replace(/,/g, "")) : null;
-  const stop = new Set(["show", "me", "projects", "that", "need", "within", "of", "the", "and", "for", "in", "near", "km", "mm", "to", "a", "with"]);
-  const words = q
-    .replace(/(\d[\d,]*)\s*km/g, " ")
-    .split(/[^a-z0-9]+/)
-    .filter((w) => w.length > 2 && !stop.has(w));
-  return list.filter((op) => {
-    if (maxKm !== null && op.distanceKm > maxKm) return false;
+  const stop = new Set(["show", "me", "the", "and", "for", "with", "near", "a", "an", "to", "of", "in", "my", "what", "best", "find", "under", "about"]);
+  const words = q.split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !stop.has(w));
+  return list.filter((f) => {
     if (!words.length) return true;
-    const hay = `${op.title} ${op.needs.join(" ")} ${op.summary} ${op.location} ${op.extraction.Materials}`.toLowerCase();
+    const hay = `${f.title} ${f.tags.join(" ")} ${f.location} ${f.tag}`.toLowerCase();
     return words.some((w) => hay.includes(w));
   });
 }

@@ -1,6 +1,7 @@
-import { OPPORTUNITIES } from "./data.js";
+import { FINDS } from "./goals.js";
+import { scoreFind } from "./match.js";
 
-// Where a business "is" for distance purposes: the main city of its region.
+// Where a person "is" for distance purposes: the main city of their region.
 export const REGION_HOME = {
   "Western Australia": { lat: -31.95, lng: 115.86, city: "Perth" },
   "New South Wales": { lat: -33.87, lng: 151.21, city: "Sydney" },
@@ -36,10 +37,17 @@ export function distanceKm(a, b) {
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
-/** Every opportunity with its distance measured from this business. */
-export function opportunitiesFor(profile) {
+/** Every find, matched to the person's goals and scored, best first. */
+export function findsFor(profile) {
   const home = homeOf(profile);
-  return OPPORTUNITIES.map((op) => ({ ...op, distanceKm: Math.max(1, Math.round(distanceKm(home, op) / 5) * 5) }));
+  const out = [];
+  for (const goal of profile?.goals || []) {
+    for (const find of FINDS.filter((x) => x.type === goal.type)) {
+      const s = scoreFind(find, goal, home);
+      out.push({ op: { ...find, distanceKm: Math.max(1, Math.round(distanceKm(home, find))) }, goal, ...s });
+    }
+  }
+  return out.sort((a, b) => b.score - a.score);
 }
 
-export const COUNTRY_COUNT = new Set(OPPORTUNITIES.map((o) => countryOf(o.region))).size;
+export const COUNTRY_COUNT = new Set(FINDS.map((o) => countryOf(o.region))).size;

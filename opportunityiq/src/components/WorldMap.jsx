@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { geoCircle, geoNaturalEarth1, geoPath } from "d3-geo";
 import { BORDERS, LAND, MAP_H, MAP_W, PROJECTION } from "../lib/worldMap.js";
-import { formatMoney } from "../lib/match.js";
+import { priceOf } from "../lib/match.js";
 import { countryOf } from "../lib/geo.js";
 
 const projection = geoNaturalEarth1().scale(PROJECTION.scale).translate(PROJECTION.translate);
@@ -47,7 +47,7 @@ function viewBoxFor(nameOrBounds) {
 }
 
 const fitColor = (score) => (score >= 75 ? "#34d399" : score >= 50 ? "#fbbf24" : "#94a3b8");
-const kindColor = (op) => (op.kind === "signal" ? "#a78bfa" : "#22d3ee");
+const kindColor = (op) => (op.kind === "watch" ? "#a78bfa" : "#22d3ee");
 
 // Groups pins that would overlap at the current zoom.
 function cluster(points, radius) {
@@ -64,7 +64,7 @@ function cluster(points, radius) {
 }
 
 // colorBy "fit": pins coloured by the viewer's fit score (dashboard).
-// colorBy "kind": tenders vs early signals, sized by value (home page showcase).
+// colorBy "kind": available options vs things being watched (home page showcase).
 export default function WorldMap({ items, home, radiusKm, onOpen, initialView = "World", title = "Opportunity map", colorBy = "fit" }) {
   const [view, setView] = useState(initialView);
   const [vb, setVb] = useState(() => viewBoxFor(initialView));
@@ -137,7 +137,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
         <div className="min-w-0">
           <p className="font-semibold text-white">{title}</p>
           <p className="text-xs text-slate-400">
-            {items.length} opportunities · {countries} {countries === 1 ? "country" : "countries"} · {inView} in view · sample data
+            {items.length} finds · {countries} {countries === 1 ? "country" : "countries"} · {inView} in view · sample data
           </p>
         </div>
         <div className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1" role="tablist" aria-label="Map region">
@@ -156,7 +156,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
       </div>
 
       <div className="relative">
-        <svg viewBox={vb.join(" ")} className="block h-auto w-full" style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }} role="img" aria-label={`${title}: ${items.length} opportunities across ${countries} countries`}>
+        <svg viewBox={vb.join(" ")} className="block h-auto w-full" style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }} role="img" aria-label={`${title}: ${items.length} finds across ${countries} countries`}>
           <defs>
             <radialGradient id="pin-glow">
               <stop offset="0" stopColor="#22d3ee" stopOpacity="0.55" />
@@ -174,11 +174,11 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
 
           {clusters.map((c, i) => {
             const best = Math.max(...c.items.map((p) => p.score));
-            const color = colorBy === "kind" ? (c.items.every((p) => p.op.kind === "signal") ? "#a78bfa" : "#22d3ee") : fitColor(best);
-            const valueBoost = colorBy === "kind" && c.items.length === 1 ? Math.min(1.8, 0.8 + Math.log10(c.items[0].op.value / 100_000) * 0.45) : 1;
+            const color = colorBy === "kind" ? (c.items.every((p) => p.op.kind === "watch") ? "#a78bfa" : "#22d3ee") : fitColor(best);
+            const valueBoost = colorBy === "kind" && c.items.length === 1 ? Math.min(1.8, 0.8 + Math.log10(Math.max(1, c.items[0].op.value || 100) / 100) * 0.45) : 1;
             const isSel = selected && c.items.some((p) => p.op.id === selected.op.id);
             const r = (c.items.length > 1 ? 5.5 : 3.6 * Math.max(0.8, valueBoost)) * unit;
-            const signal = c.items.length === 1 && c.items[0].op.kind === "signal";
+            const signal = c.items.length === 1 && c.items[0].op.kind === "watch";
             return (
               <g
                 key={i}
@@ -187,7 +187,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && choose(c)}
                 tabIndex={0}
                 role="button"
-                aria-label={c.items.length > 1 ? `${c.items.length} opportunities, tap to zoom` : `${c.items[0].op.title}, ${c.items[0].score}% fit`}
+                aria-label={c.items.length > 1 ? `${c.items.length} finds, tap to zoom` : `${c.items[0].op.title}, ${c.items[0].score}% fit`}
                 className="cursor-pointer outline-none"
               >
                 <circle r={r * 3.2} fill="url(#pin-glow)" opacity={isSel ? 1 : 0.6} />
@@ -220,26 +220,26 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 px-4 py-2.5 text-[11px] text-slate-400">
         {colorBy === "kind" ? (
           <>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-ai-cyan" /> Formal tender</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border border-dashed border-ai-violet" /> Early signal</span>
-            <span>Bigger pin = bigger contract</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-ai-cyan" /> Available now</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border border-dashed border-ai-violet" /> Watching for you</span>
+            
           </>
         ) : (
           <>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-brand-400" /> High fit</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> Possible</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Low</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border border-dashed border-ai-violet" /> Early signal</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-brand-400" /> Great match</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> Good option</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Worth a look</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border border-dashed border-ai-violet" /> Watching for you</span>
           </>
         )}
-        {home && <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rotate-45 bg-ai-cyan" /> You, {radiusKm} km range</span>}
+        {home && <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rotate-45 bg-ai-cyan" /> You{radiusKm ? `, ${radiusKm} km range` : ""}</span>}
         <span className="ml-auto">Tap a pin or a number</span>
       </div>
 
       {group && !selected && (
         <div className="border-t border-white/10 bg-white/[0.03]">
           <div className="flex items-center justify-between px-4 pt-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ai-violet">{group.length} opportunities here</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-ai-violet">{group.length} finds here</p>
             <button onClick={() => setGroup(null)} className="text-xs text-slate-400 hover:text-white" aria-label="Close list">✕</button>
           </div>
           <ul className="max-h-64 divide-y divide-white/5 overflow-y-auto px-2 pb-2">
@@ -248,10 +248,10 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
                 <button onClick={() => setSelected(p)} className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left hover:bg-white/5">
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-white">{p.op.title}</span>
-                    <span className="block text-xs text-slate-400">{p.op.location} · est. {formatMoney(p.op.value)}</span>
+                    <span className="block text-xs text-slate-400">{p.op.location} · {priceOf(p.op)}</span>
                   </span>
                   <span className="shrink-0 text-sm font-bold" style={{ color: colorBy === "fit" ? fitColor(p.score) : kindColor(p.op) }}>
-                    {colorBy === "fit" ? `${p.score}%` : p.op.kind === "signal" ? "Signal" : "Tender"}
+                    {colorBy === "fit" ? `${p.score}%` : p.op.kind === "watch" ? "Watching" : "Option"}
                   </span>
                 </button>
               </li>
@@ -265,14 +265,14 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
           <div className="min-w-0">
             <p className="truncate font-semibold text-white">{selected.op.title}</p>
             <p className="text-xs text-slate-400">
-              {selected.op.location} · {countryOf(selected.op.region)} · est. {formatMoney(selected.op.value)} · {colorBy === "fit" ? `${selected.op.distanceKm.toLocaleString()} km from you` : selected.op.deadline ? "taking submissions" : "no tender yet"}
+              {selected.op.location} · {countryOf(selected.op.region)} · {priceOf(selected.op)} · {colorBy === "fit" ? `${selected.op.distanceKm.toLocaleString()} km from you` : selected.op.tag}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
             {colorBy === "fit" ? (
               <span className="text-lg font-extrabold" style={{ color: fitColor(selected.score) }}>{selected.score}%</span>
             ) : (
-              <span className="text-xs font-semibold" style={{ color: kindColor(selected.op) }}>{selected.op.kind === "signal" ? "Early signal" : "Formal tender"}</span>
+              <span className="text-xs font-semibold" style={{ color: kindColor(selected.op) }}>{selected.op.kind === "watch" ? "Watching for you" : "Available now"}</span>
             )}
             <button onClick={() => onOpen(selected.op)} className="btn-primary px-4 py-2">Open →</button>
             <button onClick={() => setSelected(null)} className="text-xs text-slate-400 hover:text-white" aria-label="Close">✕</button>

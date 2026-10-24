@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { CONTRACT_BANDS, INDUSTRIES, REGIONS } from "./data.js";
-import { DEFAULT_PROFILE } from "./store.js";
-import { formatMoney } from "./match.js";
+import { GOAL_TYPES } from "./goals.js";
+import { REGIONS } from "./places.js";
+import { priceOf } from "./match.js";
 import { AI_ENDPOINT } from "./config.js";
 
 // One AI interface for the whole app:
@@ -9,7 +9,7 @@ import { AI_ENDPOINT } from "./config.js";
 //   ai.json(prompt)                     -> parsed JSON value
 // Provider order: the Claude viewer (claude.ai preview), then your own
 // AI_ENDPOINT (a server that holds the API key), else null and the app
-// falls back to its rule-based matching.
+// falls back to its rule-based assistant.
 
 let aiPromise;
 
@@ -85,7 +85,7 @@ export function aiErrorText(e) {
     case "not_granted":
     case "sampling_disabled":
     case "capability_disabled":
-      return "AI is switched off for this view, so we used the quick matcher instead.";
+      return "AI is switched off for this view, so the quick assistant answered instead.";
     case "rate_limited":
       return "The AI is busy. Give it a minute and try again.";
     case "refused":
@@ -95,179 +95,183 @@ export function aiErrorText(e) {
   }
 }
 
-// ---------- Profile from a plain-English description ----------
+// ---------- Goals from plain speech ----------
 
-const CITY_REGION = {
-  perth: "Western Australia", fremantle: "Western Australia", kwinana: "Western Australia", bunbury: "Western Australia",
-  pilbara: "Western Australia", joondalup: "Western Australia", mandurah: "Western Australia", welshpool: "Western Australia",
-  sydney: "New South Wales", newcastle: "New South Wales", melbourne: "Victoria", geelong: "Victoria",
-  brisbane: "Queensland", "gold coast": "Queensland", townsville: "Queensland", adelaide: "South Australia",
-  hobart: "Tasmania", darwin: "Northern Territory", canberra: "ACT",
-  auckland: "New Zealand", wellington: "New Zealand", singapore: "Singapore", mumbai: "India", bengaluru: "India",
-  bangalore: "India", delhi: "India", chennai: "India", dubai: "United Arab Emirates", "abu dhabi": "United Arab Emirates",
-  london: "United Kingdom", manchester: "United Kingdom", houston: "United States", "new york": "United States",
-  vancouver: "Canada", toronto: "Canada",
-};
+const day = 86_400_000;
+const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
 
-const KEYWORDS = {
-  "Laser cutting": ["laser"], "CNC folding": ["fold", "press brake", "bending"], Welding: ["weld"],
-  Rolling: ["roll"], "Structural fabrication": ["structural steel", "structural fab"], Installation: ["install", "erect"],
-  Machining: ["machin", "lathe", "cnc mill"], "Galvanising / coating": ["galvan", "coat", "paint"],
-  "Structural design": ["structural engineer", "structural design", "bridge"], "Mechanical design": ["mechanical"],
-  "Electrical design": ["electrical"], "Drafting / BIM": ["draft", "bim", "cad"], "Project management": ["project manag"],
-  "Inspection & certification": ["inspect", "certif"], "Hi-vis garments": ["hi-vis", "hi vis", "high vis"],
-  Embroidery: ["embroider"], "Window cleaning": ["window"], "Washroom services": ["washroom"],
-  "Commercial cleaning": ["clean"], "Static guarding": ["guard"], "Cybersecurity": ["cyber"], "IT support": ["it support", "helpdesk"],
-  "Cloud services": ["cloud"], "Solar PV": ["solar"], "Fresh produce": ["produce", "fruit", "vegetable"], "Screen printing": ["screen print"], Workwear: ["workwear", "uniform"],
-};
+const PLACES = ["bali", "phuket", "perth", "perth cbd", "sydney", "melbourne", "brisbane", "tokyo", "fiji", "london", "singapore", "dubai", "northbridge", "subiaco", "leederville"];
+const PREFS = ["villa", "pool", "beach", "camera", "battery", "3-bed", "4-bed", "train", "thai", "spicy", "sushi", "pizza", "hybrid", "suv", "remote", "ux", "cheap", "quiet", "kids"];
 
-function localProfile(desc) {
-  const t = desc.toLowerCase();
-  const hits = (cap) => (KEYWORDS[cap] || [cap.toLowerCase()]).some((k) => t.includes(k));
-  let best = "steel";
-  let bestN = -1;
-  for (const [id, ind] of Object.entries(INDUSTRIES)) {
-    const n = ind.capabilities.filter(hits).length + 2 * ind.keywords.filter((k) => t.includes(k)).length;
-    if (n > bestN) [best, bestN] = [id, n];
+function whenFrom(t) {
+  const m = t.match(/(\d+)\s*(day|week|month|year)s?/);
+  if (/tonight|today|right now/.test(t)) return iso(Date.now());
+  if (/tomorrow/.test(t)) return iso(Date.now() + day);
+  if (/this (week|weekend)|friday|saturday|sunday/.test(t)) return iso(Date.now() + 4 * day);
+  if (/next month|a month|one month/.test(t)) return iso(Date.now() + 30 * day);
+  if (/next year|a year|one year|12 months/.test(t)) return iso(Date.now() + 365 * day);
+  const mon = t.match(/next (january|february|march|april|may|june|july|august|september|october|november|december)/);
+  if (mon) {
+    const target = new Date(`${mon[1]} 1, ${new Date().getFullYear()}`);
+    if (target <= new Date()) target.setFullYear(target.getFullYear() + 1);
+    return iso(target.getTime());
   }
-  const ind = INDUSTRIES[best];
-  const city = Object.keys(CITY_REGION).find((c) => t.includes(c));
-  const region = REGIONS.find((r) => t.includes(r.toLowerCase())) || (city && CITY_REGION[city]) || DEFAULT_PROFILE.region;
-  // Match a certification by its full name, or by its standard number ("9001").
-  const certs = ind.certifications.filter((c) => {
-    const num = c.match(/\d{3,5}/)?.[0];
-    return t.includes(c.toLowerCase()) || (num && t.includes(num));
+  if (m) return iso(Date.now() + Number(m[1]) * { day: 1, week: 7, month: 30.4, year: 365 }[m[2]] * day);
+  return iso(Date.now() + 60 * day);
+}
+
+function budgetFrom(t) {
+  const m = t.match(/\$\s?(\d[\d,.]*)\s*(k|m)?|(\d[\d,.]*)\s*(k|m)\b|under\s+(\d[\d,]*)/);
+  if (!m) return null;
+  const n = Number((m[1] || m[3] || m[5]).replace(/,/g, ""));
+  const mult = (m[2] || m[4]) === "k" ? 1000 : (m[2] || m[4]) === "m" ? 1_000_000 : 1;
+  return Math.round(n * mult);
+}
+
+const typeOf = (t) =>
+  Object.entries(GOAL_TYPES).find(([, g]) => g.keywords.some((k) => new RegExp(`\\b${k}`).test(t)))?.[0];
+
+/** Splits a narration into goals without AI (the fallback). */
+function localGoals(text, city = "Perth") {
+  // Break into small chunks; a chunk that names a new kind of goal starts it,
+  // other chunks (budgets, dates, wishes) add detail to the goal before them.
+  const chunks = text.split(/[;\n!?]|\.(?!\d)|,(?!\d{3})|\band\b|\balso\b/i).map((x) => x.trim()).filter(Boolean);
+  const groups = [];
+  for (const chunk of chunks) {
+    const type = typeOf(chunk.toLowerCase());
+    if (type && !groups.some((g) => g.type === type)) groups.push({ type, parts: [chunk] });
+    else if (groups.length) groups[groups.length - 1].parts.push(chunk);
+  }
+  return groups.map(({ type, parts }, i) => {
+    const wish = parts.join(", ");
+    const t = wish.toLowerCase();
+    const place = [...PLACES].sort((x, y) => y.length - x.length).find((p) => t.includes(p));
+    const first = parts[0].replace(/^(i'?m|we'?re|i am|we are)?\s*(also\s+)?(planning|want|need|looking|hoping|keen)\s+(to\s+|for\s+)?(buy\s+|get\s+|find\s+)?/i, "").replace(/^(a|an|the|me)\s+/i, "");
+    return {
+      id: `g-${type}-${i}`,
+      type,
+      title: first.length > 3 && first.length <= 40 ? first.replace(/^./, (c) => c.toUpperCase()) : GOAL_TYPES[type].label,
+      wish,
+      budget: budgetFrom(t),
+      when: whenFrom(t),
+      location: place ? place.replace(/\b\w/g, (c) => c.toUpperCase()).replace("Cbd", "CBD") : type === "dining" ? `${city} CBD` : city,
+      prefs: PREFS.filter((p) => t.includes(p)),
+    };
   });
-  return {
-    ...DEFAULT_PROFILE,
-    industry: best,
-    region,
-    capabilities: ind.capabilities.filter(hits).length ? ind.capabilities.filter(hits) : ind.capabilities.slice(0, 2),
-    certifications: certs,
-  };
 }
 
-function cleanProfile(raw, desc) {
-  const fallback = localProfile(desc);
-  if (!raw || typeof raw !== "object") return fallback;
-  const industry = INDUSTRIES[raw.industry] ? raw.industry : fallback.industry;
-  const ind = INDUSTRIES[industry];
-  const pick = (list, allowed) => (Array.isArray(list) ? list.filter((x) => allowed.includes(x)) : []);
-  const caps = pick(raw.capabilities, ind.capabilities);
-  const km = Number(raw.maxDistanceKm);
-  return {
-    ...DEFAULT_PROFILE,
-    companyName: typeof raw.companyName === "string" ? raw.companyName.slice(0, 60) : "",
-    industry,
-    region: REGIONS.includes(raw.region) ? raw.region : fallback.region,
-    maxDistanceKm: km >= 25 && km <= 1500 ? Math.round(km / 25) * 25 : DEFAULT_PROFILE.maxDistanceKm,
-    capabilities: caps.length ? caps : fallback.capabilities,
-    certifications: pick(raw.certifications, ind.certifications),
-    contractBand: CONTRACT_BANDS.some((b) => b.id === raw.contractBand) ? raw.contractBand : DEFAULT_PROFILE.contractBand,
-    aiSummary: typeof raw.summary === "string" ? raw.summary.slice(0, 200) : "",
-  };
-}
+const nameFrom = (text) => text.match(/\b(?:i'?m|i am|my name is|this is)\s+([A-Z][a-z]{1,20})\b/)?.[1] || "";
 
-function profilePrompt(desc) {
-  const lists = Object.entries(INDUSTRIES)
-    .map(([id, i]) => `- ${id}: capabilities ${JSON.stringify(i.capabilities)}; certifications ${JSON.stringify(i.certifications)}`)
-    .join("\n");
-  return `You set up capability profiles for OpportunityIQ, a service that matches businesses to tenders and supply contracts.
-Read the business description and reply with only one JSON object of this shape:
-{"companyName": string, "industry": string, "region": string, "maxDistanceKm": number, "capabilities": string[], "certifications": string[], "contractBand": string, "summary": string}
+function goalsPrompt(text, city) {
+  return `You are OpportunityIQ, a personal AI assistant. A person described what they want in plain words. Split it into separate goals.
+Reply with only one JSON object: {"name": string, "city": string, "goals": [{"type": string, "title": string, "wish": string, "budget": number|null, "inDays": number, "location": string, "prefs": string[]}]}
 
 Rules:
-- industry: one of ${JSON.stringify(Object.keys(INDUSTRIES))}, the closest fit.
-- capabilities and certifications: choose ONLY exact strings from that industry's lists below. Include a certification only if the description mentions it.
-- region: one of ${JSON.stringify(REGIONS)}. Infer from a city if given (e.g. Perth = Western Australia). Default "Western Australia".
-- maxDistanceKm: 25 to 1500. Default 300.
-- contractBand: one of ${JSON.stringify(CONTRACT_BANDS.map((b) => `${b.id} (${b.label})`))}, use just the id. Default "s".
-- companyName: "" if not given.
-- summary: one plain sentence describing what the business does.
+- type: one of ${JSON.stringify(Object.keys(GOAL_TYPES))} (${Object.entries(GOAL_TYPES).map(([k, g]) => `${k} = ${g.label}`).join("; ")}). Skip anything that fits none.
+- title: 2-5 words, e.g. "Bali holiday for 2".
+- wish: their words for this goal, tidied, one sentence.
+- budget: total in AUD as a number (per person for dining), or null if not given. "$4k" = 4000.
+- inDays: days from today until they need it (tonight = 0, "in 6 months" = 182). Default 60.
+- location: the destination or area, else "${city}".
+- prefs: 1-4 short lowercase keywords for what matters (e.g. "pool", "camera", "spicy", "3-bed", "train").
+- name: their first name if given, else "". city: their home city if given, else "${city}".
+At most 6 goals.
 
-Industries:
-${lists}
-
-Description:
-"""${desc.slice(0, 2000)}"""`;
+Their words:
+"""${text.slice(0, 2000)}"""`;
 }
 
-/** Returns { profile, usedAI, note }. Never throws. */
-export async function profileFromText(desc) {
+/** Returns { goals, name, city, usedAI, note }. Never throws. */
+export async function goalsFromText(text, city = "Perth") {
+  const fallback = () => ({ goals: localGoals(text, city), name: nameFrom(text), city, usedAI: false });
   const ai = await getAI();
-  if (!ai) return { profile: localProfile(desc), usedAI: false, note: "" };
+  if (!ai) return { ...fallback(), note: "" };
   try {
-    return { profile: cleanProfile(await ai.json(profilePrompt(desc)), desc), usedAI: true, note: "" };
+    const raw = await ai.json(goalsPrompt(text, city));
+    const list = Array.isArray(raw?.goals) ? raw.goals : [];
+    const goals = list
+      .filter((g) => GOAL_TYPES[g?.type])
+      .slice(0, 6)
+      .map((g, i) => ({
+        id: `g-${g.type}-${i}`,
+        type: g.type,
+        title: String(g.title || GOAL_TYPES[g.type].label).slice(0, 48),
+        wish: String(g.wish || "").slice(0, 200),
+        budget: Number(g.budget) > 0 ? Number(g.budget) : null,
+        when: iso(Date.now() + Math.max(0, Math.min(3650, Number(g.inDays) || 60)) * day),
+        location: String(g.location || city).slice(0, 40),
+        prefs: Array.isArray(g.prefs) ? g.prefs.map((p) => String(p).toLowerCase().slice(0, 20)).slice(0, 4) : [],
+      }));
+    if (!goals.length) return { ...fallback(), note: "" };
+    return { goals, name: String(raw.name || "").slice(0, 30), city: String(raw.city || city).slice(0, 30), usedAI: true, note: "" };
   } catch (e) {
-    return { profile: localProfile(desc), usedAI: false, note: aiErrorText(e) };
+    return { ...fallback(), note: aiErrorText(e) };
   }
 }
 
 // ---------- Prompts for the rest of the app ----------
 
-const describeProfile = (p) =>
-  `${p.companyName || "The business"}: ${INDUSTRIES[p.industry].label}, based in ${p.region}, travels up to ${p.maxDistanceKm} km. ` +
-  `Capabilities: ${p.capabilities.join(", ") || "none listed"}. Certifications: ${p.certifications.join(", ") || "none listed"}. ` +
-  `Preferred contract size: ${CONTRACT_BANDS.find((b) => b.id === p.contractBand)?.label}.` +
-  (p.excluded ? ` Does not want: ${p.excluded}.` : "");
+const describeGoal = (g) =>
+  `${g.title} (${GOAL_TYPES[g.type].label}): "${g.wish}". Budget: ${g.budget ? `$${g.budget.toLocaleString("en-AU")}` : "not set"}. Needed by ${g.when}. Place: ${g.location}. Wants: ${g.prefs.join(", ") || "nothing specific"}.`;
 
-const describeOp = (op, s) =>
-  `[${op.id}] ${op.title} | ${op.kind === "tender" ? "Formal tender" : "Early signal (not a contract yet)"} | ${op.buyer} | ${op.location}, ${op.distanceKm} km | est. ${formatMoney(op.value)} | ` +
-  `${op.deadline ? `deadline ${op.deadline}` : "no deadline yet"} | needs: ${op.needs.join(", ")} | certifications: ${op.certifications.join(", ") || "none"} | ` +
-  `${op.summary}` + (s ? ` | rule-based fit ${s.score}%; gaps: ${s.gaps.join("; ") || "none"}` : "");
+const describeFind = (s) =>
+  `[${s.op.id}] ${s.op.title} | ${s.op.kind === "watch" ? "Watching (alert, not a product)" : "Available now"} | ${s.op.location} | ${priceOf(s.op) || "no price"} | ${s.op.rating ? `rated ${s.op.rating}` : "no rating"} | ${s.op.tag} | ${Object.entries(s.op.facts).map(([k, v]) => `${k}: ${v}`).join("; ")} | fit ${s.score}% for goal "${s.goal.title}"`;
 
-export function matchBriefPrompt(profile, top) {
-  return `You are OpportunityIQ, an AI business development assistant. A business owner just described their business and you found these matches (fictional sample data).
+export function briefingPrompt(profile, top) {
+  return `You are OpportunityIQ, a warm, sharp personal assistant that watches the world 24/7 for someone's goals. Everything below is fictional sample data.
 
-Business: ${describeProfile(profile)}
+Their goals:
+${profile.goals.map(describeGoal).join("\n")}
 
-Matches:
-${top.map((t) => describeOp(t.op, t)).join("\n")}
+Best finds right now:
+${top.map(describeFind).join("\n")}
 
-Write a short briefing for the owner, max 90 words. Start with one sentence on what you understood about their business. Then one bullet per match: "- **<title>**: why it fits, and the one thing to check." Plain, confident Australian English. No preamble, no sign-off.`;
+Write today's briefing, max 100 words. Start with "${profile.name ? `Good morning, ${profile.name}.` : "Good morning."}" then one bullet per goal: "- **<goal title>**: the single most useful update and what to do next." Friendly, specific, Australian English. No preamble, no sign-off.`;
 }
 
 export function askPrompt(question, profile, scored) {
-  return `You are OpportunityIQ's research assistant. Answer the owner's question using ONLY the opportunities listed (they are fictional sample data). Never invent opportunities, figures or contacts.
+  return `You are OpportunityIQ, a personal AI assistant. Answer using ONLY the finds listed (fictional sample data). Never invent places, prices or ratings.
 
-Business: ${describeProfile(profile)}
+Their goals:
+${profile.goals.map(describeGoal).join("\n")}
 
-Opportunities:
-${scored.map((s) => describeOp(s.op, s)).join("\n")}
+Finds:
+${scored.map(describeFind).join("\n")}
 
 Question: """${question.slice(0, 500)}"""
 
-Reply in max 110 words. Use "- **<title>**: reason" bullets for relevant opportunities, best first. If none fit, say so plainly and suggest what to change. Then on the very last line write exactly "IDS: " followed by the comma-separated ids of the opportunities you mentioned, or "IDS: none".`;
+Reply in max 110 words with "- **<name>**: why" bullets, best first. If nothing fits, say so and suggest what to change. Then on the very last line write exactly "IDS: " followed by the comma-separated ids you mentioned, or "IDS: none".`;
 }
 
-export function analysisPrompt(op, profile, s) {
-  return `You are OpportunityIQ's bid analyst. Analyse this opportunity for this business. The data is fictional sample data.
+const ADVICE = {
+  holiday: "Cover: when to book and why, how to split the budget (flights, stay, spending), the best pick and one alternative, and 2 practical tips.",
+  tech: "Cover: which one to buy and why, whether to buy now or wait for the sale, and what to check before buying.",
+  home: "Cover: what the sample interest rate means for their repayments, how much buffer to keep, which listing fits best and why, first-home grants to check, and next steps (pre-approval, inspections). Add one line: this is general information, not financial advice.",
+  dining: "Cover: your top pick for tonight and why, a backup, and when to go or book.",
+  car: "Cover: which car is the best value and why, what to check (service history, inspection), and whether to wait for sales.",
+  events: "Cover: how to get the tickets (presale timing, resale safety) and what to set reminders for.",
+  career: "Cover: which option fits best, what to highlight in the application, and deadlines.",
+  money: "Cover: which change saves the most, how much, and the steps to switch.",
+};
 
-Business: ${describeProfile(profile)}
+export function advicePrompt(goal, scored) {
+  return `You are OpportunityIQ, a personal AI assistant. Give advice for this goal using ONLY these facts (fictional sample data). Where something isn't stated, say "not stated".
 
-Opportunity: ${describeOp(op, s)}
-Extracted tender details: ${Object.entries(op.extraction).map(([k, v]) => `${k}: ${v}`).join("; ")}
+Goal: ${describeGoal(goal)}
 
-Use only these facts. Where something isn't stated, say "Not specified". ${op.kind === "signal" ? "This is an early signal, not a contract: make that clear and advise how to get in early." : ""}
+Finds:
+${scored.map(describeFind).join("\n")}
+
+${ADVICE[goal.type]}
 Format, max 170 words:
-## Verdict
-"Bid", "Consider" or "Skip", then one sentence why.
-## Why it fits
+## Our pick
+One sentence.
+## Why
 2 bullets.
-## Risks and gaps
-2-3 bullets.
-## Ask the buyer
-3 short questions as bullets.
-## Next step
-One sentence.`;
-}
-
-export function emailPrompt(op, profile, matched) {
-  return `Write a short, professional enquiry email (max 140 words) from this business to the buyer's procurement team about the opportunity below. Australian English. Start with a "Subject:" line. Mention the relevant capabilities (${matched.join(", ") || "general"}) and certifications held. Ask 2-3 specific clarifying questions based on the gaps. Use the placeholder [Your name] for the sender. Don't invent facts, prices or contacts.
-
-Business: ${describeProfile(profile)}
-Opportunity: ${describeOp(op)}
-Known gaps: ${Object.entries(op.extraction).filter(([, v]) => /not specified|risk/i.test(v)).map(([k, v]) => `${k}: ${v}`).join("; ") || "none"}`;
+## Watch out
+1-2 bullets.
+## Next steps
+2-3 bullets.`;
 }
 
 /** Splits the trailing "IDS:" line off an answer (also while it streams). */
@@ -278,6 +282,6 @@ export function splitIds(text) {
     .slice(i + 4)
     .split(/[,\s]+/)
     .map((x) => x.replace(/[^\w-]/g, ""))
-    .filter((x) => /^op-\d+$/.test(x));
+    .filter((x) => /^f-[a-z0-9]+$/.test(x));
   return { body: text.slice(0, i).trimEnd(), ids };
 }

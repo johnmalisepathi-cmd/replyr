@@ -66,8 +66,8 @@ export function Nav({ route, hasProfile }) {
         {inApp ? (
           <nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
             {link("/dashboard", "Dashboard")}
-            {link("/pipeline", "Pipeline")}
-            {link("/onboarding", "Profile")}
+            {link("/pipeline", "My plan")}
+            {link("/onboarding", "Goals")}
           </nav>
         ) : (
           <div className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export function Nav({ route, hasProfile }) {
               onClick={() => document.getElementById("pilot")?.scrollIntoView({ behavior: "smooth" })}
               className="btn-primary"
             >
-              Join the pilot
+              Get early access
             </button>
           </div>
         )}
@@ -91,8 +91,7 @@ export function SampleBanner() {
   return (
     <div className="border-b border-amber-200 bg-amber-50 text-amber-900">
       <div className="section py-2 text-xs sm:text-sm">
-        <strong>Demo mode.</strong> All opportunities, buyers and scores are fictional sample data. Nothing here is a
-        live tender.
+        <strong>Demo mode.</strong> Places, prices, listings and rates here are fictional sample data, so check before you book or buy.
       </div>
     </div>
   );
@@ -112,16 +111,6 @@ export function FitBadge({ score }) {
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${f.tone}`}>{f.text} · {score}%</span>;
 }
 
-export function KindBadge({ kind }) {
-  return kind === "tender" ? (
-    <span className="rounded-full bg-navy-900 px-2.5 py-1 text-xs font-semibold text-white">Formal tender</span>
-  ) : (
-    <span className="rounded-full border border-dashed border-violet-400 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
-      Early signal · not a contract
-    </span>
-  );
-}
-
 export function Footer() {
   return (
     <footer className="border-t border-white/10 bg-navy-950 text-slate-400">
@@ -129,7 +118,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-3 max-w-xs text-sm">
-            AI opportunity discovery and capability matching for businesses that make, build and supply.
+            Your personal AI assistant. Tell it what you want, and it watches the world for you, 24/7.
           </p>
         </div>
         <div className="text-sm">
@@ -145,16 +134,16 @@ export function Footer() {
             {CONTACT_EMAIL ? (
               <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-white">{CONTACT_EMAIL}</a>
             ) : (
-              "Use the pilot form above"
+              "Use the early-access form above"
             )}
           </p>
-          <p className="mt-2">Pilot in Western Australia.</p>
+          <p className="mt-2">Early access now open.</p>
         </div>
       </div>
       <div className="border-t border-white/10">
         <div className="section py-5 text-xs">
           © {new Date().getFullYear()} OpportunityIQ. Pre-launch. Features described are in development. OpportunityIQ
-          does not guarantee contract wins and never contacts buyers or submits bids on your behalf.
+          never books, buys or pays on your behalf. Suggestions are general information, not financial advice.
         </div>
       </div>
     </footer>

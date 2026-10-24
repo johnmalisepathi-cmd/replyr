@@ -1,18 +1,18 @@
 import { useEffect, useRef } from "react";
 
 // Hero artwork: information sources at the top stream into a pulsing AI
-// core, which sends scored matches out to the bottom. Canvas draws the
+// core, which sends personal alerts out to the bottom. Canvas draws the
 // moving parts; the labels are HTML so they stay sharp and readable.
 const SOURCES = [
-  { x: 0.12, label: "Tender portals", short: "Tenders" },
-  { x: 0.37, label: "Planning approvals", short: "Planning" },
-  { x: 0.63, label: "Project pipelines", short: "Pipelines" },
-  { x: 0.88, label: "Supplier pages", short: "Suppliers" },
+  { x: 0.12, label: "Flight prices", short: "Flights" },
+  { x: 0.37, label: "Property listings", short: "Homes" },
+  { x: 0.63, label: "Store prices", short: "Stores" },
+  { x: 0.88, label: "Restaurant reviews", short: "Food" },
 ];
 const OUTPUTS = [
-  { x: 0.18, score: 91, label: "Support frames" },
-  { x: 0.5, score: 74, label: "Access platforms" },
-  { x: 0.82, score: 38, label: "Car park steel" },
+  { x: 0.18, big: "−22%", label: "Bali flights", tone: "text-brand-300" },
+  { x: 0.5, big: "New", label: "3-bed listing", tone: "text-amber-300" },
+  { x: 0.82, big: "4.7★", label: "Thai, open now", tone: "text-sky-300" },
 ];
 const SRC_Y = 0.12;
 const CORE_Y = 0.5;
@@ -150,7 +150,7 @@ export default function AICore() {
   }, []);
 
   return (
-    <div className="relative aspect-[5/4] w-full max-w-full" aria-label="AI engine diagram: sources flow into the AI core, which outputs scored matches" role="img">
+    <div className="relative aspect-[5/4] w-full max-w-full" aria-label="AI engine diagram: prices, listings and reviews flow into the AI core, which sends you alerts" role="img">
       <canvas ref={ref} className="absolute inset-0 h-full w-full" />
       {SOURCES.map((s) => (
         <span
@@ -171,7 +171,7 @@ export default function AICore() {
           className="absolute -translate-x-1/2 -translate-y-1/2 animate-floaty rounded-xl border border-brand-400/30 bg-navy-950/85 px-2.5 py-1.5 text-center shadow-glow"
           style={{ left: `${o.x * 100}%`, top: `${OUT_Y * 100}%`, animationDelay: `${o.x * 2}s` }}
         >
-          <span className={`block text-sm font-extrabold sm:text-base ${o.score >= 75 ? "text-brand-300" : o.score >= 50 ? "text-amber-300" : "text-slate-400"}`}>{o.score}%</span>
+          <span className={`block text-sm font-extrabold sm:text-base ${o.tone}`}>{o.big}</span>
           <span className="block whitespace-nowrap text-[10px] text-slate-400 sm:text-[11px]">{o.label}</span>
         </span>
       ))}
