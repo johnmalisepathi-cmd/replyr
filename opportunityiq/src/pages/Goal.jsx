@@ -6,6 +6,7 @@ import { formatMoney, monthlyRepayment, priceOf } from "../lib/match.js";
 import { advicePrompt, aiErrorText, aiPlan, checkinPrompt, useAI } from "../lib/ai.js";
 import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
 import { FitBadge, FitBar, ProgressRing } from "../components/ui.jsx";
+import Mandala from "../components/Mandala.jsx";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import { boundsOf, countdown } from "./Dashboard.jsx";
@@ -221,7 +222,7 @@ export default function Goal({ id, profile, pipeline, setStage, progress, goalAc
 
       {complete && (
         <div className="mt-6 rounded-2xl border border-brand-200 bg-brand-50 p-5 text-center">
-          <p className="text-2xl">🎉</p>
+          <Mandala size={64} gold className="mx-auto" />
           <p className="mt-1 text-lg font-bold text-brand-800">Goal complete!</p>
           <p className="text-sm text-brand-700">Every step is done. Nice work. I'll keep this goal in your history.</p>
         </div>

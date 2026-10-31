@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // "Why not just ask ChatGPT or Google?" — the comparison every visitor is thinking.
-const COLS = ["ChatGPT / Google", "To-do & alert apps", "OpportunityIQ"];
+const COLS = ["ChatGPT / Google", "To-do & alert apps", "VaradIQ"];
 
 // Each cell: [level, text]. level: 2 = yes, 1 = partly, 0 = no.
 const ROWS = [
@@ -63,7 +63,7 @@ export default function WhyDifferent() {
       </div>
 
       <div className="md:hidden">
-        <div className="flex gap-2" role="tablist" aria-label="Compare OpportunityIQ with">
+        <div className="flex gap-2" role="tablist" aria-label="Compare VaradIQ with">
           {[0, 1].map((i) => (
             <button
               key={i}
@@ -86,7 +86,7 @@ export default function WhyDifferent() {
                   <span className="flex items-start gap-1.5 text-slate-400"><Mark level={cells[mobileCol][0]} />{cells[mobileCol][1]}</span>
                 </div>
                 <div className="min-w-0 rounded-lg bg-ai-violet/10 p-2">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ai-violet">OpportunityIQ</p>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ai-violet">VaradIQ</p>
                   <span className="flex items-start gap-1.5 text-slate-100"><Mark level={cells[2][0]} />{cells[2][1]}</span>
                 </div>
               </div>
@@ -107,7 +107,7 @@ export default function WhyDifferent() {
           <p className="mt-5 text-2xl font-extrabold text-slate-300">≈ 5 hours a week</p>
         </div>
         <div className="ai-panel p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ai-cyan">Your week with OpportunityIQ</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ai-cyan">Your week with VaradIQ</p>
           <ul className="mt-4 space-y-3 text-sm text-slate-200">
             <li className="flex gap-3"><span className="text-ai-cyan">✓</span>A plan for every goal, with today's actions</li>
             <li className="flex gap-3"><span className="text-ai-cyan">✓</span>"Bali flights down 22%. Book this week."</li>

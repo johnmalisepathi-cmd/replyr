@@ -18,7 +18,7 @@ export default function PilotForm() {
         const res = await fetch(WAITLIST_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ ...form, firstGoal: GOAL_TYPES[form.firstGoal].label, source: "opportunityiq-website" }),
+          body: JSON.stringify({ ...form, firstGoal: GOAL_TYPES[form.firstGoal].label, source: "varadiq-website" }),
         });
         setStatus(res.ok ? "done" : "error");
       } catch {
@@ -26,7 +26,7 @@ export default function PilotForm() {
       }
     } else if (CONTACT_EMAIL) {
       const body = Object.entries(form).map(([k, v]) => `${k}: ${v}`).join("\n");
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("OpportunityIQ early access")}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("VaradIQ early access")}&body=${encodeURIComponent(body)}`;
       setStatus("done");
     } else {
       setStatus("error");

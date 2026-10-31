@@ -1,4 +1,4 @@
-// OpportunityIQ Personal: the kinds of goals the assistant can watch, and
+// VaradIQ Personal: the kinds of goals the assistant can watch, and
 // the SAMPLE "finds" it shows in the demo. Every find is fictional and
 // labelled sample data in the UI; prices, rates and grants are illustrative.
 

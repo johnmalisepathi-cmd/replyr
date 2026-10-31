@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Mandala from "./Mandala.jsx";
 
 // Renders the small markdown subset the AI writes: "## " headings,
 // "- " bullets and **bold**. Built from React nodes, never innerHTML.
@@ -55,11 +56,7 @@ export function AIText({ text, streaming = false, className = "" }) {
 export function AIThinking({ label = "Thinking" }) {
   return (
     <div className="flex items-center gap-3 text-sm text-slate-300" role="status">
-      <span className="flex gap-1" aria-hidden="true">
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="h-2 w-2 animate-dot rounded-full bg-ai-cyan" style={{ animationDelay: `${i * 0.15}s` }} />
-        ))}
-      </span>
+      <Mandala size={26} spinning />
       {label}…
     </div>
   );

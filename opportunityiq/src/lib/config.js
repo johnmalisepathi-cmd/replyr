@@ -14,7 +14,7 @@ export const AI_ENDPOINT = import.meta.env.VITE_AI_ENDPOINT || "";
 export const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
 
 export const COMPANY = {
-  name: "OpportunityIQ",
+  name: "VaradIQ",
   pilotRegion: "Western Australia",
   pilotIndustries: "steel fabrication and engineering",
 };

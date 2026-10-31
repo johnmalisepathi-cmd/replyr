@@ -1,8 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { COLORS, drawMandala, drawRipple } from "../lib/mandala.js";
 
-// Hero artwork: information sources at the top stream into a pulsing AI
-// core, which sends personal alerts out to the bottom. Canvas draws the
-// moving parts; the labels are HTML so they stay sharp and readable.
+// Hero artwork: information sources at the top stream into the VaradIQ
+// mandala. It loops through the agent's day: watching (blue), thinking (spins
+// faster, data flows in) and done (turns gold, ripples of light go out).
+// Canvas draws the moving parts; the labels are HTML so they stay sharp.
 const SOURCES = [
   { x: 0.12, label: "Flight prices", short: "Flights" },
   { x: 0.37, label: "Property listings", short: "Homes" },
@@ -10,13 +12,21 @@ const SOURCES = [
   { x: 0.88, label: "Restaurant reviews", short: "Food" },
 ];
 const OUTPUTS = [
-  { x: 0.18, big: "−22%", label: "Bali flights", tone: "text-brand-300" },
-  { x: 0.5, big: "$990", label: "Bills cut / yr", tone: "text-amber-300" },
-  { x: 0.82, big: "4 of 6", label: "Bali steps done", tone: "text-sky-300" },
+  { big: "−22%", label: "Bali flights", tone: "text-brand-300" },
+  { big: "$990", label: "Bills cut / yr", tone: "text-amber-300" },
+  { big: "4 of 6", label: "Bali steps done", tone: "text-sky-300" },
 ];
-const SRC_Y = 0.12;
-const CORE_Y = 0.5;
-const OUT_Y = 0.86;
+const SRC_Y = 0.1;
+const CORE_Y = 0.47;
+const CYCLE = 14; // seconds: watching 0-4, thinking 4-9, done 9-14
+const PHASES = [
+  [0, "Watching for you"],
+  [4, "Thinking…"],
+  [9, "Done ✓"],
+];
+
+const clamp = (x) => Math.max(0, Math.min(1, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
 
 function bezier(a, c, b, t) {
   const u = 1 - t;
@@ -25,6 +35,7 @@ function bezier(a, c, b, t) {
 
 export default function AICore() {
   const ref = useRef(null);
+  const [phase, setPhase] = useState(0);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -34,6 +45,7 @@ export default function AICore() {
     let h = 0;
     let raf = 0;
     let visible = true;
+    let shown = 0;
 
     const resize = () => {
       const r = canvas.getBoundingClientRect();
@@ -50,96 +62,56 @@ export default function AICore() {
     const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
     io.observe(canvas);
 
-    // Particles: inbound (source -> core) and outbound (core -> match).
-    const parts = Array.from({ length: 46 }, (_, i) => ({
-      out: i % 3 === 0,
-      lane: i,
-      t: Math.random(),
-      speed: 0.0022 + Math.random() * 0.0035,
-    }));
-
-    const path = (p) => {
+    const draw = (seconds) => {
+      const t = seconds % CYCLE;
+      const think = prog(t, 4, 4.8) * (1 - prog(t, 8.7, 9.3));
+      const gold = prog(t, 9, 10) * (1 - prog(t, 13.2, 14));
       const cx = w / 2;
       const cy = h * CORE_Y;
-      if (p.out) {
-        const o = OUTPUTS[p.lane % OUTPUTS.length];
-        return [cx, cy, o.x * w, h * 0.7, o.x * w, h * OUT_Y];
-      }
-      const s = SOURCES[p.lane % SOURCES.length];
-      return [s.x * w, h * SRC_Y, s.x * w, h * 0.32, cx, cy];
-    };
-
-    const draw = (time) => {
-      const cx = w / 2;
-      const cy = h * CORE_Y;
-      const R = Math.min(w, h) * 0.13;
+      const R = Math.min(w, h) * 0.16;
       ctx.clearRect(0, 0, w, h);
 
-      // Lanes
+      // Lanes from each source into the mandala
       ctx.lineWidth = 1;
-      [...SOURCES.map((s) => [s.x * w, h * SRC_Y, s.x * w, h * 0.32, cx, cy]), ...OUTPUTS.map((o) => [cx, cy, o.x * w, h * 0.7, o.x * w, h * OUT_Y])].forEach(
-        ([x0, y0, x1, y1, x2, y2], i) => {
-          ctx.strokeStyle = i < SOURCES.length ? "rgba(34,211,238,0.16)" : "rgba(52,211,153,0.18)";
-          ctx.beginPath();
-          ctx.moveTo(x0, y0);
-          ctx.quadraticCurveTo(x1, y1, x2, y2);
-          ctx.stroke();
-        }
-      );
-
-      // Particles
-      for (const p of parts) {
-        if (!still) p.t = (p.t + p.speed) % 1;
-        const [x0, y0, x1, y1, x2, y2] = path(p);
-        const x = bezier(x0, x1, x2, p.t);
-        const y = bezier(y0, y1, y2, p.t);
-        const fade = Math.sin(Math.PI * p.t);
-        ctx.fillStyle = p.out ? `rgba(52,211,153,${0.9 * fade})` : `rgba(34,211,238,${0.9 * fade})`;
+      ctx.strokeStyle = "rgba(34,211,238,0.16)";
+      for (const s of SOURCES) {
         ctx.beginPath();
-        ctx.arc(x, y, p.out ? 2.4 : 1.8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Core glow
-      const pulse = still ? 1 : 1 + Math.sin(time / 700) * 0.06;
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 2.6 * pulse);
-      g.addColorStop(0, "rgba(167,139,250,0.55)");
-      g.addColorStop(0.35, "rgba(34,211,238,0.18)");
-      g.addColorStop(1, "rgba(34,211,238,0)");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * 2.6 * pulse, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Orbit rings
-      const spin = still ? 0 : time / 2400;
-      [1.35, 1.75].forEach((k, i) => {
-        ctx.strokeStyle = i ? "rgba(52,211,153,0.35)" : "rgba(167,139,250,0.55)";
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([4, 7]);
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, R * k, R * k * 0.42, i ? -spin : spin, 0, Math.PI * 2);
+        ctx.moveTo(s.x * w, h * SRC_Y);
+        ctx.quadraticCurveTo(s.x * w, h * 0.3, cx, cy - R);
         ctx.stroke();
+      }
+      // Data flowing in: gentle while watching, a stream while thinking
+      const flow = 0.25 + think * 0.75;
+      SOURCES.forEach((s, i) => {
+        for (let k = 0; k < 4; k++) {
+          const u = (seconds * (0.18 + think * 0.35) + k / 4 + i * 0.13) % 1;
+          ctx.fillStyle = `rgba(${i % 2 ? COLORS.GREEN : COLORS.CYAN},${flow * Math.sin(u * Math.PI)})`;
+          ctx.beginPath();
+          ctx.arc(bezier(s.x * w, s.x * w, cx, u), bezier(h * SRC_Y, h * 0.3, cy - R, u), 1.8 + think, 0, Math.PI * 2);
+          ctx.fill();
+        }
       });
-      ctx.setLineDash([]);
 
-      // Core
-      const cg = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
-      cg.addColorStop(0, "#e0f2fe");
-      cg.addColorStop(0.35, "#22d3ee");
-      cg.addColorStop(0.75, "#7c3aed");
-      cg.addColorStop(1, "#1e1b4b");
-      ctx.fillStyle = cg;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * pulse * 0.9, 0, Math.PI * 2);
-      ctx.fill();
+      // Ripples: soft blue ones while watching, gold bursts when done
+      const sp = R * 0.9;
+      [0.4, 2.2].forEach((b) => drawRipple(ctx, cx, cy, R * 1.1, t, b, { colour: COLORS.CYAN, count: 60, speed: sp, life: 2.6, size: 1.6 }));
+      [9.2, 9.9, 10.8, 12].forEach((b, i) => drawRipple(ctx, cx, cy, R * 1.1, t, b, { colour: i % 2 ? COLORS.CREAM : COLORS.GOLD, count: 90, speed: sp * 1.5, life: 3, size: 2.2 }));
+
+      const spin = still ? 0.2 : seconds * 0.12 + Math.min(Math.max(t - 4, 0), 5) * 0.4;
+      drawMandala(ctx, cx, cy, R, { n: 8, spin, gold, energy: think, t: seconds, lw: Math.max(3, R * 0.06), glow: 0.8 + think * 0.5 + gold * 0.6 });
+
+      const p = t >= 9 ? 2 : t >= 4 ? 1 : 0;
+      if (p !== shown) {
+        shown = p;
+        setPhase(p);
+      }
     };
 
-    const loop = (t) => {
-      if (visible) draw(t);
+    const loop = (time) => {
+      if (visible) draw(time / 1000);
       raf = requestAnimationFrame(loop);
     };
-    if (still) draw(0);
+    if (still) draw(1);
     else raf = requestAnimationFrame(loop);
 
     return () => {
@@ -150,31 +122,38 @@ export default function AICore() {
   }, []);
 
   return (
-    <div className="relative aspect-[5/4] w-full max-w-full" aria-label="AI engine diagram: prices, listings and your bills flow into the AI agent, which moves your goals forward" role="img">
-      <canvas ref={ref} className="absolute inset-0 h-full w-full" />
-      {SOURCES.map((s) => (
+    <div className="w-full max-w-full" role="img" aria-label="AI engine diagram: prices, listings and your bills flow into the VaradIQ agent, which turns gold when a goal is done">
+      <div className="relative aspect-[5/4] w-full">
+        <canvas ref={ref} className="absolute inset-0 h-full w-full" />
+        {SOURCES.map((s) => (
+          <span
+            key={s.label}
+            className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-ai-cyan/30 bg-navy-950/80 px-2 py-1 text-[10px] font-medium text-cyan-100 sm:px-2.5 sm:text-xs"
+            style={{ left: `${s.x * 100}%`, top: `${SRC_Y * 100}%` }}
+          >
+            <span className="sm:hidden">{s.short}</span>
+            <span className="hidden sm:inline">{s.label}</span>
+          </span>
+        ))}
         <span
-          key={s.label}
-          className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-ai-cyan/30 bg-navy-950/80 px-2 py-1 text-[10px] font-medium text-cyan-100 sm:px-2.5 sm:text-xs"
-          style={{ left: `${s.x * 100}%`, top: `${SRC_Y * 100}%` }}
+          className={`absolute left-1/2 top-[76%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-700 sm:text-xs ${phase === 2 ? "text-amber-300" : "text-ai-cyan"}`}
+          aria-live="off"
         >
-          <span className="sm:hidden">{s.short}</span>
-          <span className="hidden sm:inline">{s.label}</span>
+          {PHASES[phase][1]}
         </span>
-      ))}
-      <span className="absolute left-1/2 top-[66%] -translate-x-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-[0.2em] text-ai-violet sm:text-xs">
-        AI engine
-      </span>
-      {OUTPUTS.map((o) => (
-        <span
-          key={o.label}
-          className="absolute -translate-x-1/2 -translate-y-1/2 animate-floaty rounded-xl border border-brand-400/30 bg-navy-950/85 px-2.5 py-1.5 text-center shadow-glow"
-          style={{ left: `${o.x * 100}%`, top: `${OUT_Y * 100}%`, animationDelay: `${o.x * 2}s` }}
-        >
-          <span className={`block text-sm font-extrabold sm:text-base ${o.tone}`}>{o.big}</span>
-          <span className="block whitespace-nowrap text-[10px] text-slate-400 sm:text-[11px]">{o.label}</span>
-        </span>
-      ))}
+      </div>
+      {/* Results sit in a grid so they never run off the edge on phones */}
+      <div className="-mt-2 grid grid-cols-3 gap-2 sm:gap-3">
+        {OUTPUTS.map((o) => (
+          <span
+            key={o.label}
+            className={`rounded-xl border bg-navy-950/85 px-2 py-1.5 text-center transition-all duration-700 ${phase === 2 ? "border-amber-300/50 shadow-[0_0_30px_-8px_rgba(251,191,36,0.6)]" : "border-brand-400/30 shadow-glow"}`}
+          >
+            <span className={`block text-sm font-extrabold sm:text-base ${o.tone}`}>{o.big}</span>
+            <span className="block text-[10px] leading-tight text-slate-400 sm:text-[11px]">{o.label}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

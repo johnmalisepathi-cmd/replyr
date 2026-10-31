@@ -20,7 +20,7 @@ export default function Privacy() {
         <section>
           <h2 className="text-lg font-semibold text-slate-900">Where suggestions come from</h2>
           <p className="mt-2">
-            At launch, OpportunityIQ will use licensed travel, retail, property and restaurant data, plus official sources for things
+            At launch, VaradIQ will use licensed travel, retail, property and restaurant data, plus official sources for things
             like interest rates and grants, and will link back to each source. The demo uses fictional sample data.
           </p>
         </section>
@@ -28,7 +28,7 @@ export default function Privacy() {
           <h2 className="text-lg font-semibold text-slate-900">AI limitations</h2>
           <p className="mt-2">
             AI suggestions help you decide where to look. They aren't professional, financial or legal advice. Check prices, terms
-            and availability with the provider before you book or buy. OpportunityIQ never books, buys or pays on your behalf.
+            and availability with the provider before you book or buy. VaradIQ never books, buys or pays on your behalf.
           </p>
         </section>
         <section>

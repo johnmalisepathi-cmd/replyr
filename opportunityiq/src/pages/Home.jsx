@@ -37,7 +37,7 @@ const PLANS = [
 
 const FAQ = [
   { q: "Is the AI real?", a: "Yes. In this preview, the \"Tell me what you want\" box, the assistant on the dashboard and the goal advice are answered by a real AI model, live. The prices, places and listings are sample data until we connect live sources." },
-  { q: "Why not just ask ChatGPT or Google?", a: "They answer when you ask, then stop. OpportunityIQ is an agent: it makes a plan for each goal, keeps working on it after you close the app, tells you what to do each day, and checks in every week until the goal is done." },
+  { q: "Why not just ask ChatGPT or Google?", a: "They answer when you ask, then stop. VaradIQ is an agent: it makes a plan for each goal, keeps working on it after you close the app, tells you what to do each day, and checks in every week until the goal is done." },
   { q: "How does it save me money on bills?", a: "Tell it to cut your bills. It compares your electricity, insurance, phone, internet and subscriptions with what's available, and shows the yearly saving for each switch. You can send the money you save straight into another goal, like your holiday fund. At launch, some providers may pay us a fee when you switch; we'll always show you the cheapest option either way." },
   { q: "Where does the information come from?", a: "At launch: travel, retail, property and restaurant data providers, plus official sources for things like interest rates and grants. Every suggestion links back to where it came from." },
   { q: "Will it book, buy or move my money?", a: "No. It plans, finds, compares and reminds. You always decide, and you book, buy, switch or transfer money yourself. The savings tracker just records what you've put aside." },
@@ -80,7 +80,7 @@ export default function Home({ hasProfile, setProfile }) {
               Tell it your goal. <span className="ai-text">It works on it 24/7 until it's done.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-slate-300">
-              A holiday, a new phone, your first home, lower bills? Say it once. OpportunityIQ makes the plan, does the
+              A holiday, a new phone, your first home, lower bills? Say it once. VaradIQ makes the plan, does the
               research, finds the money, and tells you exactly what to do each day until it's done.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -92,6 +92,10 @@ export default function Home({ hasProfile, setProfile }) {
               </button>
             </div>
             <p className="mt-4 text-sm text-slate-500">Free to start. No credit card.</p>
+            <p className="mt-6 max-w-md border-l-2 border-amber-300/60 pl-3 text-sm text-slate-400">
+              <span className="font-semibold text-slate-200">Varad</span> is Sanskrit for "a wish granted".{" "}
+              <span className="font-semibold text-slate-200">IQ</span> is the intelligence that makes it happen. When a goal is done, our logo turns gold.
+            </p>
           </div>
           <div className="min-w-0">
             <AICore />
@@ -170,12 +174,12 @@ export default function Home({ hasProfile, setProfile }) {
 
       {/* WHY DIFFERENT */}
       <section id="why" className="section scroll-mt-20 py-16">
-        <Eyebrow>Why OpportunityIQ</Eyebrow>
+        <Eyebrow>Why VaradIQ</Eyebrow>
         <h2 className="mt-2 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl" style={{ textWrap: "balance" }}>
           "Can't I just ask ChatGPT?" You can. It won't finish the job.
         </h2>
         <p className="mt-4 max-w-2xl text-slate-400">
-          Chatbots answer, then forget. To-do apps wait for you to do everything. OpportunityIQ is an agent: it plans each
+          Chatbots answer, then forget. To-do apps wait for you to do everything. VaradIQ is an agent: it plans each
           goal, does its own steps around the clock, and keeps you moving until it's done.
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-3">

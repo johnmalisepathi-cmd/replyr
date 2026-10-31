@@ -65,7 +65,7 @@ function cluster(points, radius) {
 
 // colorBy "fit": pins coloured by the viewer's fit score (dashboard).
 // colorBy "kind": available options vs things being watched (home page showcase).
-export default function WorldMap({ items, home, radiusKm, onOpen, initialView = "World", title = "Opportunity map", colorBy = "fit" }) {
+export default function WorldMap({ items, home, radiusKm, onOpen, initialView = "World", title = "Goal map", colorBy = "fit" }) {
   const [view, setView] = useState(initialView);
   const [vb, setVb] = useState(() => viewBoxFor(initialView));
   const [selected, setSelected] = useState(null);

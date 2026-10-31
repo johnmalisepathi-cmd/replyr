@@ -1,11 +1,15 @@
-# OpportunityIQ — your AI goal agent
+# VaradIQ — your AI goal agent
 
 Tell it your goal: a holiday in 6 months, a new phone, your first home, lower
-bills, dinner tonight. OpportunityIQ makes a plan for each goal (steps, dates,
+bills, dinner tonight. VaradIQ makes a plan for each goal (steps, dates,
 who does what, a weekly savings amount), works on its own steps 24/7 (watching
 prices, comparing options, finding cheaper bills), tells you today's actions
 and checks in every week until the goal is done. Money it saves on bills can be
 sent straight into another goal's fund.
+
+**The name:** *Varad* is Sanskrit for "a wish granted"; *IQ* is the intelligence that makes it happen. The logo is eight V's in a circle around a glowing core: blue-green while the agent works, gold when a goal is done.
+
+**Going live:** see [GO-LIVE.md](GO-LIVE.md) for Vercel, the AI key, the sign-up form and the varadiq.com domain.
 
 ## What's real and what's sample
 
