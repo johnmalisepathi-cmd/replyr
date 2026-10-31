@@ -101,7 +101,7 @@ const day = 86_400_000;
 const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
 
 const PLACES = ["bali", "phuket", "perth", "perth cbd", "sydney", "melbourne", "brisbane", "tokyo", "fiji", "london", "singapore", "dubai", "northbridge", "subiaco", "leederville"];
-const PREFS = ["villa", "pool", "beach", "camera", "battery", "3-bed", "4-bed", "train", "thai", "spicy", "sushi", "pizza", "hybrid", "suv", "remote", "ux", "cheap", "quiet", "kids"];
+const PREFS = ["electricity", "insurance", "subscriptions", "internet", "villa", "pool", "beach", "camera", "battery", "3-bed", "4-bed", "train", "thai", "spicy", "sushi", "pizza", "hybrid", "suv", "remote", "ux", "cheap", "quiet", "kids"];
 
 function whenFrom(t) {
   const m = t.match(/(\d+)\s*(day|week|month|year)s?/);
@@ -150,12 +150,13 @@ function localGoals(text, city = "Perth") {
     return {
       id: `g-${type}-${i}`,
       type,
-      title: first.length > 3 && first.length <= 40 ? first.replace(/^./, (c) => c.toUpperCase()) : GOAL_TYPES[type].label,
+      title: first.length > 3 && first.length <= 28 && !first.includes(":") ? first.replace(/^./, (c) => c.toUpperCase()) : GOAL_TYPES[type].label,
       wish,
       budget: budgetFrom(t),
       when: whenFrom(t),
       location: place ? place.replace(/\b\w/g, (c) => c.toUpperCase()).replace("Cbd", "CBD") : type === "dining" ? `${city} CBD` : city,
       prefs: PREFS.filter((p) => t.includes(p)),
+      created: iso(Date.now()),
     };
   });
 }
@@ -201,6 +202,7 @@ export async function goalsFromText(text, city = "Perth") {
         when: iso(Date.now() + Math.max(0, Math.min(3650, Number(g.inDays) || 60)) * day),
         location: String(g.location || city).slice(0, 40),
         prefs: Array.isArray(g.prefs) ? g.prefs.map((p) => String(p).toLowerCase().slice(0, 20)).slice(0, 4) : [],
+        created: iso(Date.now()),
       }));
     if (!goals.length) return { ...fallback(), note: "" };
     return { goals, name: String(raw.name || "").slice(0, 30), city: String(raw.city || city).slice(0, 30), usedAI: true, note: "" };
@@ -217,8 +219,8 @@ const describeGoal = (g) =>
 const describeFind = (s) =>
   `[${s.op.id}] ${s.op.title} | ${s.op.kind === "watch" ? "Watching (alert, not a product)" : "Available now"} | ${s.op.location} | ${priceOf(s.op) || "no price"} | ${s.op.rating ? `rated ${s.op.rating}` : "no rating"} | ${s.op.tag} | ${Object.entries(s.op.facts).map(([k, v]) => `${k}: ${v}`).join("; ")} | fit ${s.score}% for goal "${s.goal.title}"`;
 
-export function briefingPrompt(profile, top) {
-  return `You are OpportunityIQ, a warm, sharp personal assistant that watches the world 24/7 for someone's goals. Everything below is fictional sample data.
+export function briefingPrompt(profile, top, todo = []) {
+  return `You are OpportunityIQ, a warm, sharp AI goal agent that plans people's goals, watches the world 24/7 for them and keeps them moving until each goal is done. Everything below is fictional sample data.
 
 Their goals:
 ${profile.goals.map(describeGoal).join("\n")}
@@ -226,7 +228,7 @@ ${profile.goals.map(describeGoal).join("\n")}
 Best finds right now:
 ${top.map(describeFind).join("\n")}
 
-Write today's briefing, max 100 words. Start with "${profile.name ? `Good morning, ${profile.name}.` : "Good morning."}" then one bullet per goal: "- **<goal title>**: the single most useful update and what to do next." Friendly, specific, Australian English. No preamble, no sign-off.`;
+${todo.length ? `Today's actions from their plans:\n${todo.slice(0, 4).map((t) => `- ${t.text} (${t.goal.title})`).join("\n")}\n\n` : ""}Write today's briefing, max 110 words. Start with "${profile.name ? `Good morning, ${profile.name}.` : "Good morning."}" then one bullet per goal: "- **<goal title>**: the single most useful update and what to do next." If today's actions are given, end with a line "**Today:**" and the 2 most important actions. Friendly, specific, Australian English. No preamble, no sign-off.`;
 }
 
 export function askPrompt(question, profile, scored) {
@@ -251,7 +253,7 @@ const ADVICE = {
   car: "Cover: which car is the best value and why, what to check (service history, inspection), and whether to wait for sales.",
   events: "Cover: how to get the tickets (presale timing, resale safety) and what to set reminders for.",
   career: "Cover: which option fits best, what to highlight in the application, and deadlines.",
-  money: "Cover: which change saves the most, how much, and the steps to switch.",
+  money: "Cover: the total yearly saving if they switch everything, which switch to do first (check renewal dates), and how the saving could fund their other goals.",
 };
 
 export function advicePrompt(goal, scored) {
@@ -284,4 +286,47 @@ export function splitIds(text) {
     .map((x) => x.replace(/[^\w-]/g, ""))
     .filter((x) => /^f-[a-z0-9]+$/.test(x));
   return { body: text.slice(0, i).trimEnd(), ids };
+}
+
+// ---------- The Goal Agent: plans and check-ins ----------
+
+const describeStep = (s) => `${s.done ? "[done]" : "[todo]"} ${s.title} (due ${s.due}, ${s.who === "agent" ? "agent does it" : "person does it"})`;
+
+/** Asks the AI to tailor a goal's plan. Returns steps or null. */
+export async function aiPlan(goal) {
+  const ai = await getAI();
+  if (!ai) return null;
+  const raw = await ai.json(`You are OpportunityIQ, an AI goal agent that plans goals and works on them 24/7. Write a step-by-step plan for this goal.
+Goal: ${describeGoal(goal)} Today is ${iso(Date.now())}.
+Reply with only a JSON array of 4-7 steps in order: [{"title": string (max 6 words), "inDays": number (days from today, last step on or before the goal date), "who": "agent"|"you", "detail": string (one short sentence: what happens, e.g. what the agent watches or what the person must do)}].
+"agent" steps are research, watching prices and reminders. "you" steps are decisions, bookings, payments and signing. Australian English.`);
+  if (!Array.isArray(raw) || !raw.length) return null;
+  const left = Math.max(0, Math.ceil((new Date(goal.when) - Date.now()) / day));
+  return raw.slice(0, 7).map((x, i) => ({
+    id: `a${i}`,
+    title: String(x.title || `Step ${i + 1}`).slice(0, 60),
+    who: x.who === "agent" ? "agent" : "you",
+    detail: String(x.detail || "").slice(0, 160),
+    due: iso(Date.now() + Math.max(0, Math.min(left, Number(x.inDays) || 0)) * day),
+  }));
+}
+
+export function checkinPrompt(profile, goal, steps, money, scored) {
+  return `You are OpportunityIQ, a warm but honest AI goal agent. You work on people's goals 24/7 and check in weekly to keep them moving. Everything is fictional sample data.
+
+Person: ${profile.name || "the user"}. Goal: ${describeGoal(goal)}
+Plan:
+${steps.map(describeStep).join("\n")}
+Money: ${money}
+Best finds:
+${scored.slice(0, 5).map(describeFind).join("\n")}
+
+Write this week's check-in, max 120 words, in this format:
+## This week
+One sentence on progress (be specific, use the numbers).
+## Do these next
+2-3 bullets, each a concrete action with a date or amount.
+## I'm handling
+1-2 bullets on what you (the agent) will keep watching.
+Encouraging, never preachy. No sign-off.`;
 }

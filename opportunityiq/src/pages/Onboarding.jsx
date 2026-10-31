@@ -8,7 +8,7 @@ import { daysUntil, formatMoney } from "../lib/match.js";
 import { AIBadge, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import VoiceButton from "../components/VoiceButton.jsx";
 
-const blankGoal = () => ({ id: `g-${Date.now()}`, type: "holiday", title: "", wish: "", budget: "", when: new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10), location: "", prefs: [] });
+const blankGoal = () => ({ id: `g-${Date.now()}`, type: "holiday", title: "", wish: "", budget: "", when: new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10), location: "", prefs: [], created: new Date().toISOString().slice(0, 10) });
 
 function whenText(date) {
   const d = daysUntil(date);

@@ -4,6 +4,7 @@ import { findsFor } from "../lib/geo.js";
 import { priceOf } from "../lib/match.js";
 import { aiErrorText, briefingPrompt, getAI, goalsFromText, useAI } from "../lib/ai.js";
 import { DEFAULT_PROFILE } from "../lib/store.js";
+import { planFor } from "../lib/plans.js";
 import { FitBar } from "./ui.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "./ai-ui.jsx";
 import VoiceButton from "./VoiceButton.jsx";
@@ -18,8 +19,8 @@ const EXAMPLES = [
     text: "We want to buy our first home in Perth within a year: a 3-bed house under $750k near a train line. Please keep an eye on interest rates too.",
   },
   {
-    label: "Busy weekend",
-    text: "Find me two tickets to a big concert in Perth, a used hybrid SUV under $35k in the next 2 months, and cheaper electricity bills.",
+    label: "Cut my bills",
+    text: "Cut my bills by about $1,500 a year: electricity, insurance, internet and subscriptions. Put the savings towards a holiday to Bali in 9 months under $5,000.",
   },
 ];
 
@@ -77,7 +78,7 @@ export default function AIDemo({ setProfile }) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-5 py-4">
         <div className="flex items-center gap-2">
           <Sparkle className="h-5 w-5 text-ai-cyan" />
-          <p className="font-semibold text-white">Tell me what you want. I'll watch for it 24/7.</p>
+          <p className="font-semibold text-white">Tell me your goals. I'll plan them and work on them 24/7.</p>
         </div>
         <AIBadge live={!!ai} />
       </div>
@@ -119,7 +120,7 @@ export default function AIDemo({ setProfile }) {
           ))}
         </div>
         <button type="submit" disabled={busy || !text.trim()} className="btn-ai w-full py-3 text-base">
-          <Sparkle /> {busy ? "AI is working…" : "Start watching for me"}
+          <Sparkle /> {busy ? "AI is working…" : "Make my plan"}
         </button>
       </form>
 
@@ -130,7 +131,7 @@ export default function AIDemo({ setProfile }) {
           {result && (
             <>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-ai-violet">
-                {result.profile.goals.length} goal{result.profile.goals.length > 1 ? "s" : ""} I'm now watching
+                {result.profile.goals.length} goal{result.profile.goals.length > 1 ? "s" : ""} I'm now working on
               </p>
               <ul className="space-y-3">
                 {result.best.map(({ goal, op, score }) => (
@@ -143,6 +144,9 @@ export default function AIDemo({ setProfile }) {
                         <p className="truncate text-sm font-semibold text-white">{goal.title}</p>
                         <p className="truncate text-xs text-slate-400">
                           Best find: {op.title} · {priceOf(op)}
+                        </p>
+                        <p className="truncate text-xs text-ai-cyan">
+                          Step 1: {planFor(goal)[0].title} ({planFor(goal)[0].who === "agent" ? "I'll do it" : "you"})
                         </p>
                       </div>
                       <span className="shrink-0 rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-200">{op.tag}</span>
@@ -171,7 +175,7 @@ export default function AIDemo({ setProfile }) {
                 }}
                 className="btn-primary shrink-0"
               >
-                Open my assistant →
+                Open my plan →
               </button>
             </div>
           )}

@@ -3,11 +3,12 @@ import { go } from "../lib/router.js";
 import { findsFor, homeOf } from "../lib/geo.js";
 import { daysUntil, priceOf, searchFinds } from "../lib/match.js";
 import { aiErrorText, askPrompt, briefingPrompt, splitIds, useAI } from "../lib/ai.js";
-import { FitBar } from "../components/ui.jsx";
+import { FitBar, ProgressRing } from "../components/ui.jsx";
+import { billSavings, dueText, goalProgress, isComplete, planFor, todaysActions } from "../lib/plans.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 
-const EXAMPLES = ["Where should we eat tonight?", "Is now a good time to book Bali?", "Which phone should I buy?"];
+const EXAMPLES = ["What should I do first this week?", "Is now a good time to book Bali?", "Which bill should I switch first?"];
 
 function greeting() {
   const h = new Date().getHours();
@@ -38,7 +39,7 @@ export function boundsOf(items) {
   return [w, s, e, n];
 }
 
-export default function Dashboard({ profile, pipeline }) {
+export default function Dashboard({ profile, pipeline, progress, goalActions }) {
   const ai = useAI();
   const [goalFilter, setGoalFilter] = useState("all");
   const [kind, setKind] = useState("all");
@@ -77,7 +78,7 @@ export default function Dashboard({ profile, pipeline }) {
   const getBriefing = async () => {
     setBriefing(true);
     setBrief("");
-    await run(briefingPrompt(profile, bestPerGoal), ({ text }) => setBrief(text));
+    await run(briefingPrompt(profile, bestPerGoal, actions), ({ text }) => setBrief(text));
     setBriefing(false);
   };
 
@@ -103,32 +104,78 @@ export default function Dashboard({ profile, pipeline }) {
     setAsking(false);
   };
 
-  const watches = scored.filter((s) => s.op.kind === "watch").length;
+  const actions = todaysActions(profile.goals, progress, (g) => bestPerGoal.find((s) => s.goal.id === g.id) || null);
+  const stepsDone = profile.goals.reduce((n, g) => n + planFor(g, progress[g.id]).filter((s) => s.done).length, 0);
+  const found = profile.goals.filter((g) => g.type === "money").reduce((n, g) => n + billSavings(g, progress[g.id]).perYear, 0);
+  const savedTotal = profile.goals.reduce((n, g) => n + (g.type === "money" ? 0 : progress[g.id]?.saved || 0), 0);
+  const [showAll, setShowAll] = useState(false);
 
   return (
     <main className="section py-8">
-      <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Your personal assistant</p>
+      <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Your goal agent</p>
       <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-        {greeting()}{profile.name ? `, ${profile.name}` : ""}. Here's what changed for your goals.
+        {greeting()}{profile.name ? `, ${profile.name}` : ""}. Here's what to do today.
       </h1>
 
       <div className="mt-6 grid grid-cols-3 gap-3">
         {[
-          [profile.goals.length, "Goals watched"],
-          [scored.length, "Finds so far"],
-          [watches, "Things I'm tracking"],
+          [`${profile.goals.filter((g) => !isComplete(g, progress[g.id])).length}`, "Goals in progress"],
+          [stepsDone, "Steps done"],
+          [found ? `$${found.toLocaleString("en-AU")}/yr` : `$${savedTotal.toLocaleString("en-AU")}`, found ? "Money found on bills" : "Saved for goals"],
         ].map(([n, l]) => (
           <div key={l} className="card p-4 text-center">
-            <p className="text-3xl font-extrabold">{n}</p>
+            <p className="text-2xl font-extrabold sm:text-3xl">{n}</p>
             <p className="mt-1 text-xs text-slate-500 sm:text-sm">{l}</p>
           </div>
         ))}
       </div>
 
+      <section className="mt-8" aria-labelledby="today-h">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="today-h" className="text-lg font-bold">Today's actions</h2>
+          <span className="text-xs text-slate-500">The agent handles the rest 🤖</span>
+        </div>
+        {actions.length ? (
+          <ul className="mt-3 space-y-2">
+            {actions.slice(0, showAll ? 20 : 5).map((a) => (
+              <li key={a.key} className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-ai-cyan">
+                  {a.kind === "save" ? <span aria-hidden="true">💰</span> : <IndustryIcon id={a.goal.type} className="h-6 w-6" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold">{a.text}</p>
+                    <span className="chip">{a.goal.title}</span>
+                    {a.kind === "step" && <span className={`text-xs ${a.urgency < 0 ? "font-semibold text-amber-700" : "text-slate-500"}`}>{dueText(a.step.due)}</span>}
+                  </div>
+                  <p className="mt-0.5 text-sm text-slate-600">{a.hint}</p>
+                  {a.kind === "step" && a.find && a.find.op.kind === "option" && <p className="mt-1 text-xs text-brand-700">Best find: {a.find.op.title} · {priceOf(a.find.op)} · {a.find.op.tag}</p>}
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  {a.kind === "save" ? (
+                    <button onClick={() => goalActions.addSaved(a.goal.id, a.amount)} className="btn-primary px-4 py-2">I've saved ${a.amount.toLocaleString("en-AU")}</button>
+                  ) : (
+                    <button onClick={() => goalActions.toggleStep(a.goal.id, a.step.id)} className="btn-primary px-4 py-2">Done ✓</button>
+                  )}
+                  <button onClick={() => go(`/goal/${a.goal.id}`)} className="btn-ghost px-4 py-2">Open</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="card mt-3 p-6 text-center text-slate-500">All caught up 🎉 Nothing to do today. I'm still watching.</p>
+        )}
+        {actions.length > 5 && (
+          <button onClick={() => setShowAll((x) => !x)} className="mt-3 text-sm font-medium text-brand-600">{showAll ? "Show fewer" : `Show all ${actions.length} actions`}</button>
+        )}
+      </section>
+
       <h2 className="mt-8 text-lg font-bold">Your goals</h2>
-      <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {profile.goals.map((g) => {
-          const best = bestPerGoal.find((s) => s.goal.id === g.id);
+          const prog = progress[g.id];
+          const pctDone = Math.round(goalProgress(g, prog) * 100);
+          const next = planFor(g, prog).find((s) => !s.done);
           return (
             <li key={g.id}>
               <button onClick={() => go(`/goal/${g.id}`)} className="card flex h-full w-full flex-col p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-300">
@@ -136,19 +183,16 @@ export default function Dashboard({ profile, pipeline }) {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-ai-cyan">
                     <IndustryIcon id={g.type} className="h-6 w-6" />
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{g.title}</p>
                     <p className="text-xs text-slate-500">{countdown(g.when)}</p>
                   </div>
+                  <ProgressRing value={pctDone} size={48} label={`${g.title} progress`} />
                 </div>
-                {best ? (
-                  <p className="mt-3 text-sm text-slate-700">
-                    <span className="font-medium">{best.op.tag}:</span> {best.op.title}
-                  </p>
-                ) : (
-                  <p className="mt-3 text-sm text-slate-500">Watching. Nothing new yet.</p>
-                )}
-                <span className="mt-auto pt-3 text-xs font-medium text-brand-600">Open goal →</span>
+                <p className="mt-3 text-sm text-slate-700">
+                  {next ? <><span className="font-medium">Next:</span> {next.title} <span className="text-slate-500">({next.who === "agent" ? "agent" : "you"})</span></> : "All steps done 🎉"}
+                </p>
+                <span className="mt-auto pt-3 text-xs font-medium text-brand-600">Open plan →</span>
               </button>
             </li>
           );
@@ -182,13 +226,13 @@ export default function Dashboard({ profile, pipeline }) {
         )}
 
         <div className="mt-6 border-t border-white/10 pt-5">
-          <label htmlFor="ask" className="text-sm font-semibold text-white">Ask your assistant</label>
+          <label htmlFor="ask" className="text-sm font-semibold text-white">Ask your agent</label>
           <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); ask(); }}>
             <input
               id="ask"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={ai ? "Ask anything about your goals" : "Search your finds, e.g. thai, villa, camera"}
+              placeholder={ai ? "Ask anything about your goals" : "Search your finds, e.g. thai, villa, bills"}
               className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-ai-cyan focus:outline-none focus:ring-2 focus:ring-ai-cyan/30"
             />
             {ai && <button type="submit" disabled={asking || !query.trim()} className="btn-ai shrink-0 px-4">{asking ? "…" : "Ask"}</button>}
@@ -207,7 +251,7 @@ export default function Dashboard({ profile, pipeline }) {
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-bold">
-          {visible.length} finds
+          {visible.length} things I found
           {aiIds && <span className="ml-2 align-middle text-xs font-medium text-violet-600">picked by AI · <button onClick={() => setAiIds(null)} className="underline">show all</button></span>}
         </h2>
         <div className="flex flex-wrap gap-2 text-sm">

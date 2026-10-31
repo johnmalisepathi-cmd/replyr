@@ -3,10 +3,11 @@ import { useState } from "react";
 const PLUS_PER_YEAR = 9.99 * 12;
 const money = (n) => `$${Math.round(n).toLocaleString("en-AU")}`;
 
-// Assumptions, shown to the visitor: booking travel at the right time saves
+// Assumptions, shown to the visitor: cheaper bills save ~12%, booking travel at the right time saves
 // ~12%, buying tech in a sale saves ~10%, a better home-loan rate saves
 // 0.25% a year on the balance.
 const FIELDS = [
+  { id: "bills", label: "Bills a year (power, insurance, phone, internet, subscriptions)", min: 0, max: 15000, step: 250, fmt: (v) => money(v) },
   { id: "trip", label: "Holidays you book a year (total spend)", min: 0, max: 20000, step: 500, fmt: (v) => money(v) },
   { id: "tech", label: "Big purchases a year (phones, laptops, TVs)", min: 0, max: 10000, step: 250, fmt: (v) => money(v) },
   { id: "loan", label: "Home loan you have or plan", min: 0, max: 1500000, step: 25000, fmt: (v) => money(v) },
@@ -14,13 +15,14 @@ const FIELDS = [
 ];
 
 export default function RoiCalculator() {
-  const [v, setV] = useState({ trip: 4000, tech: 1500, loan: 600000, hours: 3 });
+  const [v, setV] = useState({ bills: 8000, trip: 4000, tech: 1500, loan: 600000, hours: 3 });
 
+  const billCut = v.bills * 0.12;
   const travel = v.trip * 0.12;
   const gadgets = v.tech * 0.1;
   const rate = v.loan * 0.0025;
   const hoursSaved = Math.max(0, v.hours - 0.25) * 52;
-  const total = travel + gadgets + rate;
+  const total = billCut + travel + gadgets + rate;
   const multiple = total / PLUS_PER_YEAR;
 
   return (
@@ -50,6 +52,7 @@ export default function RoiCalculator() {
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ai-cyan">You could save per year</p>
         <p className="mt-2 text-5xl font-extrabold tabular-nums text-white">{money(total)}</p>
         <dl className="mt-5 space-y-2 text-sm">
+          <div className="flex justify-between gap-3"><dt className="text-slate-400">Cheaper bills</dt><dd className="tabular-nums text-slate-100">{money(billCut)}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-slate-400">Booking travel at the right time</dt><dd className="tabular-nums text-slate-100">{money(travel)}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-slate-400">Buying in the right sale</dt><dd className="tabular-nums text-slate-100">{money(gadgets)}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-slate-400">A 0.25% better home-loan rate</dt><dd className="tabular-nums text-slate-100">{money(rate)}</dd></div>
@@ -58,7 +61,7 @@ export default function RoiCalculator() {
         <p className="mt-5 rounded-xl bg-brand-500/15 px-4 py-3 text-center font-semibold text-brand-200">
           {multiple >= 1 ? `About ${multiple >= 10 ? Math.round(multiple) : multiple.toFixed(1)}× what it costs, plus ${Math.round(hoursSaved)} hours back` : "Mostly time saved. Try the free plan first."}
         </p>
-        <p className="mt-3 text-xs text-slate-500">Your own estimate, using typical savings (12% on travel, 10% on tech, 0.25% on a loan). Not financial advice.</p>
+        <p className="mt-3 text-xs text-slate-500">Your own estimate, using typical savings (12% on bills and travel, 10% on tech, 0.25% on a loan). Not financial advice.</p>
       </div>
     </div>
   );

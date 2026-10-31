@@ -13,7 +13,7 @@ const NEEDS_PROFILE = ["/dashboard", "/pipeline", "/goal"];
 
 export default function App() {
   const route = useRoute();
-  const { profile, setProfile, pipeline, setStage } = useAppState();
+  const { profile, setProfile, pipeline, setStage, progress, goalActions } = useAppState();
   const blocked = !profile && NEEDS_PROFILE.some((p) => route.startsWith(p));
 
   // App screens need goals — send first-time visitors to add some.
@@ -24,10 +24,10 @@ export default function App() {
   let page;
   if (blocked) page = null;
   else if (route === "/onboarding") page = <Onboarding profile={profile} setProfile={setProfile} />;
-  else if (route === "/dashboard") page = <Dashboard profile={profile} pipeline={pipeline} />;
+  else if (route === "/dashboard") page = <Dashboard profile={profile} pipeline={pipeline} progress={progress} goalActions={goalActions} />;
   else if (route === "/pipeline") page = <Pipeline profile={profile} pipeline={pipeline} setStage={setStage} />;
   else if (route.startsWith("/goal/"))
-    page = <Goal id={route.split("/")[2]} profile={profile} pipeline={pipeline} setStage={setStage} />;
+    page = <Goal key={route} id={route.split("/")[2]} profile={profile} pipeline={pipeline} setStage={setStage} progress={progress} goalActions={goalActions} />;
   else if (route === "/privacy") page = <Privacy />;
   else page = <Home hasProfile={!!profile} setProfile={setProfile} />;
 

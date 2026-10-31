@@ -6,13 +6,13 @@ import { useEffect, useRef } from "react";
 const SOURCES = [
   { x: 0.12, label: "Flight prices", short: "Flights" },
   { x: 0.37, label: "Property listings", short: "Homes" },
-  { x: 0.63, label: "Store prices", short: "Stores" },
+  { x: 0.63, label: "Your bills", short: "Bills" },
   { x: 0.88, label: "Restaurant reviews", short: "Food" },
 ];
 const OUTPUTS = [
   { x: 0.18, big: "−22%", label: "Bali flights", tone: "text-brand-300" },
-  { x: 0.5, big: "New", label: "3-bed listing", tone: "text-amber-300" },
-  { x: 0.82, big: "4.7★", label: "Thai, open now", tone: "text-sky-300" },
+  { x: 0.5, big: "$990", label: "Bills cut / yr", tone: "text-amber-300" },
+  { x: 0.82, big: "4 of 6", label: "Bali steps done", tone: "text-sky-300" },
 ];
 const SRC_Y = 0.12;
 const CORE_Y = 0.5;
@@ -150,7 +150,7 @@ export default function AICore() {
   }, []);
 
   return (
-    <div className="relative aspect-[5/4] w-full max-w-full" aria-label="AI engine diagram: prices, listings and reviews flow into the AI core, which sends you alerts" role="img">
+    <div className="relative aspect-[5/4] w-full max-w-full" aria-label="AI engine diagram: prices, listings and your bills flow into the AI agent, which moves your goals forward" role="img">
       <canvas ref={ref} className="absolute inset-0 h-full w-full" />
       {SOURCES.map((s) => (
         <span

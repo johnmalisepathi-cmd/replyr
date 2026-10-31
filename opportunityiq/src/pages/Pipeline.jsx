@@ -9,8 +9,8 @@ export default function Pipeline({ profile, pipeline, setStage }) {
 
   return (
     <main className="section py-8">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My plan</h1>
-      <p className="mt-1 text-slate-600">Everything you've saved, from first look to booked and done.</p>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Saved finds</h1>
+      <p className="mt-1 text-slate-600">Everything you've saved for your goals, from first look to booked and done.</p>
 
       {!tracked.length ? (
         <div className="card mt-8 p-10 text-center">

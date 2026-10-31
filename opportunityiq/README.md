@@ -1,20 +1,24 @@
-# OpportunityIQ — your personal AI assistant
+# OpportunityIQ — your AI goal agent
 
-Tell it what you want: a holiday in 6 months, a new phone, your first home,
-dinner tonight. OpportunityIQ turns your words into goals, watches prices,
-listings, interest rates and places 24/7, and tells you the right moment to act.
+Tell it your goal: a holiday in 6 months, a new phone, your first home, lower
+bills, dinner tonight. OpportunityIQ makes a plan for each goal (steps, dates,
+who does what, a weekly savings amount), works on its own steps 24/7 (watching
+prices, comparing options, finding cheaper bills), tells you today's actions
+and checks in every week until the goal is done. Money it saves on bills can be
+sent straight into another goal's fund.
 
 ## What's real and what's sample
 
 | Part | Status |
 | --- | --- |
-| Website (home, goals, dashboard, goal pages, plan, map) | Real, ready to publish |
+| Website (home, goals, Today page, goal plans, savings tracker, bill savings, map) | Real, ready to publish |
+| Plans, today's actions, savings and progress (`src/lib/plans.js`) | Real rule-based logic; the AI can tailor a plan and write weekly check-ins |
 | Early-access form | Real once `VITE_WAITLIST_ENDPOINT` is set |
-| AI (understanding goals, daily briefing, ask your assistant, goal advice) | Real AI in the claude.ai preview; on your own host it needs `VITE_AI_ENDPOINT`, otherwise a keyword-based assistant answers |
+| AI (understanding goals, tailored plans, weekly check-ins, daily briefing, ask your agent, advice) | Real AI in the claude.ai preview; on your own host it needs `VITE_AI_ENDPOINT`, otherwise a keyword-based assistant answers |
 | Fit scores (`src/lib/match.js`) | Real rule-based logic, explained per find |
 | Places, prices, listings, rates, grants (`src/lib/goals.js`) | **Fictional sample data**, labelled in the UI |
 | Voice input | Uses the browser's speech recognition where available |
-| Goals and plan storage | Browser only (localStorage) |
+| Goals, plan progress and savings storage | Browser only (localStorage) |
 
 ## Run it
 

@@ -47,9 +47,9 @@ export const GOAL_TYPES = {
   },
   money: {
     label: "Money & bills",
-    watches: ["Energy plans", "Insurance renewals", "Savings rates", "Rebates and grants"],
-    example: "Cheaper electricity and a better savings rate",
-    keywords: ["bill", "bills", "electricity", "energy", "insurance", "savings", "save money", "rebate"],
+    watches: ["Energy plans", "Insurance renewals", "Phone and internet plans", "Unused subscriptions", "Savings rates"],
+    example: "Save $1,500 a year on my bills and put it towards my holiday",
+    keywords: ["bill", "bills", "electricity", "subscription", "energy", "insurance", "savings", "save money", "rebate"],
   },
 };
 
@@ -61,7 +61,20 @@ export const DEMO_GOALS = [
   { id: "g-tech", type: "tech", title: "New phone", wish: "A phone with a great camera and long battery, under $1,200", budget: 1200, when: d(30), location: "Perth", prefs: ["camera", "battery"] },
   { id: "g-home", type: "home", title: "First home in Perth", wish: "3-bedroom house in Perth's eastern suburbs, under $750k, near a train line", budget: 750000, when: d(365), location: "Perth", prefs: ["3-bed", "train"] },
   { id: "g-dining", type: "dining", title: "Dinner tonight", wish: "Spicy Thai near the city tonight, about $40 each", budget: 40, when: d(0), location: "Perth CBD", prefs: ["thai", "spicy"] },
+  { id: "g-money", type: "money", title: "Cut my bills", wish: "Save $1,500 a year on electricity, insurance, phone and subscriptions, and put it towards Bali", budget: 1500, when: d(45), location: "Perth", prefs: ["electricity", "insurance", "phone", "subscriptions"], fundsGoal: "g-holiday" },
 ];
+
+// When each demo goal was started, so the plans and savings have some history.
+export const DEMO_CREATED = { "g-holiday": d(-30), "g-tech": d(-10), "g-home": d(-120), "g-dining": d(0), "g-money": d(-7) };
+
+// Demo progress: steps already done and money already saved per goal.
+export const DEMO_PROGRESS = {
+  "g-holiday": { done: ["s0", "s1"], saved: 1200 },
+  "g-tech": { done: ["s0"], saved: 450 },
+  "g-home": { done: ["s0", "s1"], saved: 52000 },
+  "g-dining": { done: ["s0"] },
+  "g-money": { done: ["s0"], switched: ["f-m1"] },
+};
 
 // kind: "option" = available now. "watch" = something the AI is tracking
 // for you (a price drop, a rate decision, a sale coming).
@@ -112,6 +125,10 @@ export const FINDS = [
 
   // Money & bills
   f({ id: "f-m1", type: "money", kind: "option", title: "Switch energy plan: save about $310 a year", location: "Perth", region: "Western Australia", lat: -31.93, lng: 115.87, value: 310, priceLabel: "Save ~$310/yr", rating: null, tag: "5-minute switch", tags: ["electricity", "energy", "bills"], facts: { Based: "Your sample usage", "No exit fee": "Yes" } }),
+  f({ id: "f-m3", type: "money", kind: "option", title: "Car and home insurance: same cover, about $260 less", location: "Online", region: "Western Australia", lat: -31.91, lng: 115.89, value: 260, priceLabel: "Save ~$260/yr", rating: 4.5, tag: "Renews in 3 weeks", tags: ["insurance", "bills"], facts: { Cover: "Same excess and cover as now (sample)", When: "Switch before your renewal date" } }),
+  f({ id: "f-m4", type: "money", kind: "option", title: "Phone plan: same data for $18 a month less", location: "Online", region: "Western Australia", lat: -31.97, lng: 115.82, value: 216, priceLabel: "Save ~$216/yr", rating: 4.3, tag: "Keep your number", tags: ["phone", "mobile", "bills"], facts: { Data: "Same 60 GB a month (sample)", Contract: "No lock-in" } }),
+  f({ id: "f-m5", type: "money", kind: "option", title: "2 streaming subscriptions you haven't used in 60 days", location: "Your accounts", region: "Western Australia", lat: -31.99, lng: 115.86, value: 324, priceLabel: "Save ~$324/yr", rating: null, tag: "Cancel in 2 minutes", tags: ["subscriptions", "bills"], facts: { Found: "Two services, $27 a month together (sample)", Tip: "Pause instead of cancel if you might come back" } }),
+  f({ id: "f-m6", type: "money", kind: "option", title: "Internet: faster plan for $15 a month less", location: "Online", region: "Western Australia", lat: -31.92, lng: 115.84, value: 180, priceLabel: "Save ~$180/yr", rating: 4.4, tag: "Faster too", tags: ["internet", "bills"], facts: { Speed: "Faster than now (sample)", Contract: "Month to month" } }),
   f({ id: "f-m2", type: "money", kind: "option", title: "Savings account at 5.1% (sample rate)", location: "Online", region: "Western Australia", lat: -31.96, lng: 115.84, value: 5.1, priceLabel: "5.1% p.a. (sample)", rating: null, tag: "Higher than yours", tags: ["savings", "rate"], facts: { Conditions: "Deposit $1,000 a month (sample)" } }),
 ];
 

@@ -65,9 +65,9 @@ export function Nav({ route, hasProfile }) {
         <Logo compact={inApp} />
         {inApp ? (
           <nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
-            {link("/dashboard", "Dashboard")}
-            {link("/pipeline", "My plan")}
+            {link("/dashboard", "Today")}
             {link("/onboarding", "Goals")}
+            {link("/pipeline", "Saved")}
           </nav>
         ) : (
           <div className="flex items-center gap-2">
@@ -106,6 +106,21 @@ export function FitBar({ score, dark = false }) {
   );
 }
 
+// Circular progress for a goal (0-100).
+export function ProgressRing({ value, size = 56, dark = false, label }) {
+  const r = 15.5;
+  const c = 2 * Math.PI * r;
+  return (
+    <span className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }} role="meter" aria-label={label} aria-valuenow={value} aria-valuemin={0} aria-valuemax={100}>
+      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="18" cy="18" r={r} fill="none" strokeWidth="3.5" className={dark ? "stroke-white/10" : "stroke-slate-100"} />
+        <circle cx="18" cy="18" r={r} fill="none" strokeWidth="3.5" strokeLinecap="round" stroke={value >= 100 ? "#10b981" : "#8bc34a"} strokeDasharray={`${(c * Math.min(100, value)) / 100} ${c}`} className="transition-all duration-500" />
+      </svg>
+      <span className={`absolute text-[11px] font-bold tabular-nums ${dark ? "text-white" : "text-slate-800"}`} style={{ fontSize: size / 4.6 }}>{value >= 100 ? "✓" : `${value}%`}</span>
+    </span>
+  );
+}
+
 export function FitBadge({ score }) {
   const f = fitLabel(score);
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${f.tone}`}>{f.text} · {score}%</span>;
@@ -118,7 +133,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-3 max-w-xs text-sm">
-            Your personal AI assistant. Tell it what you want, and it watches the world for you, 24/7.
+            Your AI goal agent. Tell it a goal, and it plans it, watches it and keeps you moving until it's done.
           </p>
         </div>
         <div className="text-sm">
