@@ -66,7 +66,9 @@ function cluster(points, radius) {
 
 // colorBy "fit": pins coloured by the viewer's fit score (dashboard).
 // colorBy "kind": available options vs things being watched (home page showcase).
-export default function WorldMap({ items, home, radiusKm, onOpen, initialView = "World", title = "Goal map", colorBy = "fit" }) {
+// status: "searching" while a live search runs, "live" once its results are shown,
+// "example" for sample data. Only "searching" shows the sweeping animation.
+export default function WorldMap({ items, home, radiusKm, onOpen, initialView = "World", title = "Goal map", colorBy = "fit", status = "example", statusNote = "" }) {
   const [view, setView] = useState(initialView);
   const [vb, setVb] = useState(() => viewBoxFor(initialView));
   const [selected, setSelected] = useState(null);
@@ -138,7 +140,8 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
         <div className="min-w-0">
           <p className="font-semibold text-white">{title}</p>
           <p className="text-xs text-slate-400">
-            {items.length} finds · {countries} {countries === 1 ? "country" : "countries"} · {inView} in view · example data
+            {items.length} {status === "live" ? "places" : "finds"} · {countries} {countries === 1 ? "country" : "countries"} · {inView} in view
+            {status === "example" && " · example data"}
           </p>
         </div>
         <div className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1" role="tablist" aria-label="Map region">
@@ -212,14 +215,19 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
             </g>
           )}
         </svg>
-        <div className="map-sweep pointer-events-none absolute inset-y-0 w-1/4" aria-hidden="true" />
-        <span className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-navy-950/80 px-2.5 py-1 text-[11px] font-medium text-ai-cyan">
-          <span className="h-1.5 w-1.5 animate-glow rounded-full bg-ai-cyan" /> AI scanning sources
-        </span>
+        {status === "searching" && <div className="map-sweep pointer-events-none absolute inset-y-0 w-1/4" aria-hidden="true" />}
+        {status !== "example" && (
+          <span className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-navy-950/80 px-2.5 py-1 text-[11px] font-medium text-ai-cyan" role="status">
+            <span className={`h-1.5 w-1.5 rounded-full ${status === "searching" ? "animate-glow bg-ai-cyan" : "bg-brand-400"}`} />
+            {status === "searching" ? "Searching the web…" : statusNote || "Live results"}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 px-4 py-2.5 text-[11px] text-slate-400">
-        {colorBy === "kind" ? (
+        {status === "live" ? (
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-brand-400" /> Found on the web: tap a pin to view &amp; book</span>
+        ) : colorBy === "kind" ? (
           <>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-ai-cyan" /> Available now</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border border-dashed border-ai-violet" /> Watching for you</span>
@@ -266,7 +274,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
           <div className="min-w-0">
             <p className="truncate font-semibold text-white">{selected.op.title}</p>
             <p className="text-xs text-slate-400">
-              {selected.op.location} · {countryOf(selected.op.region)} · {priceOf(selected.op)} · {colorBy === "fit" ? `${formatKm(selected.op.distanceKm, home?.units)} from you` : selected.op.tag}
+              {[selected.op.location, countryOf(selected.op.region), priceOf(selected.op)].filter(Boolean).join(" · ")} · {colorBy === "fit" ? `${formatKm(selected.op.distanceKm, home?.units)} from you` : selected.op.tag}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
@@ -275,7 +283,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
             ) : (
               <span className="text-xs font-semibold" style={{ color: kindColor(selected.op) }}>{selected.op.kind === "watch" ? "Watching for you" : "Available now"}</span>
             )}
-            <button onClick={() => onOpen(selected.op)} className="btn-primary px-4 py-2">Open →</button>
+            <button onClick={() => onOpen(selected.op)} className="btn-primary px-4 py-2">{selected.op.url ? "View & book →" : "Open →"}</button>
             <button onClick={() => setSelected(null)} className="text-xs text-slate-400 hover:text-white" aria-label="Close">✕</button>
           </div>
         </div>

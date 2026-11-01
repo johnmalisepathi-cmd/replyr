@@ -41,8 +41,15 @@ ${describe(goal, near)}
 Find 3 to 5 real, specific options available now (for example hotels or flights for a trip, restaurants open near them, products in stock at stores that sell in ${country(near)}, homes or cars for sale, energy plans). For anything local (restaurants, shops, homes, cars, bills) search near where they live; for travel, search the destination, with flights from their nearest city. Show prices in ${cur(near)} where the site does, otherwise as published. Prefer options that fit the budget and what matters to them, and the official provider or booking page for each.
 
 Reply with ONLY a JSON array, no other text:
-[{"title": string (max 70 chars), "location": string (suburb, city or store/website name), "price": string or null (as published, e.g. "From $189/night" or "$1,099"), "why": string (one short sentence on why it fits), "url": string (the exact page URL from your search results where they can view or book it)}]
+[{"title": string (max 70 chars), "location": string (suburb, city or store/website name), "price": string or null (as published, e.g. "From $189/night" or "$1,099"), "why": string (one short sentence on why it fits), "url": string (the exact page URL from your search results where they can view or book it), "lat": number or null, "lng": number or null (approximate latitude/longitude of the place, its city, or the destination; null for online-only stores)}]
 Only include options whose URL appeared in your search results. Write in ${english(near)}.`;
+}
+
+// Keeps a latitude/longitude pair only if both are real numbers in range.
+function coords(x) {
+  const lat = Number(x.lat);
+  const lng = Number(x.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat || lng) ? { lat, lng } : {};
 }
 
 function parseItems(text) {
@@ -64,6 +71,7 @@ function parseItems(text) {
       price: x.price ? clean(x.price, 40) : null,
       why: clean(x.why, 160),
       url: x.url.trim().slice(0, 500),
+      ...coords(x),
     }));
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { go } from "../lib/router.js";
 import { GOAL_TYPES, PLAN_STAGES } from "../lib/goals.js";
-import { findsFor, homeOf } from "../lib/geo.js";
+import { distanceKm, findsFor, homeOf } from "../lib/geo.js";
 import { monthlyRepayment, priceOf } from "../lib/match.js";
 import { advicePrompt, aiErrorText, aiPlan, canSearchLive, checkinPrompt, liveFinds, useAI } from "../lib/ai.js";
 import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
@@ -148,8 +148,7 @@ const ago = (iso) => {
 };
 
 // Real options found on the web by the AI, with links to the provider's page.
-function LiveFinds({ goal, live, near, onFound }) {
-  const [busy, setBusy] = useState(false);
+function LiveFinds({ goal, live, near, onFound, busy, setBusy }) {
   const [note, setNote] = useState("");
   const search = async () => {
     setBusy(true);
@@ -210,7 +209,8 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
   const [note, setNote] = useState("");
   const ctl = useRef(null);
   useEffect(() => () => ctl.current?.abort(), []);
-  const finds = useMemo(() => findsFor(profile).filter((s) => s.goal.id === id), [profile, id]);
+  const allFinds = useMemo(() => findsFor(profile).filter((s) => s.goal.id === id), [profile, id]);
+  const [searching, setSearching] = useState(false);
 
   if (!goal) {
     return (
@@ -220,6 +220,30 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
       </main>
     );
   }
+
+  // Examples only show when they fit this goal: a trip's examples must be in its
+  // destination; local goals (dinner, homes…) only near the person.
+  const near = homeOf(profile);
+  const fits = (s) => {
+    if (goal.type === "holiday") {
+      const where = (goal.location || "").toLowerCase().split(",")[0].trim();
+      return !!where && `${s.op.location} ${s.op.region} ${s.op.title} ${s.op.tags.join(" ")}`.toLowerCase().includes(where);
+    }
+    if (["dining", "home", "car"].includes(goal.type)) return s.op.distanceKm <= 100;
+    return true;
+  };
+  const live = canSearchLive && goal.type !== "money";
+  const finds = live ? allFinds.filter(fits) : allFinds;
+  // Live places with a location, shaped like finds so the map can pin them.
+  const livePoints = (prog.live?.items || [])
+    .filter((it) => Number.isFinite(it.lat) && Number.isFinite(it.lng))
+    .map((it, i) => ({
+      op: { id: `live-${i}`, title: it.title, location: it.location || "", region: "", lat: it.lat, lng: it.lng, priceLabel: it.price, kind: "option", tag: "Live", url: it.url, distanceKm: Math.round(distanceKm(near, it) * 10) / 10 },
+      score: 90,
+      goal,
+    }));
+  const mapItems = livePoints.length ? livePoints : finds;
+  const mapStatus = searching ? "searching" : livePoints.length ? "live" : "example";
 
   const steps = planFor(goal, prog);
   const savings = goal.type === "money" ? null : savingsStatus(goal, prog);
@@ -303,7 +327,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
           {canSearchLive && goal.type !== "money" && (
-            <LiveFinds goal={goal} live={prog.live} near={{ label: homeOf(profile).city, ...currentLocale() }} onFound={(r) => goalActions.setLive(goal.id, r)} />
+            <LiveFinds goal={goal} live={prog.live} near={{ label: near.city, ...currentLocale() }} onFound={(r) => goalActions.setLive(goal.id, r)} busy={searching} setBusy={setSearching} />
           )}
 
           {/* THE PLAN */}
@@ -383,11 +407,20 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
 
           {["dining", "home", "tech", "car"].includes(goal.type) && <LocationCard profile={profile} setProfile={setProfile} compact />}
 
-          {goal.type !== "money" && finds.length > 0 && (
-            <WorldMap items={finds} home={homeOf(profile)} initialView={boundsOf(finds)} onOpen={(op) => document.getElementById(`find-${op.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} title={`${goal.title}: on the map`} />
+          {goal.type !== "money" && (mapItems.length > 0 || searching) && (
+            <WorldMap
+              key={`${mapStatus}-${mapItems.length}`}
+              items={mapItems}
+              home={near}
+              initialView={mapItems.length ? boundsOf(mapItems, goal.type === "holiday" ? [14, 10] : [1.2, 0.8]) : "World"}
+              onOpen={(op) => (op.url ? window.open(op.url, "_blank", "noopener,noreferrer") : document.getElementById(`find-${op.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }))}
+              title={`${goal.title}: on the map`}
+              status={mapStatus}
+              statusNote={prog.live?.at ? `Updated ${ago(prog.live.at)} · ${livePoints.length} ${livePoints.length === 1 ? "place" : "places"}` : ""}
+            />
           )}
 
-          <h2 className="text-lg font-bold">{canSearchLive && goal.type !== "money" ? "Example finds" : "What I found"}</h2>
+          {(!live || finds.length > 0) && <h2 className="text-lg font-bold">{live ? "Example finds" : "What I found"}</h2>}
           <ul className="space-y-4">
             {finds.map(({ op, score, reasons, gaps }) => (
               <li key={op.id} id={`find-${op.id}`} className="card scroll-mt-24 p-5">
@@ -423,7 +456,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
                 </div>
               </li>
             ))}
-            {!finds.length && <li className="card p-8 text-center text-slate-500">I'm watching for this. Nothing new yet.</li>}
+            {!finds.length && !live && <li className="card p-8 text-center text-slate-500">I'm watching for this. Nothing new yet.</li>}
           </ul>
         </div>
 

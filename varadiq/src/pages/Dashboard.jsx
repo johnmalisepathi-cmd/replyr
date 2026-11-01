@@ -27,7 +27,8 @@ export function countdown(date) {
 }
 
 // Bounds that fit a set of finds, for the map's first view.
-export function boundsOf(items) {
+// minSpan: the smallest view in degrees [longitude, latitude] (wider for trips, so cities are recognisable).
+export function boundsOf(items, minSpan = [1.2, 0.8]) {
   if (!items.length) return "World";
   const lngs = items.map((s) => s.op.lng);
   const lats = items.map((s) => s.op.lat);
@@ -36,8 +37,8 @@ export function boundsOf(items) {
     const half = Math.max((hi - lo) / 2 * 1.3, min / 2);
     return [mid - half, mid + half];
   };
-  const [w, e] = pad(Math.min(...lngs), Math.max(...lngs), 1.2);
-  const [s, n] = pad(Math.min(...lats), Math.max(...lats), 0.8);
+  const [w, e] = pad(Math.min(...lngs), Math.max(...lngs), minSpan[0]);
+  const [s, n] = pad(Math.min(...lats), Math.max(...lats), minSpan[1]);
   return [w, s, e, n];
 }
 
