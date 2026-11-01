@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { go } from "../lib/router.js";
-import { findsFor, homeOf } from "../lib/geo.js";
+import { findsFor, fitsGoal, homeOf } from "../lib/geo.js";
 import { daysUntil, priceOf, searchFinds } from "../lib/match.js";
 import { aiErrorText, askPrompt, briefingPrompt, splitIds, useAI } from "../lib/ai.js";
 import { FitBar, ProgressRing } from "../components/ui.jsx";
@@ -59,7 +59,7 @@ export default function Dashboard({ user, profile, setProfile, pipeline, progres
   useEffect(() => () => ctl.current?.abort(), []);
 
   const scored = useMemo(() => findsFor(profile), [profile]);
-  const bestPerGoal = profile.goals.map((g) => scored.find((s) => s.goal.id === g.id)).filter(Boolean);
+  const bestPerGoal = profile.goals.map((g) => scored.find((s) => s.goal.id === g.id && fitsGoal(s))).filter(Boolean);
 
   const visible = useMemo(() => {
     const ids = ai ? (aiIds ? new Set(aiIds) : null) : new Set(searchFinds(scored.map((s) => s.op), query).map((o) => o.id));
@@ -108,7 +108,15 @@ export default function Dashboard({ user, profile, setProfile, pipeline, progres
     setAsking(false);
   };
 
-  const actions = todaysActions(profile.goals, progress, (g) => bestPerGoal.find((s) => s.goal.id === g.id) || null);
+  // The best thing to show for a goal: the person's pick, else the top live
+  // result from the web, else a sample only if it suits the goal.
+  const bestFor = (g) => {
+    const p = progress[g.id] || {};
+    const real = p.pick || p.live?.items?.[0];
+    if (real) return { real: true, label: p.pick ? "Your pick" : "Live find", op: { title: real.title, price: real.price, kind: "option" } };
+    return bestPerGoal.find((s) => s.goal.id === g.id) || null;
+  };
+  const actions = todaysActions(profile.goals, progress, bestFor);
   const stepsDone = profile.goals.reduce((n, g) => n + planFor(g, progress[g.id]).filter((s) => s.done).length, 0);
   const found = profile.goals.filter((g) => g.type === "money").reduce((n, g) => n + billSavings(g, progress[g.id]).perYear, 0);
   const savedTotal = profile.goals.reduce((n, g) => n + (g.type === "money" ? 0 : progress[g.id]?.saved || 0), 0);
@@ -165,7 +173,11 @@ export default function Dashboard({ user, profile, setProfile, pipeline, progres
                     {a.kind === "step" && <span className={`text-xs ${a.urgency < 0 ? "font-semibold text-amber-700" : "text-slate-500"}`}>{dueText(a.step.due)}</span>}
                   </div>
                   <p className="mt-0.5 text-sm text-slate-600">{a.hint}</p>
-                  {a.kind === "step" && a.find && a.find.op.kind === "option" && <p className="mt-1 text-xs text-brand-700">Best find: {a.find.op.title} · {priceOf(a.find.op)} · {a.find.op.tag}</p>}
+                  {a.kind === "step" && a.find && a.find.op.kind === "option" && (
+                    <p className="mt-1 text-xs text-brand-700">
+                      {a.find.real ? `${a.find.label}: ${[a.find.op.title, a.find.op.price].filter(Boolean).join(" · ")}` : `Sample find: ${a.find.op.title} · ${priceOf(a.find.op)} · ${a.find.op.tag}`}
+                    </p>
+                  )}
                 </div>
                 <div className="flex shrink-0 gap-2">
                   {a.kind === "save" ? (

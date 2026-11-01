@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { go } from "../lib/router.js";
 import { GOAL_TYPES, PLAN_STAGES } from "../lib/goals.js";
-import { distanceKm, findsFor, homeOf } from "../lib/geo.js";
+import { distanceKm, findsFor, fitsGoal, homeOf } from "../lib/geo.js";
 import { monthlyRepayment, priceOf } from "../lib/match.js";
 import { advicePrompt, aiErrorText, aiPlan, canSearchLive, checkinPrompt, comparePrompt, liveFinds, useAI } from "../lib/ai.js";
 import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
@@ -311,14 +311,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
   // Examples only show when they fit this goal: a trip's examples must be in its
   // destination; local goals (dinner, homes…) only near the person.
   const near = homeOf(profile);
-  const fits = (s) => {
-    if (goal.type === "holiday") {
-      const where = (goal.location || "").toLowerCase().split(",")[0].trim();
-      return !!where && `${s.op.location} ${s.op.region} ${s.op.title} ${s.op.tags.join(" ")}`.toLowerCase().includes(where);
-    }
-    if (["dining", "home", "car"].includes(goal.type)) return s.op.distanceKm <= 100;
-    return true;
-  };
+  const fits = fitsGoal;
   const live = canSearchLive && goal.type !== "money";
   // Shopping somewhere other than home (e.g. a phone in Singapore): search there, not near home.
   const placeLc = (goal.location || "").trim().toLowerCase();

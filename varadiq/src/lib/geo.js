@@ -59,3 +59,15 @@ export function findsFor(profile) {
 }
 
 export const COUNTRY_COUNT = new Set(FINDS.map((o) => countryOf(o.region))).size;
+
+/** Whether a sample find suits its goal: a trip's must be in its destination;
+ *  local goals (dinner, homes, cars) only within 100 km of the person. */
+export function fitsGoal(s) {
+  const goal = s.goal;
+  if (goal.type === "holiday") {
+    const where = (goal.location || "").toLowerCase().split(",")[0].trim();
+    return !!where && `${s.op.location} ${s.op.region} ${s.op.title} ${(s.op.tags || []).join(" ")}`.toLowerCase().includes(where);
+  }
+  if (["dining", "home", "car"].includes(goal.type)) return s.op.distanceKm <= 100;
+  return true;
+}

@@ -100,8 +100,8 @@ export function SampleBanner() {
       <div className="section flex items-start gap-2 py-2 text-xs sm:items-center sm:text-sm">
         <Mandala size={18} glow={false} className="mt-px shrink-0 sm:mt-0" />
         <p>
-          <strong className="text-white">Early access.</strong> The AI is real. Places, prices and listings are examples while we
-          connect live data, so check with the provider before you book or buy.
+          <strong className="text-white">Early access.</strong> Live results come from the web. Samples are marked. Confirm prices
+          with the provider before you book or buy.
         </p>
       </div>
     </div>
