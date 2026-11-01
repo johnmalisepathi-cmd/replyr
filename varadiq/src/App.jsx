@@ -34,7 +34,7 @@ export default function App() {
   else if (route === "/dashboard") page = <Dashboard user={user} profile={profile} setProfile={setProfile} pipeline={pipeline} progress={progress} goalActions={goalActions} />;
   else if (route === "/pipeline") page = <Pipeline profile={profile} pipeline={pipeline} setStage={setStage} />;
   else if (route.startsWith("/goal/"))
-    page = <Goal key={route} id={route.split("/")[2]} profile={profile} setProfile={setProfile} pipeline={pipeline} setStage={setStage} progress={progress} goalActions={goalActions} />;
+    page = <Goal key={route} id={route.split("/")[2]} profile={profile} setProfile={setProfile} pipeline={pipeline} setStage={setStage} progress={progress} goalActions={goalActions} user={user} />;
   else if (route === "/privacy") page = <Privacy />;
   else if (route === "/account") page = <Account user={user} sync={sync} signOut={signOut} />;
   else page = <Home hasProfile={!!profile} setProfile={setProfile} />;

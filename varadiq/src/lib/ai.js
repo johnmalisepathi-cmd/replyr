@@ -4,6 +4,7 @@ import { REGIONS } from "./places.js";
 import { priceOf } from "./match.js";
 import { AI_ENDPOINT } from "./config.js";
 import { currentLocale, myMoney } from "./locale.js";
+import { cloudEnabled, supabase } from "./cloud.js";
 
 // One AI interface for the whole app:
 //   ai.text(prompt, { onText, signal }) -> full answer (streams through onText)
@@ -93,6 +94,12 @@ export function aiErrorText(e) {
       return "The AI is busy. Give it a minute and try again.";
     case "refused":
       return "The AI couldn't answer that. Try wording it differently.";
+    case "signin":
+      return "Sign in free to search the web live.";
+    case "daily_limit":
+      return `You've used today's ${e.limit || ""} live searches. They're back tomorrow 🌙`.replace("  ", " ");
+    case "busy_today":
+      return "Live search is very busy today. Please try again tomorrow 🌙";
     case "timeout":
       return "The web search took too long this time. Try again, or make the goal a little more specific.";
     default:
@@ -351,9 +358,17 @@ export const canSearchLive = !!FINDS_ENDPOINT;
 /** Real options found on the web for a goal. Resolves {items} or rejects {code}. */
 export async function liveFinds(goal, near) {
   if (!FINDS_ENDPOINT) throw { code: "not_granted" };
+  // Live search needs a signed-in person (it counts their daily searches).
+  const headers = { "Content-Type": "application/json" };
+  if (cloudEnabled) {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) throw { code: "signin" };
+    headers.Authorization = `Bearer ${token}`;
+  }
   const res = await fetch(FINDS_ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
       goal: { type: goal.type, title: goal.title, wish: goal.wish, budget: goal.budget, when: goal.when, location: goal.location, prefs: goal.prefs },
       near,
@@ -361,11 +376,13 @@ export async function liveFinds(goal, near) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    if (res.status === 401) throw { code: "signin" };
+    if (err.error === "daily_limit" || err.error === "busy_today") throw { code: err.error, limit: err.limit };
     throw { code: res.status === 429 ? "rate_limited" : res.status === 504 || err.error === "timeout" ? "timeout" : "upstream_error", detail: err.detail || err.error || `HTTP ${res.status}` };
   }
   const data = await res.json();
-  if (data.refused) throw { code: "refused" };
-  return { items: Array.isArray(data.items) ? data.items : [], at: new Date().toISOString() };
+  if (data.refused) throw { code: "refused", left: data.left };
+  return { items: Array.isArray(data.items) ? data.items : [], at: new Date().toISOString(), left: Number.isFinite(data.left) ? data.left : null };
 }
 
 /** Prompt: compare real options found on the web and recommend the best ones. */

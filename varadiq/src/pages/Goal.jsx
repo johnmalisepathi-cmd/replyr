@@ -10,6 +10,7 @@ import Mandala from "../components/Mandala.jsx";
 import LocationCard from "../components/LocationCard.jsx";
 import { formatKm } from "../lib/location.js";
 import { currentLocale, defaultHome, myMoney } from "../lib/locale.js";
+import { cloudEnabled } from "../lib/cloud.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import { boundsOf, countdown } from "./Dashboard.jsx";
@@ -192,8 +193,10 @@ function EditableStat({ label, shown, type, value, placeholder, onSave }) {
 // Button wording by kind of goal: trips are booked, things are bought.
 const VIEW_LABEL = { holiday: "View & book", dining: "View & book", events: "View & book", home: "View listing", career: "View & apply", money: "View plan" };
 
-function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, ai }) {
+function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, ai, user }) {
   const [note, setNote] = useState("");
+  const [left, setLeft] = useState(null);
+  const needsSignIn = cloudEnabled && !user;
   const [compare, setCompare] = useState("");
   const [comparing, setComparing] = useState(false);
   const runCompare = async () => {
@@ -211,10 +214,14 @@ function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, a
     setNote("");
     try {
       const r = await liveFinds(goal, near);
-      onFound(r);
+      setLeft(r.left);
+      const { left: _left, ...found } = r;
+      onFound(found);
       setCompare("");
       if (!r.items.length) setNote("I couldn't find good live options this time. Try again, or add more detail to the goal.");
     } catch (e) {
+      if (Number.isFinite(e?.left)) setLeft(e.left);
+      if (e?.code === "daily_limit") setLeft(0);
       setNote([aiErrorText(e), e?.detail ? `(Details: ${e.detail})` : ""].filter(Boolean).join(" "));
     }
     setBusy(false);
@@ -259,18 +266,24 @@ function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, a
           {live?.items?.length > 1 && ai && !comparing && (
             <button onClick={runCompare} className="btn-ai"><Sparkle /> {compare ? "Compare again" : "Compare these for me"}</button>
           )}
-          <button onClick={search} className={`${live?.items?.length ? "btn border border-white/20 text-white hover:bg-white/10" : "btn-ai"}`}>
-            {live?.items?.length ? "Search again" : <><Sparkle /> Search the web for this goal</>}
-          </button>
+          {needsSignIn ? (
+            <button onClick={() => go("/account")} className="btn-ai"><Sparkle /> Sign in free to search live</button>
+          ) : (
+            <button onClick={search} disabled={left === 0} className={`${live?.items?.length ? "btn border border-white/20 text-white hover:bg-white/10" : "btn-ai"} disabled:opacity-50`}>
+              {live?.items?.length ? "Search again" : <><Sparkle /> Search the web for this goal</>}
+            </button>
+          )}
         </div>
       )}
       {note && <p className="mt-3 text-xs text-amber-300">{note}</p>}
+      {needsSignIn && !note && <p className="mt-3 text-xs text-slate-400">Live search is free with an account (no password, just your email), so your finds are saved on every device.</p>}
+      {left !== null && left > 0 && !busy && <p className="mt-2 text-xs text-slate-400">{left} live {left === 1 ? "search" : "searches"} left today.</p>}
       <p className="mt-3 text-[11px] text-slate-500">Found by AI on public websites. Prices and availability can change, so confirm on the provider's site before you book or buy.</p>
     </section>
   );
 }
 
-export default function Goal({ id, profile, setProfile, pipeline, setStage, progress, goalActions }) {
+export default function Goal({ id, profile, setProfile, pipeline, setStage, progress, goalActions, user }) {
   const goal = profile.goals.find((g) => g.id === id);
   const prog = progress[id] || {};
   const ai = useAI();
@@ -440,7 +453,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
           )}
 
           {canSearchLive && goal.type !== "money" && (
-            <LiveFinds goal={goal} live={prog.live} near={{ label: near.city, ...currentLocale(), elsewhere: buyElsewhere }} onFound={(r) => goalActions.setLive(goal.id, r)} busy={searching} setBusy={setSearching} pick={prog.pick} ai={ai} onChoose={choosePick} />
+            <LiveFinds goal={goal} live={prog.live} near={{ label: near.city, ...currentLocale(), elsewhere: buyElsewhere }} onFound={(r) => goalActions.setLive(goal.id, r)} busy={searching} setBusy={setSearching} pick={prog.pick} ai={ai} onChoose={choosePick} user={user} />
           )}
 
           {/* THE PLAN */}

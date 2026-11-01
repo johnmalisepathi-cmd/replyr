@@ -14,6 +14,24 @@ const STOP_AFTER_MS = 35_000;
 const MODEL = process.env.AI_MODEL || "claude-opus-5-5";
 const MAX_CONTINUATIONS = 3;
 
+// Live search limits (supabase/limits.sql): signed-in people only, a few
+// searches each per day, and a cap for everyone together. Uses the public
+// Supabase settings; the person's own sign-in token proves who they are.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || "";
+
+/** Counts one live search for this person, or says why they can't search. */
+async function useSearch(token) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/use_live_search`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (res.status === 401 || res.status === 403) return { ok: false, reason: "signin" };
+  if (!res.ok) throw new Error(`limits check failed: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
+  return res.json();
+}
+
 const clean = (v, n = 120) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
 // The person's country, currency and spelling, as sent by the website (with safe defaults).
 const country = (near) => clean(near?.countryName, 60) || "their country";
@@ -88,6 +106,26 @@ export default async function handler(req, res) {
   const { goal, near } = req.body || {};
   if (!goal || typeof goal.title !== "string") return res.status(400).json({ error: "Missing goal" });
 
+  // Who is searching, and are they within today's limits?
+  let quota = null;
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+    if (!token) return res.status(401).json({ error: "signin" });
+    try {
+      quota = await useSearch(token);
+    } catch (error) {
+      console.error(error.message);
+      return res.status(503).json({ error: "limits_unavailable" });
+    }
+    if (!quota.ok) {
+      if (quota.reason === "signin") return res.status(401).json({ error: "signin" });
+      return res.status(429).json({ error: quota.reason === "person" ? "daily_limit" : "busy_today", limit: quota.limit });
+    }
+  } else {
+    console.warn("Live search limits are off: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY not set.");
+  }
+  const left = quota ? Math.max(0, quota.limit - quota.used) : null;
+
   const tools = [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }];
   // Lets web search favour results near the person.
   const loc = { type: "approximate" };
@@ -115,12 +153,12 @@ export default async function handler(req, res) {
       // The server paused a long search; send its work back so it carries on.
       messages.splice(1, messages.length - 1, { role: "assistant", content: response.content });
     }
-    if (response.stop_reason === "refusal") return res.status(200).json({ items: [], refused: true });
+    if (response.stop_reason === "refusal") return res.status(200).json({ items: [], refused: true, left });
     const text = response.content
       .filter((b) => b.type === "text")
       .map((b) => b.text)
       .join("");
-    return res.status(200).json({ items: parseItems(text) });
+    return res.status(200).json({ items: parseItems(text), left });
   } catch (error) {
     // Shows in Vercel → Logs, so we can see why a search failed.
     console.error("finds failed:", error?.status ?? "", error?.message ?? error);
