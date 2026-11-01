@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { DEMO_CREATED, DEMO_GOALS, DEMO_PROGRESS } from "./goals.js";
-import { cloudEnabled, loadCloud, saveCloud, signOut as cloudSignOut, supabase } from "./cloud.js";
+import { cloudEnabled, loadCloud, saveCloud, signOut as cloudSignOut, returningFromSignIn, supabase } from "./cloud.js";
+
+// Opens Today once after coming back from a sign-in link.
+let openedAfterSignIn = false;
 
 // The profile (with goals), plan progress and saved finds are always kept in
 // this browser. When someone is signed in, they are also saved to their
@@ -52,7 +55,9 @@ export function useAppState() {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
       // Just came back from a sign-in link or Google: tidy the address and open Today.
-      if (event === "SIGNED_IN" && new URLSearchParams(window.location.search).has("code")) {
+      // (Supabase may report this as SIGNED_IN or INITIAL_SESSION, depending on timing.)
+      if (session && returningFromSignIn && !openedAfterSignIn) {
+        openedAfterSignIn = true;
         window.history.replaceState(null, "", `${window.location.pathname}#/dashboard`);
         window.dispatchEvent(new HashChangeEvent("hashchange"));
       }

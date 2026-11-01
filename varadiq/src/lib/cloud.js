@@ -8,6 +8,10 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
+// Remember whether this page load is the return from a sign-in link, before
+// Supabase reads (and may remove) the ?code=… from the address.
+export const returningFromSignIn = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("code");
+
 export const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: true } }) : null;
 export const cloudEnabled = !!supabase;
 // Google sign-in needs a Google OAuth client set up in Supabase first; until

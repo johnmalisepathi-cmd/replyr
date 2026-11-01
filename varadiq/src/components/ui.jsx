@@ -69,6 +69,15 @@ export function Nav({ route, hasProfile, user }) {
             {cloudEnabled && !user && (
               <button onClick={() => go("/account")} className="hidden text-sm font-medium text-slate-300 hover:text-white md:inline">Sign in</button>
             )}
+            {cloudEnabled && user && (
+              <button
+                onClick={() => go("/account")}
+                aria-label={`Account: ${user.email}`}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-white"
+              >
+                {(user.email || "?")[0].toUpperCase()}
+              </button>
+            )}
             <button onClick={() => go(hasProfile ? "/dashboard" : "/onboarding")} className="btn hidden border border-white/20 text-white hover:bg-white/10 sm:inline-flex">
               Start free
             </button>
