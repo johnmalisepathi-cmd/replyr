@@ -20,7 +20,7 @@ About 30–45 minutes, on a computer (easier than a phone). You need: your GitHu
 
 1. Go to **vercel.com** and choose **Sign up with GitHub**.
 2. Click **Add New → Project**, then **Import** the `replyr` repository.
-3. Set **Root Directory** to `opportunityiq`. Vercel detects Vite by itself.
+3. Set **Root Directory** to `varadiq`. Vercel detects Vite by itself.
 4. Open **Environment Variables** and add these four:
 
    | Name | Value |

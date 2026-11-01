@@ -27,7 +27,7 @@ sent straight into another goal's fund.
 ## Run it
 
 ```bash
-cd opportunityiq
+cd varadiq
 npm install
 npm run dev      # local
 npm run build    # static site in dist/
