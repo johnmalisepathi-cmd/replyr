@@ -92,6 +92,8 @@ export function aiErrorText(e) {
       return "The AI is busy. Give it a minute and try again.";
     case "refused":
       return "The AI couldn't answer that. Try wording it differently.";
+    case "timeout":
+      return "The web search took too long this time. Try again, or make the goal a little more specific.";
     default:
       return "The AI didn't finish answering. Try again.";
   }
@@ -102,7 +104,7 @@ export function aiErrorText(e) {
 const day = 86_400_000;
 const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
 
-const PLACES = ["bali", "phuket", "perth", "perth cbd", "sydney", "melbourne", "brisbane", "tokyo", "fiji", "london", "singapore", "dubai", "northbridge", "subiaco", "leederville"];
+const PLACES = ["india", "goa", "kerala", "delhi", "mumbai", "japan", "tokyo", "kyoto", "dubai", "abu dhabi", "thailand", "bangkok", "vietnam", "hanoi", "singapore", "malaysia", "kuala lumpur", "sri lanka", "nepal", "maldives", "new zealand", "queenstown", "auckland", "fiji", "hawaii", "usa", "new york", "los angeles", "canada", "london", "uk", "paris", "france", "italy", "rome", "spain", "greece", "europe", "turkey", "egypt", "south africa", "korea", "seoul", "china", "hong kong", "philippines", "cambodia", "laos", "adelaide", "hobart", "tasmania", "darwin", "cairns", "gold coast", "margaret river", "broome", "bali", "phuket", "perth", "perth cbd", "sydney", "melbourne", "brisbane", "tokyo", "fiji", "london", "singapore", "dubai", "northbridge", "subiaco", "leederville"];
 const PREFS = ["electricity", "insurance", "subscriptions", "internet", "villa", "pool", "beach", "camera", "battery", "3-bed", "4-bed", "train", "thai", "spicy", "sushi", "pizza", "hybrid", "suv", "remote", "ux", "cheap", "quiet", "kids"];
 
 function whenFrom(t) {
@@ -147,7 +149,7 @@ function localGoals(text, city = "Perth") {
   return groups.map(({ type, parts }, i) => {
     const wish = parts.join(", ");
     const t = wish.toLowerCase();
-    const place = [...PLACES].sort((x, y) => y.length - x.length).find((p) => t.includes(p));
+    const place = [...PLACES].sort((x, y) => y.length - x.length).find((p) => new RegExp(`\\b${p}\\b`).test(t));
     const first = parts[0].replace(/^(i'?m|we'?re|i am|we are)?\s*(also\s+)?(planning|want|need|looking|hoping|keen)\s+(to\s+|for\s+)?(buy\s+|get\s+|find\s+)?/i, "").replace(/^(a|an|the|me)\s+/i, "");
     return {
       id: `g-${type}-${i}`,
@@ -156,7 +158,7 @@ function localGoals(text, city = "Perth") {
       wish,
       budget: budgetFrom(t),
       when: whenFrom(t),
-      location: place ? place.replace(/\b\w/g, (c) => c.toUpperCase()).replace("Cbd", "CBD") : type === "dining" ? `${city} CBD` : city,
+      location: place ? place.replace(/\b\w/g, (c) => c.toUpperCase()).replace("Cbd", "CBD").replace(/^(Usa|Uk)$/, (m) => m.toUpperCase()) : type === "dining" ? `${city} CBD` : type === "holiday" ? "" : city,
       prefs: PREFS.filter((p) => t.includes(p)),
       created: iso(Date.now()),
     };
@@ -350,7 +352,10 @@ export async function liveFinds(goal, near) {
       near,
     }),
   });
-  if (!res.ok) throw { code: res.status === 429 ? "rate_limited" : "upstream_error" };
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw { code: res.status === 429 ? "rate_limited" : res.status === 504 || err.error === "timeout" ? "timeout" : "upstream_error", detail: err.detail || err.error || `HTTP ${res.status}` };
+  }
   const data = await res.json();
   if (data.refused) throw { code: "refused" };
   return { items: Array.isArray(data.items) ? data.items : [], at: new Date().toISOString() };

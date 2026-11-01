@@ -7,7 +7,10 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export const config = { maxDuration: 60 };
 
-const client = new Anthropic();
+// Keep each call inside Vercel's 60-second limit, so a slow search reports a
+// clear "timeout" instead of being cut off.
+const client = new Anthropic({ timeout: 50_000, maxRetries: 0 });
+const STOP_AFTER_MS = 35_000;
 const MODEL = process.env.AI_MODEL || "claude-opus-5-5";
 const MAX_CONTINUATIONS = 3;
 
@@ -73,10 +76,11 @@ export default async function handler(req, res) {
   const { goal, near } = req.body || {};
   if (!goal || typeof goal.title !== "string") return res.status(400).json({ error: "Missing goal" });
 
-  const tools = [{ type: "web_search_20260209", name: "web_search", max_uses: 4 }];
+  const tools = [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }];
   if (near?.label) tools[0].user_location = { type: "approximate", city: clean(near.label, 60), country: "AU" };
 
   const messages = [{ role: "user", content: prompt(goal, near) }];
+  const started = Date.now();
   try {
     let response;
     for (let i = 0; i <= MAX_CONTINUATIONS; i++) {
@@ -89,7 +93,7 @@ export default async function handler(req, res) {
         tools,
         messages,
       });
-      if (response.stop_reason !== "pause_turn") break;
+      if (response.stop_reason !== "pause_turn" || Date.now() - started > STOP_AFTER_MS) break;
       // The server paused a long search; send its work back so it carries on.
       messages.splice(1, messages.length - 1, { role: "assistant", content: response.content });
     }
@@ -100,8 +104,12 @@ export default async function handler(req, res) {
       .join("");
     return res.status(200).json({ items: parseItems(text) });
   } catch (error) {
+    // Shows in Vercel → Logs, so we can see why a search failed.
+    console.error("finds failed:", error?.status ?? "", error?.message ?? error);
+    const detail = String(error?.error?.error?.message || error?.message || "").slice(0, 200);
+    if (error instanceof Anthropic.APIConnectionTimeoutError) return res.status(504).json({ error: "timeout" });
     if (error instanceof Anthropic.RateLimitError) return res.status(429).json({ error: "rate_limited" });
-    if (error instanceof Anthropic.APIError) return res.status(502).json({ error: `upstream_${error.status}` });
-    return res.status(500).json({ error: "server_error" });
+    if (error instanceof Anthropic.APIError) return res.status(502).json({ error: `upstream_${error.status}`, detail });
+    return res.status(500).json({ error: "server_error", detail });
   }
 }

@@ -158,7 +158,7 @@ function LiveFinds({ goal, live, near, onFound }) {
       onFound(r);
       if (!r.items.length) setNote("I couldn't find good live options this time. Try again, or add more detail to the goal.");
     } catch (e) {
-      setNote(aiErrorText(e));
+      setNote([aiErrorText(e), e?.detail ? `(Details: ${e.detail})` : ""].filter(Boolean).join(" "));
     }
     setBusy(false);
   };
@@ -296,7 +296,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
       <div className="mt-6 grid grid-cols-3 gap-3 text-center">
         <div className="card p-3"><p className="text-xs text-slate-500">{goal.type === "money" ? "Target saving" : "Budget"}</p><p className="font-bold">{goal.budget ? `${formatMoney(goal.budget)}${goal.type === "money" ? "/yr" : ""}` : "Not set"}</p></div>
         <div className="card p-3"><p className="text-xs text-slate-500">When</p><p className="font-bold">{countdown(goal.when)}</p></div>
-        <div className="card p-3"><p className="text-xs text-slate-500">Where</p><p className="truncate font-bold">{goal.location}</p></div>
+        <div className="card p-3"><p className="text-xs text-slate-500">Where</p><p className="truncate font-bold">{goal.location || "Not set"}</p></div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">

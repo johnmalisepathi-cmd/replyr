@@ -47,6 +47,7 @@ export default async function handler(req, res) {
       .join("");
     return res.status(200).json({ text });
   } catch (error) {
+    console.error("ai failed:", error?.status ?? "", error?.message ?? error);
     if (error instanceof Anthropic.RateLimitError) return res.status(429).json({ error: "rate_limited" });
     if (error instanceof Anthropic.AuthenticationError) return res.status(500).json({ error: "AI key missing or invalid" });
     if (error instanceof Anthropic.APIError) return res.status(502).json({ error: `upstream_${error.status}` });
