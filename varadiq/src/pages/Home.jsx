@@ -36,7 +36,7 @@ const PLANS = [
 ];
 
 const FAQ = [
-  { q: "Is the AI real?", a: "Yes. In this preview, the \"Tell me what you want\" box, the assistant on the dashboard and the goal advice are answered by a real AI model, live. The prices, places and listings are sample data until we connect live sources." },
+  { q: "Is the AI real?", a: "Yes. The goal planner, the daily briefing, the weekly check-ins and the advice are written by a real AI model, live. In early access, the places, prices and listings are examples while we connect live data sources." },
   { q: "Why not just ask ChatGPT or Google?", a: "They answer when you ask, then stop. VaradIQ is an agent: it makes a plan for each goal, keeps working on it after you close the app, tells you what to do each day, and checks in every week until the goal is done." },
   { q: "How does it save me money on bills?", a: "Tell it to cut your bills. It compares your electricity, insurance, phone, internet and subscriptions with what's available, and shows the yearly saving for each switch. You can send the money you save straight into another goal, like your holiday fund. At launch, some providers may pay us a fee when you switch; we'll always show you the cheapest option either way." },
   { q: "Where does the information come from?", a: "At launch: travel, retail, property and restaurant data providers, plus official sources for things like interest rates and grants. Every suggestion links back to where it came from." },
@@ -169,7 +169,7 @@ export default function Home({ hasProfile, setProfile }) {
         <div className="mt-8">
           <WorldMap items={MAP_ITEMS} colorBy="kind" initialView="Asia-Pacific" onOpen={(op) => go(hasProfile ? "/dashboard" : "/onboarding")} title="Live goal map" />
         </div>
-        <p className="mt-3 text-xs text-slate-500">Sample data. Live prices, listings and places arrive at launch.</p>
+        <p className="mt-3 text-xs text-slate-500">Example data in early access. Live prices, listings and places are coming next.</p>
       </section>
 
       {/* WHY DIFFERENT */}

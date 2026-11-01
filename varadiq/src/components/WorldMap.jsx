@@ -137,7 +137,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
         <div className="min-w-0">
           <p className="font-semibold text-white">{title}</p>
           <p className="text-xs text-slate-400">
-            {items.length} finds · {countries} {countries === 1 ? "country" : "countries"} · {inView} in view · sample data
+            {items.length} finds · {countries} {countries === 1 ? "country" : "countries"} · {inView} in view · example data
           </p>
         </div>
         <div className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1" role="tablist" aria-label="Map region">

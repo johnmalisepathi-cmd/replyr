@@ -22,11 +22,12 @@ export function Wordmark({ className = "text-[22px]", gold = false }) {
   );
 }
 
-export function Logo() {
+// compact: on narrow phones inside the app, show just the mandala so the menu fits.
+export function Logo({ compact = false }) {
   return (
-    <button onClick={() => go("/")} className="flex items-center gap-2" aria-label="VaradIQ home">
+    <button onClick={() => go("/")} className="flex shrink-0 items-center gap-2" aria-label="VaradIQ home">
       <Mandala size={34} />
-      <Wordmark />
+      <Wordmark className={`text-[22px] ${compact ? "hidden min-[420px]:inline" : ""}`} />
     </button>
   );
 }
@@ -46,7 +47,7 @@ export function Nav({ route, hasProfile }) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-navy-950/90 backdrop-blur">
       <div className="section flex h-16 items-center justify-between gap-3">
-        <Logo />
+        <Logo compact={inApp} />
         {inApp ? (
           <nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
             {link("/dashboard", "Today")}
@@ -73,9 +74,13 @@ export function Nav({ route, hasProfile }) {
 
 export function SampleBanner() {
   return (
-    <div className="border-b border-amber-200 bg-amber-50 text-amber-900">
-      <div className="section py-2 text-xs sm:text-sm">
-        <strong>Demo mode.</strong> Places, prices, listings and rates here are fictional sample data, so check before you book or buy.
+    <div className="border-b border-white/10 bg-navy-900 text-slate-300">
+      <div className="section flex items-start gap-2 py-2 text-xs sm:items-center sm:text-sm">
+        <Mandala size={18} glow={false} className="mt-px shrink-0 sm:mt-0" />
+        <p>
+          <strong className="text-white">Early access.</strong> The AI is real. Places, prices and listings are examples while we
+          connect live data, so check with the provider before you book or buy.
+        </p>
       </div>
     </div>
   );
