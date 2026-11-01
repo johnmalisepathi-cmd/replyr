@@ -4,6 +4,7 @@ import { findsFor } from "../lib/geo.js";
 import { priceOf } from "../lib/match.js";
 import { aiErrorText, briefingPrompt, getAI, goalsFromText, useAI } from "../lib/ai.js";
 import { DEFAULT_PROFILE } from "../lib/store.js";
+import { defaultHome } from "../lib/locale.js";
 import { planFor } from "../lib/plans.js";
 import { FitBar } from "./ui.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "./ai-ui.jsx";
@@ -44,7 +45,7 @@ export default function AIDemo({ setProfile }) {
     setNote("");
     setResult(null);
 
-    const { goals, name, city, usedAI, note: n } = await goalsFromText(words, DEFAULT_PROFILE.city);
+    const { goals, name, city, usedAI, note: n } = await goalsFromText(words, defaultHome(null).city);
     if (signal.aborted) return;
     if (!goals.length) {
       setNote("I couldn't find a goal in that. Try something like \"a holiday to Bali in 6 months\" or \"Thai dinner tonight\".");

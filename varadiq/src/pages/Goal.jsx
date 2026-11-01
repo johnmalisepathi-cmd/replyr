@@ -2,18 +2,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { go } from "../lib/router.js";
 import { GOAL_TYPES, PLAN_STAGES } from "../lib/goals.js";
 import { findsFor, homeOf } from "../lib/geo.js";
-import { formatMoney, monthlyRepayment, priceOf } from "../lib/match.js";
+import { monthlyRepayment, priceOf } from "../lib/match.js";
 import { advicePrompt, aiErrorText, aiPlan, canSearchLive, checkinPrompt, liveFinds, useAI } from "../lib/ai.js";
 import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
 import { FitBadge, FitBar, ProgressRing } from "../components/ui.jsx";
 import Mandala from "../components/Mandala.jsx";
 import LocationCard from "../components/LocationCard.jsx";
 import { formatKm } from "../lib/location.js";
+import { currentLocale, myMoney } from "../lib/locale.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import { boundsOf, countdown } from "./Dashboard.jsx";
 
-const money = (n) => `$${Math.round(n).toLocaleString("en-AU")}`;
+const money = (n) => myMoney(n);
 
 // Home goals: what the (sample) interest rate means for repayments.
 function RepaymentCalc({ budget }) {
@@ -24,8 +25,8 @@ function RepaymentCalc({ budget }) {
   const pay = monthlyRepayment(loan, rate);
   const buffer = monthlyRepayment(loan, rate + 3);
   const fields = [
-    ["rc-price", "Home price", price, setPrice, 200000, 2000000, 5000, formatMoney(price)],
-    ["rc-dep", "Deposit", deposit, setDeposit, 0, price * 0.5, 5000, `${formatMoney(deposit)} (${Math.round((deposit / price) * 100)}%)`],
+    ["rc-price", "Home price", price, setPrice, 200000, 2000000, 5000, myMoney(price)],
+    ["rc-dep", "Deposit", deposit, setDeposit, 0, price * 0.5, 5000, `${myMoney(deposit)} (${Math.round((deposit / price) * 100)}%)`],
     ["rc-rate", "Interest rate (sample)", rate, setRate, 3, 9, 0.05, `${rate.toFixed(2)}%`],
   ];
   return (
@@ -40,10 +41,10 @@ function RepaymentCalc({ budget }) {
         ))}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 text-center">
-        <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-500">Monthly repayment</p><p className="text-xl font-extrabold tabular-nums">{formatMoney(pay)}</p></div>
-        <div className="rounded-xl bg-amber-50 p-3"><p className="text-xs text-amber-800">If rates rise 3%</p><p className="text-xl font-extrabold tabular-nums text-amber-900">{formatMoney(buffer)}</p></div>
+        <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-500">Monthly repayment</p><p className="text-xl font-extrabold tabular-nums">{myMoney(pay)}</p></div>
+        <div className="rounded-xl bg-amber-50 p-3"><p className="text-xs text-amber-800">If rates rise 3%</p><p className="text-xl font-extrabold tabular-nums text-amber-900">{myMoney(buffer)}</p></div>
       </div>
-      <p className="mt-3 text-xs text-slate-500">30-year principal-and-interest loan of {formatMoney(loan)}. General information only, not financial advice. Lenders usually test you at about 3% above the rate.</p>
+      <p className="mt-3 text-xs text-slate-500">30-year principal-and-interest loan of {myMoney(loan)}. General information only, not financial advice. Lenders usually test you at about 3% above the rate.</p>
     </div>
   );
 }
@@ -66,7 +67,7 @@ function SavingsCard({ goal, status, onAdd }) {
       <div className="mt-3"><FitBar score={Math.round(status.share * 100)} /></div>
       {status.saved < status.target && (
         <p className="mt-3 text-sm text-slate-600">
-          Put aside <strong>{money(Math.ceil(status.weekly / 10) * 10)} a week</strong> to be ready by {new Date(goal.when).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}.
+          Put aside <strong>{money(Math.ceil(status.weekly / 10) * 10)} a week</strong> to be ready by {new Date(goal.when).toLocaleDateString(undefined, { day: "numeric", month: "short" })}.
           {!status.onTrack && ` You're about ${money(status.gap)} behind, so this week's amount catches you up.`}
         </p>
       )}
@@ -294,7 +295,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
       )}
 
       <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-        <div className="card p-3"><p className="text-xs text-slate-500">{goal.type === "money" ? "Target saving" : "Budget"}</p><p className="font-bold">{goal.budget ? `${formatMoney(goal.budget)}${goal.type === "money" ? "/yr" : ""}` : "Not set"}</p></div>
+        <div className="card p-3"><p className="text-xs text-slate-500">{goal.type === "money" ? "Target saving" : "Budget"}</p><p className="font-bold">{goal.budget ? `${myMoney(goal.budget)}${goal.type === "money" ? "/yr" : ""}` : "Not set"}</p></div>
         <div className="card p-3"><p className="text-xs text-slate-500">When</p><p className="font-bold">{countdown(goal.when)}</p></div>
         <div className="card p-3"><p className="text-xs text-slate-500">Where</p><p className="truncate font-bold">{goal.location || "Not set"}</p></div>
       </div>
@@ -302,7 +303,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
           {canSearchLive && goal.type !== "money" && (
-            <LiveFinds goal={goal} live={prog.live} near={{ label: homeOf(profile).city }} onFound={(r) => goalActions.setLive(goal.id, r)} />
+            <LiveFinds goal={goal} live={prog.live} near={{ label: homeOf(profile).city, ...currentLocale() }} onFound={(r) => goalActions.setLive(goal.id, r)} />
           )}
 
           {/* THE PLAN */}
@@ -401,7 +402,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
                 {op.kind === "option" && goal.type !== "money" && <div className="mt-3"><FitBar score={score} /></div>}
                 <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
                   {goal.type === "dining" && (
-                    <div className="flex gap-2"><dt className="shrink-0 text-slate-500">Distance:</dt><dd className="font-medium">{formatKm(op.distanceKm)} from {homeOf(profile).city}</dd></div>
+                    <div className="flex gap-2"><dt className="shrink-0 text-slate-500">Distance:</dt><dd className="font-medium">{formatKm(op.distanceKm, homeOf(profile).units)} from {homeOf(profile).city}</dd></div>
                   )}
                   {Object.entries(op.facts).map(([k, v]) => (
                     <div key={k} className="flex gap-2"><dt className="shrink-0 text-slate-500">{k}:</dt><dd className="font-medium">{v}</dd></div>

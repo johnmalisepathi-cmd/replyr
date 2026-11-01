@@ -3,6 +3,7 @@ import { geoCircle, geoNaturalEarth1, geoPath } from "d3-geo";
 import { BORDERS, LAND, MAP_H, MAP_W, PROJECTION } from "../lib/worldMap.js";
 import { priceOf } from "../lib/match.js";
 import { countryOf } from "../lib/geo.js";
+import { formatKm } from "../lib/location.js";
 
 const projection = geoNaturalEarth1().scale(PROJECTION.scale).translate(PROJECTION.translate);
 const toXY = (lng, lat) => projection([lng, lat]);
@@ -265,7 +266,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
           <div className="min-w-0">
             <p className="truncate font-semibold text-white">{selected.op.title}</p>
             <p className="text-xs text-slate-400">
-              {selected.op.location} · {countryOf(selected.op.region)} · {priceOf(selected.op)} · {colorBy === "fit" ? `${selected.op.distanceKm < 10 ? selected.op.distanceKm.toFixed(1) : Math.round(selected.op.distanceKm).toLocaleString()} km from you` : selected.op.tag}
+              {selected.op.location} · {countryOf(selected.op.region)} · {priceOf(selected.op)} · {colorBy === "fit" ? `${formatKm(selected.op.distanceKm, home?.units)} from you` : selected.op.tag}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">

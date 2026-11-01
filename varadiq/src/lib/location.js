@@ -19,35 +19,51 @@ export function deviceLocation() {
   });
 }
 
-/** The suburb or town name for a point, or "" if it can't be found. */
+/** The suburb or town name and country for a point; {label: "", country: ""} if unknown. */
 export async function placeName({ lat, lng }) {
   try {
     const res = await fetch(`${NOMINATIM}/reverse?format=json&zoom=14&lat=${lat}&lon=${lng}`, { headers: { Accept: "application/json" } });
-    if (!res.ok) return "";
+    if (!res.ok) return { label: "", country: "" };
     const a = (await res.json()).address || {};
-    return a.suburb || a.town || a.city_district || a.city || a.village || "";
+    return { label: a.suburb || a.town || a.city_district || a.city || a.village || "", country: (a.country_code || "").toUpperCase() };
   } catch {
-    return "";
+    return { label: "", country: "" };
   }
 }
 
-/** Looks up a suburb or postcode (Australia first). Resolves {lat, lng, label} or null. */
-export async function lookupPlace(text, country = "au") {
+async function search(q, country) {
+  const cc = country ? `&countrycodes=${country.toLowerCase()}` : "";
+  const res = await fetch(`${NOMINATIM}/search?format=json&limit=1&addressdetails=1${cc}&q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
+  if (!res.ok) return null;
+  const [hit] = await res.json();
+  return hit || null;
+}
+
+/**
+ * Looks up a suburb, city or postcode: in the person's country first, then
+ * anywhere in the world. Resolves {lat, lng, label, country} or null.
+ */
+export async function lookupPlace(text, country) {
   const q = text.trim();
   if (!q) return null;
   try {
-    const res = await fetch(`${NOMINATIM}/search?format=json&limit=1&addressdetails=1&countrycodes=${country}&q=${encodeURIComponent(q)}`, {
-      headers: { Accept: "application/json" },
-    });
-    if (!res.ok) return null;
-    const [hit] = await res.json();
+    const hit = (country && (await search(q, country))) || (await search(q));
     if (!hit) return null;
     const a = hit.address || {};
     const label = a.suburb || a.town || a.city || a.village || hit.display_name.split(",")[0];
-    return { lat: Number(hit.lat), lng: Number(hit.lon), label: a.postcode && !label.includes(a.postcode) ? `${label} ${a.postcode}` : label };
+    return {
+      lat: Number(hit.lat),
+      lng: Number(hit.lon),
+      label: a.postcode && !label.includes(a.postcode) ? `${label} ${a.postcode}` : label,
+      country: (a.country_code || "").toUpperCase(),
+    };
   } catch {
     return null;
   }
 }
 
-export const formatKm = (km) => (km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km).toLocaleString("en-AU")} km`);
+/** "2.4 km" or "1.5 mi", depending on the country's units. */
+export function formatKm(km, units = "km") {
+  const v = units === "mi" ? km * 0.621371 : km;
+  return `${v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString()} ${units}`;
+}

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { CONTACT_EMAIL, WAITLIST_ENDPOINT } from "../lib/config.js";
 import { GOAL_TYPES } from "../lib/goals.js";
-import { AU_REGIONS, WORLD_REGIONS } from "../lib/places.js";
+import { COUNTRIES, countryName, detectLocale } from "../lib/locale.js";
+
+const COUNTRY_NAMES = COUNTRIES.map((c) => countryName(c.code)).sort((a, b) => a.localeCompare(b));
 
 // Sends early-access sign-ups to WAITLIST_ENDPOINT as JSON. With no endpoint
 // set, it falls back to opening an email to CONTACT_EMAIL so no lead is lost.
 export default function PilotForm() {
-  const [form, setForm] = useState({ name: "", email: "", region: "Western Australia", firstGoal: "holiday", note: "" });
+  const [form, setForm] = useState({ name: "", email: "", region: countryName(detectLocale().country), firstGoal: "holiday", note: "" });
   const [status, setStatus] = useState("idle"); // idle | sending | done | error
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -56,13 +58,10 @@ export default function PilotForm() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label" htmlFor="pf-reg">Where you live</label>
+          <label className="label" htmlFor="pf-reg">Country</label>
           <select id="pf-reg" className="input" value={form.region} onChange={set("region")}>
-            <optgroup label="Australia">{AU_REGIONS.map((r) => <option key={r}>{r}</option>)}</optgroup>
-            <optgroup label="International">
-              {WORLD_REGIONS.map((r) => <option key={r}>{r}</option>)}
-              <option>Another country</option>
-            </optgroup>
+            {COUNTRY_NAMES.map((n) => <option key={n}>{n}</option>)}
+            <option>Another country</option>
           </select>
         </div>
         <div>

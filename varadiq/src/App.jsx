@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { go, useRoute } from "./lib/router.js";
 import { useAppState } from "./lib/store.js";
+import { setCurrentLocale } from "./lib/locale.js";
 import { Footer, Nav, SampleBanner } from "./components/ui.jsx";
 import Home from "./pages/Home.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
@@ -15,6 +16,7 @@ export default function App() {
   const route = useRoute();
   const { profile, setProfile, pipeline, setStage, progress, goalActions } = useAppState();
   const blocked = !profile && NEEDS_PROFILE.some((p) => route.startsWith(p));
+  setCurrentLocale(profile);
 
   // App screens need goals — send first-time visitors to add some.
   useEffect(() => {

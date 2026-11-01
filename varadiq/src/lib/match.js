@@ -51,7 +51,9 @@ export function scoreFind(find, goal, home) {
   if (goal.type === "dining" && home) {
     const km = distanceKm(home, find);
     score += km <= 2 ? 20 : km <= 5 ? 14 : 6;
-    reasons.push(km < 1 ? "Under 1 km away" : `${km < 10 ? km.toFixed(1) : Math.round(km)} km away`);
+    const u = home.units === "mi" ? "mi" : "km";
+    const v = u === "mi" ? km * 0.621371 : km;
+    reasons.push(v < 1 ? `Under 1 ${u} away` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ${u} away`);
   } else if (where && hay.concat(" ", find.location.toLowerCase(), " ", find.region.toLowerCase()).includes(where.split(" ")[0])) {
     score += 20;
     reasons.push(`In ${goal.location}`);

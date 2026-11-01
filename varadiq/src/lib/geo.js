@@ -1,5 +1,6 @@
 import { FINDS } from "./goals.js";
 import { scoreFind } from "./match.js";
+import { defaultHome, localeOf } from "./locale.js";
 
 // Where a person "is" for distance purposes: the main city of their region.
 export const REGION_HOME = {
@@ -24,11 +25,15 @@ const AU_STATES = new Set(["Western Australia", "New South Wales", "Victoria", "
 
 export const countryOf = (region) => (AU_STATES.has(region) ? "Australia" : region);
 
-/** Where distances are measured from: the person's saved location, else their state's main city. */
+// Countries that measure road distances in miles.
+const MILES = new Set(["US", "GB", "LR", "MM"]);
+
+/** Where distances are measured from: the person's saved location, else their country's main city. */
 export function homeOf(profile) {
+  const units = MILES.has(localeOf(profile).country) ? "mi" : "km";
   const h = profile?.home;
-  if (h && Number.isFinite(h.lat) && Number.isFinite(h.lng)) return { lat: h.lat, lng: h.lng, city: h.label || "your location" };
-  return REGION_HOME[profile?.region] || REGION_HOME["Western Australia"];
+  if (h && Number.isFinite(h.lat) && Number.isFinite(h.lng)) return { lat: h.lat, lng: h.lng, city: h.label || "your location", units };
+  return { ...defaultHome(profile), units };
 }
 
 /** Great-circle distance in km. */

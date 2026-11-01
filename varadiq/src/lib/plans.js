@@ -1,5 +1,6 @@
 import { daysUntil } from "./match.js";
 import { FINDS } from "./goals.js";
+import { myMoney } from "./locale.js";
 
 // The Goal Agent's plans. Every goal gets steps from now until its date:
 // some are done by the agent (watching, comparing, alerting), some are for
@@ -149,7 +150,7 @@ export function todaysActions(goals, progress, bestFind = () => null) {
     }
     const s = savingsStatus(g, prog);
     if (s && s.saved < s.target) {
-      out.push({ key: `${g.id}-save`, goal: g, kind: "save", urgency: s.onTrack ? 6 : 0, amount: Math.ceil(s.weekly / 10) * 10, text: `Put $${(Math.ceil(s.weekly / 10) * 10).toLocaleString("en-AU")} towards ${g.title}`, hint: s.onTrack ? "This week's amount to stay on track." : `You're about $${Math.round(s.gap).toLocaleString("en-AU")} behind. This gets you back on track.` });
+      out.push({ key: `${g.id}-save`, goal: g, kind: "save", urgency: s.onTrack ? 6 : 0, amount: Math.ceil(s.weekly / 10) * 10, text: `Put ${myMoney(Math.ceil(s.weekly / 10) * 10)} towards ${g.title}`, hint: s.onTrack ? "This week's amount to stay on track." : `You're about ${myMoney(s.gap)} behind. This gets you back on track.` });
     }
   }
   return out.sort((a, b) => a.urgency - b.urgency);

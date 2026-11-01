@@ -13,7 +13,7 @@ export default function VoiceButton({ onText, className = "" }) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     const r = new SR();
-    r.lang = "en-AU";
+    r.lang = navigator.language || "en-US";
     r.interimResults = false;
     r.onresult = (e) => latest.current(Array.from(e.results).map((x) => x[0].transcript).join(" "));
     r.onend = () => setListening(false);

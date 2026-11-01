@@ -7,8 +7,6 @@ const KEY = "opportunityiq:personal:v1";
 
 export const DEFAULT_PROFILE = {
   name: "",
-  city: "Perth",
-  region: "Western Australia",
   goals: DEMO_GOALS.map((g) => ({ ...g, created: DEMO_CREATED[g.id] })),
 };
 

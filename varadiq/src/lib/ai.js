@@ -3,6 +3,7 @@ import { GOAL_TYPES } from "./goals.js";
 import { REGIONS } from "./places.js";
 import { priceOf } from "./match.js";
 import { AI_ENDPOINT } from "./config.js";
+import { currentLocale, myMoney } from "./locale.js";
 
 // One AI interface for the whole app:
 //   ai.text(prompt, { onText, signal }) -> full answer (streams through onText)
@@ -175,7 +176,7 @@ Rules:
 - type: one of ${JSON.stringify(Object.keys(GOAL_TYPES))} (${Object.entries(GOAL_TYPES).map(([k, g]) => `${k} = ${g.label}`).join("; ")}). Skip anything that fits none.
 - title: 2-5 words, e.g. "Bali holiday for 2".
 - wish: their words for this goal, tidied, one sentence.
-- budget: total in AUD as a number (per person for dining), or null if not given. "$4k" = 4000.
+- budget: total in ${currentLocale().currency} as a number (per person for dining), or null if not given. "4k" = 4000.
 - inDays: days from today until they need it (tonight = 0, "in 6 months" = 182). Default 60.
 - location: the destination or area, else "${city}".
 - prefs: 1-4 short lowercase keywords for what matters (e.g. "pool", "camera", "spicy", "3-bed", "train").
@@ -218,7 +219,13 @@ export async function goalsFromText(text, city = "Perth") {
 // ---------- Prompts for the rest of the app ----------
 
 const describeGoal = (g) =>
-  `${g.title} (${GOAL_TYPES[g.type].label}): "${g.wish}". Budget: ${g.budget ? `$${g.budget.toLocaleString("en-AU")}` : "not set"}. Needed by ${g.when}. Place: ${g.location}. Wants: ${g.prefs.join(", ") || "nothing specific"}.`;
+  `${g.title} (${GOAL_TYPES[g.type].label}): "${g.wish}". Budget: ${g.budget ? myMoney(g.budget) : "not set"}. Needed by ${g.when}. Place: ${g.location || "not set"}. Wants: ${g.prefs.join(", ") || "nothing specific"}.`;
+
+// Who the person is and how to write for them (country, currency, spelling).
+const aboutPerson = () => {
+  const l = currentLocale();
+  return `The person lives in ${l.countryName} and uses ${l.currency}. Write in ${l.english}, with amounts in ${l.currency}.`;
+};
 
 const describeFind = (s) =>
   `[${s.op.id}] ${s.op.title} | ${s.op.kind === "watch" ? "Watching (alert, not a product)" : "Available now"} | ${s.op.location} | ${priceOf(s.op) || "no price"} | ${s.op.rating ? `rated ${s.op.rating}` : "no rating"} | ${s.op.tag} | ${Object.entries(s.op.facts).map(([k, v]) => `${k}: ${v}`).join("; ")} | fit ${s.score}% for goal "${s.goal.title}"`;
@@ -232,11 +239,11 @@ ${profile.goals.map(describeGoal).join("\n")}
 Best finds right now:
 ${top.map(describeFind).join("\n")}
 
-${todo.length ? `Today's actions from their plans:\n${todo.slice(0, 4).map((t) => `- ${t.text} (${t.goal.title})`).join("\n")}\n\n` : ""}Write today's briefing, max 110 words. Start with "${profile.name ? `Good morning, ${profile.name}.` : "Good morning."}" then one bullet per goal: "- **<goal title>**: the single most useful update and what to do next." If today's actions are given, end with a line "**Today:**" and the 2 most important actions. Friendly, specific, Australian English. No preamble, no sign-off.`;
+${todo.length ? `Today's actions from their plans:\n${todo.slice(0, 4).map((t) => `- ${t.text} (${t.goal.title})`).join("\n")}\n\n` : ""}Write today's briefing, max 110 words. Start with "${profile.name ? `Good morning, ${profile.name}.` : "Good morning."}" then one bullet per goal: "- **<goal title>**: the single most useful update and what to do next." If today's actions are given, end with a line "**Today:**" and the 2 most important actions. Friendly and specific. ${aboutPerson()} No preamble, no sign-off.`;
 }
 
 export function askPrompt(question, profile, scored) {
-  return `You are VaradIQ, a personal AI assistant. Answer using ONLY the finds listed (fictional sample data). Never invent places, prices or ratings.
+  return `You are VaradIQ, a personal AI assistant. Answer using ONLY the finds listed (fictional sample data). Never invent places, prices or ratings. ${aboutPerson()}
 
 Their goals:
 ${profile.goals.map(describeGoal).join("\n")}
@@ -261,7 +268,7 @@ const ADVICE = {
 };
 
 export function advicePrompt(goal, scored) {
-  return `You are VaradIQ, a personal AI assistant. Give advice for this goal using ONLY these facts (fictional sample data). Where something isn't stated, say "not stated".
+  return `You are VaradIQ, a personal AI assistant. Give advice for this goal using ONLY these facts (fictional sample data). Where something isn't stated, say "not stated". ${aboutPerson()}
 
 Goal: ${describeGoal(goal)}
 
@@ -303,7 +310,7 @@ export async function aiPlan(goal) {
   const raw = await ai.json(`You are VaradIQ, an AI goal agent that plans goals and works on them 24/7. Write a step-by-step plan for this goal.
 Goal: ${describeGoal(goal)} Today is ${iso(Date.now())}.
 Reply with only a JSON array of 4-7 steps in order: [{"title": string (max 6 words), "inDays": number (days from today, last step on or before the goal date), "who": "agent"|"you", "detail": string (one short sentence: what happens, e.g. what the agent watches or what the person must do)}].
-"agent" steps are research, watching prices and reminders. "you" steps are decisions, bookings, payments and signing. Australian English.`);
+"agent" steps are research, watching prices and reminders. "you" steps are decisions, bookings, payments and signing. ${aboutPerson()}`);
   if (!Array.isArray(raw) || !raw.length) return null;
   const left = Math.max(0, Math.ceil((new Date(goal.when) - Date.now()) / day));
   return raw.slice(0, 7).map((x, i) => ({
@@ -316,7 +323,7 @@ Reply with only a JSON array of 4-7 steps in order: [{"title": string (max 6 wor
 }
 
 export function checkinPrompt(profile, goal, steps, money, scored) {
-  return `You are VaradIQ, a warm but honest AI goal agent. You work on people's goals 24/7 and check in weekly to keep them moving. Everything is fictional sample data.
+  return `You are VaradIQ, a warm but honest AI goal agent. You work on people's goals 24/7 and check in weekly to keep them moving. Everything is fictional sample data. ${aboutPerson()}
 
 Person: ${profile.name || "the user"}. Goal: ${describeGoal(goal)}
 Plan:

@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       system:
         format === "json"
           ? "Reply with only valid JSON that matches what the user asks for. No markdown fences, no commentary."
-          : "You are VaradIQ, a warm, practical AI goal agent. Use Australian English.",
+          : "You are VaradIQ, a warm, practical AI goal agent. Follow the spelling, currency and country details given in the request.",
       messages: [{ role: "user", content: prompt }],
     });
 

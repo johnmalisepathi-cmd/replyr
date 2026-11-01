@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { myMoney } from "../lib/locale.js";
 
 const PLUS_PER_YEAR = 9.99 * 12;
-const money = (n) => `$${Math.round(n).toLocaleString("en-AU")}`;
+const money = (n) => myMoney(n);
 
 // Assumptions, shown to the visitor: cheaper bills save ~12%, booking travel at the right time saves
 // ~12%, buying tech in a sale saves ~10%, a better home-loan rate saves

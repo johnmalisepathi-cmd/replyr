@@ -5,6 +5,7 @@ import { daysUntil, priceOf, searchFinds } from "../lib/match.js";
 import { aiErrorText, askPrompt, briefingPrompt, splitIds, useAI } from "../lib/ai.js";
 import { FitBar, ProgressRing } from "../components/ui.jsx";
 import LocationCard from "../components/LocationCard.jsx";
+import { myMoney } from "../lib/locale.js";
 import { billSavings, dueText, goalProgress, isComplete, planFor, todaysActions } from "../lib/plans.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
@@ -122,7 +123,7 @@ export default function Dashboard({ profile, setProfile, pipeline, progress, goa
         {[
           [`${profile.goals.filter((g) => !isComplete(g, progress[g.id])).length}`, "Goals in progress"],
           [stepsDone, "Steps done"],
-          [found ? `$${found.toLocaleString("en-AU")}/yr` : `$${savedTotal.toLocaleString("en-AU")}`, found ? "Money found on bills" : "Saved for goals"],
+          [found ? `${myMoney(found)}/yr` : myMoney(savedTotal), found ? "Money found on bills" : "Saved for goals"],
         ].map(([n, l]) => (
           <div key={l} className="card p-4 text-center">
             <p className="text-2xl font-extrabold sm:text-3xl">{n}</p>
@@ -156,7 +157,7 @@ export default function Dashboard({ profile, setProfile, pipeline, progress, goa
                 </div>
                 <div className="flex shrink-0 gap-2">
                   {a.kind === "save" ? (
-                    <button onClick={() => goalActions.addSaved(a.goal.id, a.amount)} className="btn-primary px-4 py-2">I've saved ${a.amount.toLocaleString("en-AU")}</button>
+                    <button onClick={() => goalActions.addSaved(a.goal.id, a.amount)} className="btn-primary px-4 py-2">I've saved {myMoney(a.amount)}</button>
                   ) : (
                     <button onClick={() => goalActions.toggleStep(a.goal.id, a.step.id)} className="btn-primary px-4 py-2">Done ✓</button>
                   )}

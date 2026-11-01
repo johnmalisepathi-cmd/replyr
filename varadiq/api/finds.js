@@ -15,16 +15,20 @@ const MODEL = process.env.AI_MODEL || "claude-opus-5-5";
 const MAX_CONTINUATIONS = 3;
 
 const clean = (v, n = 120) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+// The person's country, currency and spelling, as sent by the website (with safe defaults).
+const country = (near) => clean(near?.countryName, 60) || "their country";
+const cur = (near) => (/^[A-Z]{3}$/.test(near?.currency || "") ? near.currency : "local currency");
+const english = (near) => clean(near?.english, 30) || "clear, simple English";
 
 function describe(goal, near) {
   const parts = [
     `Goal: ${clean(goal.title, 60)} (${clean(goal.type, 20)}).`,
     goal.wish ? `In their words: "${clean(goal.wish, 240)}".` : "",
-    goal.budget ? `Budget: about AUD ${Number(goal.budget).toLocaleString("en-AU")}${goal.type === "dining" ? " per person" : ""}.` : "Budget: not set.",
+    goal.budget ? `Budget: about ${cur(near)} ${Number(goal.budget).toLocaleString("en-US")}${goal.type === "dining" ? " per person" : ""}.` : "Budget: not set.",
     goal.when ? `Needed by: ${clean(goal.when, 10)}.` : "",
     goal.location ? `Place: ${clean(goal.location, 60)}.` : "",
     goal.prefs?.length ? `What matters: ${goal.prefs.map((p) => clean(p, 20)).join(", ")}.` : "",
-    near?.label ? `The person lives near ${clean(near.label, 60)}, Australia.` : "The person lives in Australia.",
+    `The person lives near ${clean(near?.label || "", 60) || "the main city"}, ${country(near)}.`,
   ];
   return parts.filter(Boolean).join(" ");
 }
@@ -34,11 +38,11 @@ function prompt(goal, near) {
 
 ${describe(goal, near)}
 
-Find 3 to 5 real, specific options available now (for example hotels or flights for a trip, restaurants open near them, products in stock at Australian stores, homes or cars for sale, energy plans). Prefer options that fit the budget and what matters to them, and the official provider or booking page for each.
+Find 3 to 5 real, specific options available now (for example hotels or flights for a trip, restaurants open near them, products in stock at stores that sell in ${country(near)}, homes or cars for sale, energy plans). For anything local (restaurants, shops, homes, cars, bills) search near where they live; for travel, search the destination, with flights from their nearest city. Show prices in ${cur(near)} where the site does, otherwise as published. Prefer options that fit the budget and what matters to them, and the official provider or booking page for each.
 
 Reply with ONLY a JSON array, no other text:
 [{"title": string (max 70 chars), "location": string (suburb, city or store/website name), "price": string or null (as published, e.g. "From $189/night" or "$1,099"), "why": string (one short sentence on why it fits), "url": string (the exact page URL from your search results where they can view or book it)}]
-Only include options whose URL appeared in your search results. Use Australian English.`;
+Only include options whose URL appeared in your search results. Write in ${english(near)}.`;
 }
 
 function parseItems(text) {
@@ -77,7 +81,12 @@ export default async function handler(req, res) {
   if (!goal || typeof goal.title !== "string") return res.status(400).json({ error: "Missing goal" });
 
   const tools = [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }];
-  if (near?.label) tools[0].user_location = { type: "approximate", city: clean(near.label, 60), country: "AU" };
+  // Lets web search favour results near the person.
+  const loc = { type: "approximate" };
+  if (near?.label) loc.city = clean(near.label, 60);
+  if (/^[A-Z]{2}$/.test(near?.country || "")) loc.country = near.country;
+  if (typeof near?.timezone === "string" && /^[A-Za-z_]+\/[A-Za-z_/+-]+$/.test(near.timezone)) loc.timezone = near.timezone;
+  if (loc.city || loc.country) tools[0].user_location = loc;
 
   const messages = [{ role: "user", content: prompt(goal, near) }];
   const started = Date.now();

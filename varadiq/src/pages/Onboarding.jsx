@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { go } from "../lib/router.js";
 import { GOAL_TYPES } from "../lib/goals.js";
-import { AU_REGIONS, WORLD_REGIONS } from "../lib/places.js";
+import { currencySymbol, currentLocale, myMoney } from "../lib/locale.js";
+import { homeOf } from "../lib/geo.js";
 import { DEFAULT_PROFILE } from "../lib/store.js";
 import { goalsFromText, useAI } from "../lib/ai.js";
-import { daysUntil, formatMoney } from "../lib/match.js";
+import { daysUntil } from "../lib/match.js";
 import { AIBadge, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import VoiceButton from "../components/VoiceButton.jsx";
 import LocationCard from "../components/LocationCard.jsx";
@@ -32,7 +33,7 @@ export default function Onboarding({ profile, setProfile }) {
   const listen = async () => {
     setBusy(true);
     setNote("");
-    const r = await goalsFromText(text, p.city);
+    const r = await goalsFromText(text, homeOf(p).city);
     const goals = r.goals.map((g, i) => ({ ...g, id: `${g.id}-${Date.now()}-${i}` }));
     setP((x) => ({ ...x, name: x.name || r.name, goals: [...x.goals, ...goals] }));
     setNote(r.note || (goals.length ? `Added ${goals.length} goal${goals.length > 1 ? "s" : ""}. Check them below.` : "I couldn't find a goal in that. Try \"a holiday to Bali in 6 months\"."));
@@ -41,7 +42,7 @@ export default function Onboarding({ profile, setProfile }) {
   };
   const removeGoal = (id) => update({ goals: p.goals.filter((g) => g.id !== id) });
   const saveDraft = () => {
-    const g = { ...draft, budget: draft.budget ? Number(draft.budget) : null, title: draft.title || GOAL_TYPES[draft.type].label, location: draft.location || p.city, prefs: typeof draft.prefs === "string" ? draft.prefs.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) : draft.prefs };
+    const g = { ...draft, budget: draft.budget ? Number(draft.budget) : null, title: draft.title || GOAL_TYPES[draft.type].label, location: draft.location || (draft.type === "holiday" ? "" : homeOf(p).city), prefs: typeof draft.prefs === "string" ? draft.prefs.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) : draft.prefs };
     update({ goals: [...p.goals.filter((x) => x.id !== g.id), g] });
     setDraft(null);
   };
@@ -85,18 +86,12 @@ export default function Onboarding({ profile, setProfile }) {
       </div>
 
       <div className="card mt-6 p-6">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <div>
             <label className="label" htmlFor="ob-name">Your first name <span className="font-normal text-slate-400">(optional)</span></label>
             <input id="ob-name" className="input" value={p.name} onChange={(e) => update({ name: e.target.value })} placeholder="e.g. Sam" />
           </div>
-          <div>
-            <label className="label" htmlFor="ob-region">Where you live</label>
-            <select id="ob-region" className="input" value={p.region} onChange={(e) => update({ region: e.target.value })}>
-              <optgroup label="Australia">{AU_REGIONS.map((r) => <option key={r}>{r}</option>)}</optgroup>
-              <optgroup label="International">{WORLD_REGIONS.map((r) => <option key={r}>{r}</option>)}</optgroup>
-            </select>
-          </div>
+
         </div>
 
         <div className="mt-4">
@@ -127,7 +122,7 @@ export default function Onboarding({ profile, setProfile }) {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">{g.title}</p>
                 <p className="text-sm text-slate-500">
-                  {[GOAL_TYPES[g.type].label, g.budget ? `budget ${formatMoney(g.budget)}` : null, whenText(g.when), g.location].filter(Boolean).join(" · ")}
+                  {[GOAL_TYPES[g.type].label, g.budget ? `budget ${myMoney(g.budget, { compact: true })}` : null, whenText(g.when), g.location].filter(Boolean).join(" · ")}
                 </p>
                 {g.prefs?.length > 0 && <p className="mt-1 text-xs text-slate-500">Wants: {g.prefs.join(", ")}</p>}
               </div>
@@ -153,7 +148,7 @@ export default function Onboarding({ profile, setProfile }) {
                 <input id="dg-title" className="input" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder={GOAL_TYPES[draft.type].example} />
               </div>
               <div>
-                <label className="label" htmlFor="dg-budget">Budget (AUD)</label>
+                <label className="label" htmlFor="dg-budget">Budget ({currencySymbol(currentLocale().currency)} {currentLocale().currency})</label>
                 <input id="dg-budget" type="number" min="0" className="input" value={draft.budget ?? ""} onChange={(e) => setDraft({ ...draft, budget: e.target.value })} placeholder="e.g. 4000" />
               </div>
               <div>
