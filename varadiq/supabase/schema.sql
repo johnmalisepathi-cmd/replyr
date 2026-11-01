@@ -7,6 +7,11 @@ create table if not exists public.user_state (
   updated_at timestamptz not null default now()
 );
 
+-- Signed-in people may use this table (needed when "Automatically expose new
+-- tables" is off); the policies below limit each person to their own row.
+grant select, insert, update, delete on public.user_state to authenticated;
+revoke all on public.user_state from anon;
+
 -- Row Level Security: each person can only read and change their own row.
 alter table public.user_state enable row level security;
 
