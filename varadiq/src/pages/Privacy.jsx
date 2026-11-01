@@ -13,7 +13,7 @@ export default function Privacy() {
             note you add. We use it only to contact you about early access. We don't sell it or share it for marketing.
           </p>
           <p className="mt-2">
-            The demo keeps your goals and plan in your own browser (local storage). They are not sent to us. When you use the AI
+            The app keeps your goals, plan and location in your own browser (local storage). They are not sent to us. When you use the AI
             features, your words and goals are sent to the AI service to produce the answer.
           </p>
           <p className="mt-2">
@@ -27,7 +27,7 @@ export default function Privacy() {
           <h2 className="text-lg font-semibold text-slate-900">Where suggestions come from</h2>
           <p className="mt-2">
             At launch, VaradIQ will use licensed travel, retail, property and restaurant data, plus official sources for things
-            like interest rates and grants, and will link back to each source. The demo uses fictional sample data.
+            like interest rates and grants, and will link back to each source. In early access, some places and prices shown are examples; live web search results link to the real provider.
           </p>
         </section>
         <section>

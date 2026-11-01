@@ -57,7 +57,7 @@ export function Nav({ route, hasProfile }) {
         ) : (
           <div className="flex items-center gap-2">
             <button onClick={() => go(hasProfile ? "/dashboard" : "/onboarding")} className="btn hidden border border-white/20 text-white hover:bg-white/10 sm:inline-flex">
-              Try the demo
+              Start free
             </button>
             <button
               onClick={() => document.getElementById("pilot")?.scrollIntoView({ behavior: "smooth" })}
@@ -128,7 +128,7 @@ export function Footer() {
         <div className="text-sm">
           <p className="font-semibold text-white">Product</p>
           <ul className="mt-3 space-y-2">
-            <li><button onClick={() => go("/onboarding")} className="hover:text-white">Interactive demo</button></li>
+            <li><button onClick={() => go("/onboarding")} className="hover:text-white">Open the app</button></li>
             <li><button onClick={() => go("/privacy")} className="hover:text-white">Privacy & data sources</button></li>
           </ul>
         </div>

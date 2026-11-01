@@ -326,7 +326,7 @@ export default function Home({ hasProfile, setProfile }) {
               <li>✓ Help decide which goals and countries come next</li>
             </ul>
             <button onClick={() => go(hasProfile ? "/dashboard" : "/onboarding")} className="mt-8 text-sm font-semibold text-ai-cyan hover:text-white">
-              Or explore the full demo first →
+              Or start free now →
             </button>
           </div>
           <PilotForm />
