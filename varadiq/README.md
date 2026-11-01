@@ -16,6 +16,7 @@ sent straight into another goal's fund.
 | Part | Status |
 | --- | --- |
 | Website (home, goals, Today page, goal plans, savings tracker, bill savings, map) | Real, ready to publish |
+| Live web search (`api/finds.js`) | Real: on each goal, "Search the web" asks Claude with web search for real options and links ("View & book"). Each search costs a few cents of AI credit |
 | Plans, today's actions, savings and progress (`src/lib/plans.js`) | Real rule-based logic; the AI can tailor a plan and write weekly check-ins |
 | Early-access form | Real once `VITE_WAITLIST_ENDPOINT` is set |
 | AI (understanding goals, tailored plans, weekly check-ins, daily briefing, ask your agent, advice) | Real AI in the claude.ai preview; on your own host it needs `VITE_AI_ENDPOINT`, otherwise a keyword-based assistant answers |

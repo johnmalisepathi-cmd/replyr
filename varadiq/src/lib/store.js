@@ -43,6 +43,7 @@ export function useAppState() {
     addSaved: (goalId, amount) => patch(goalId, (g) => ({ ...g, saved: Math.max(0, (g.saved || 0) + amount) })),
     toggleSwitch: (goalId, findId) => patch(goalId, (g) => ({ ...g, switched: toggle(g.switched, findId) })),
     setSteps: (goalId, steps) => patch(goalId, (g) => ({ ...g, steps, done: [] })),
+    setLive: (goalId, live) => patch(goalId, (g) => ({ ...g, live })),
     // Moves the bill savings found by one goal into another goal's fund.
     sendSavings: (fromId, toId, amount) =>
       setProgress((p) => ({

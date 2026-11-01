@@ -332,3 +332,26 @@ One sentence on progress (be specific, use the numbers).
 1-2 bullets on what you (the agent) will keep watching.
 Encouraging, never preachy. No sign-off.`;
 }
+
+// ---------- Live web search ----------
+
+// The live search runs on our own server (api/finds.js), next to the AI endpoint.
+const FINDS_ENDPOINT = AI_ENDPOINT ? AI_ENDPOINT.replace(/\/ai\/?$/, "/finds") : "";
+export const canSearchLive = !!FINDS_ENDPOINT;
+
+/** Real options found on the web for a goal. Resolves {items} or rejects {code}. */
+export async function liveFinds(goal, near) {
+  if (!FINDS_ENDPOINT) throw { code: "not_granted" };
+  const res = await fetch(FINDS_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      goal: { type: goal.type, title: goal.title, wish: goal.wish, budget: goal.budget, when: goal.when, location: goal.location, prefs: goal.prefs },
+      near,
+    }),
+  });
+  if (!res.ok) throw { code: res.status === 429 ? "rate_limited" : "upstream_error" };
+  const data = await res.json();
+  if (data.refused) throw { code: "refused" };
+  return { items: Array.isArray(data.items) ? data.items : [], at: new Date().toISOString() };
+}

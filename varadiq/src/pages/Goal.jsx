@@ -3,7 +3,7 @@ import { go } from "../lib/router.js";
 import { GOAL_TYPES, PLAN_STAGES } from "../lib/goals.js";
 import { findsFor, homeOf } from "../lib/geo.js";
 import { formatMoney, monthlyRepayment, priceOf } from "../lib/match.js";
-import { advicePrompt, aiErrorText, aiPlan, checkinPrompt, useAI } from "../lib/ai.js";
+import { advicePrompt, aiErrorText, aiPlan, canSearchLive, checkinPrompt, liveFinds, useAI } from "../lib/ai.js";
 import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
 import { FitBadge, FitBar, ProgressRing } from "../components/ui.jsx";
 import Mandala from "../components/Mandala.jsx";
@@ -134,6 +134,69 @@ function BillSavings({ goal, prog, profile, finds, actions }) {
   );
 }
 
+const host = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
+const ago = (iso) => {
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`;
+};
+
+// Real options found on the web by the AI, with links to the provider's page.
+function LiveFinds({ goal, live, near, onFound }) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  const search = async () => {
+    setBusy(true);
+    setNote("");
+    try {
+      const r = await liveFinds(goal, near);
+      onFound(r);
+      if (!r.items.length) setNote("I couldn't find good live options this time. Try again, or add more detail to the goal.");
+    } catch (e) {
+      setNote(aiErrorText(e));
+    }
+    setBusy(false);
+  };
+  return (
+    <section className="ai-panel p-5" aria-labelledby="live-h">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="live-h" className="flex items-center gap-2 font-semibold text-white">🌐 Live from the web</h2>
+        {live?.at && <span className="text-xs text-slate-400">Searched {ago(live.at)}</span>}
+      </div>
+      {!live?.items?.length && !busy && (
+        <p className="mt-2 text-sm text-slate-400">The AI searches the web right now for real options for this goal, with links to view and book on the provider's own site.</p>
+      )}
+      {busy && <div className="mt-4"><AIThinking label="Searching the web for you (about 20 seconds)" /></div>}
+      {live?.items?.length > 0 && !busy && (
+        <ul className="mt-4 space-y-3">
+          {live.items.map((it) => (
+            <li key={it.url} className="glass flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold leading-snug text-white">{it.title}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{[it.location, it.price, host(it.url) !== (it.location || "").toLowerCase() ? host(it.url) : null].filter(Boolean).join(" · ")}</p>
+                {it.why && <p className="mt-1 text-sm text-slate-300">{it.why}</p>}
+              </div>
+              <a href={it.url} target="_blank" rel="noopener noreferrer nofollow" className="btn-primary shrink-0 px-4 py-2">View &amp; book →</a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!busy && (
+        <button onClick={search} className={`${live?.items?.length ? "btn mt-4 border border-white/20 text-white hover:bg-white/10" : "btn-ai mt-4"}`}>
+          {live?.items?.length ? "Search again" : <><Sparkle /> Search the web for this goal</>}
+        </button>
+      )}
+      {note && <p className="mt-3 text-xs text-amber-300">{note}</p>}
+      <p className="mt-3 text-[11px] text-slate-500">Found by AI on public websites. Prices and availability can change, so confirm on the provider's site before you book or buy.</p>
+    </section>
+  );
+}
+
 export default function Goal({ id, profile, setProfile, pipeline, setStage, progress, goalActions }) {
   const goal = profile.goals.find((g) => g.id === id);
   const prog = progress[id] || {};
@@ -238,6 +301,10 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
+          {canSearchLive && goal.type !== "money" && (
+            <LiveFinds goal={goal} live={prog.live} near={{ label: homeOf(profile).city }} onFound={(r) => goalActions.setLive(goal.id, r)} />
+          )}
+
           {/* THE PLAN */}
           <section className="card p-5" aria-labelledby="plan-h">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -319,7 +386,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
             <WorldMap items={finds} home={homeOf(profile)} initialView={boundsOf(finds)} onOpen={(op) => document.getElementById(`find-${op.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} title={`${goal.title}: on the map`} />
           )}
 
-          <h2 className="text-lg font-bold">What I found</h2>
+          <h2 className="text-lg font-bold">{canSearchLive && goal.type !== "money" ? "Example finds" : "What I found"}</h2>
           <ul className="space-y-4">
             {finds.map(({ op, score, reasons, gaps }) => (
               <li key={op.id} id={`find-${op.id}`} className="card scroll-mt-24 p-5">
