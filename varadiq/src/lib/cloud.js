@@ -10,6 +10,9 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 export const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: true } }) : null;
 export const cloudEnabled = !!supabase;
+// Google sign-in needs a Google OAuth client set up in Supabase first; until
+// then VITE_GOOGLE_SIGNIN stays unset and only the emailed link is offered.
+export const googleEnabled = cloudEnabled && import.meta.env.VITE_GOOGLE_SIGNIN === "on";
 
 // Sign-in links come back with ?code=… (PKCE), which doesn't clash with the
 // app's #/ page addresses. The app then opens Today.

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { go } from "../lib/router.js";
-import { cloudEnabled, deleteCloud, sendMagicLink, signInWithGoogle } from "../lib/cloud.js";
+import { cloudEnabled, deleteCloud, googleEnabled, sendMagicLink, signInWithGoogle } from "../lib/cloud.js";
 import Mandala from "../components/Mandala.jsx";
 
 const SYNC_TEXT = {
@@ -74,8 +74,10 @@ export default function Account({ user, sync, signOut }) {
       <div className="card p-6 text-center">
         <Mandala size={56} className="mx-auto" />
         <h1 className="mt-3 text-2xl font-bold">Sign in to VaradIQ</h1>
-        <p className="mt-2 text-sm text-slate-600">Save your goals, use them on every device, and let your agent watch them 24/7. Free, no password needed.</p>
+        <p className="mb-6 mt-2 text-sm text-slate-600">Save your goals, use them on every device, and let your agent watch them 24/7. Free, no password needed.</p>
 
+        {googleEnabled && (
+          <>
         <button
           onClick={async () => {
             setBusy("google");
@@ -86,7 +88,7 @@ export default function Account({ user, sync, signOut }) {
             }
           }}
           disabled={!!busy}
-          className="btn mt-6 w-full border border-slate-300 bg-white py-3 text-slate-800 hover:border-slate-400"
+          className="btn w-full border border-slate-300 bg-white py-3 text-slate-800 hover:border-slate-400"
         >
           <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
             <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
@@ -98,6 +100,8 @@ export default function Account({ user, sync, signOut }) {
         </button>
 
         <div className="my-5 flex items-center gap-3 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200" />or<span className="h-px flex-1 bg-slate-200" /></div>
+          </>
+        )}
 
         {sent ? (
           <p className="rounded-xl bg-brand-50 p-4 text-sm text-brand-800" role="status">
