@@ -148,6 +148,47 @@ const ago = (iso) => {
 };
 
 // Real options found on the web by the AI, with links to the provider's page.
+// A goal detail (budget, date, place) that turns into a small form when tapped.
+function EditableStat({ label, shown, type, value, placeholder, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const id = `edit-${label.replace(/\W+/g, "-").toLowerCase()}`;
+  if (!editing) {
+    return (
+      <button
+        onClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+        className="card group p-3 text-center transition hover:border-brand-300"
+        aria-label={`${label}: ${shown}. Tap to change`}
+      >
+        <p className="text-xs text-slate-500">{label} <span className="text-brand-600 opacity-70 group-hover:opacity-100" aria-hidden="true">✎</span></p>
+        <p className="truncate font-bold">{shown}</p>
+      </button>
+    );
+  }
+  return (
+    <form
+      className="card col-span-3 flex flex-col gap-2 p-3 text-left sm:flex-row sm:items-end"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSave(String(draft));
+        setEditing(false);
+      }}
+    >
+      <div className="min-w-0 flex-1">
+        <label htmlFor={id} className="text-xs text-slate-500">{label}</label>
+        <input id={id} autoFocus className="input mt-1" type={type} min={type === "number" ? 0 : undefined} inputMode={type === "number" ? "numeric" : undefined} value={draft} placeholder={placeholder} onChange={(e) => setDraft(e.target.value)} />
+      </div>
+      <div className="flex gap-2">
+        <button type="submit" className="btn-primary px-4 py-2">Save</button>
+        <button type="button" onClick={() => setEditing(false)} className="btn-ghost px-4 py-2">Cancel</button>
+      </div>
+    </form>
+  );
+}
+
 // Button wording by kind of goal: trips are booked, things are bought.
 const VIEW_LABEL = { holiday: "View & book", dining: "View & book", events: "View & book", home: "View listing", career: "View & apply", money: "View plan" };
 
@@ -243,6 +284,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
   useEffect(() => () => ctl.current?.abort(), []);
   const allFinds = useMemo(() => findsFor(profile).filter((s) => s.goal.id === id), [profile, id]);
   const [searching, setSearching] = useState(false);
+  const [editedAfterSearch, setEditedAfterSearch] = useState(false);
 
   if (!goal) {
     return (
@@ -280,6 +322,11 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
     }));
   const mapItems = livePoints.length ? livePoints : finds;
   const mapStatus = searching ? "searching" : livePoints.length ? "live" : "example";
+
+  const updateGoal = (patch) => {
+    setProfile({ ...profile, goals: profile.goals.map((g) => (g.id === goal.id ? { ...g, ...patch } : g)) });
+    setEditedAfterSearch(true);
+  };
 
   const steps = planFor(goal, prog);
   // Choosing a live option ticks the person's "decide / pick / choose" step, and
@@ -361,10 +408,20 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
       )}
 
       <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-        <div className="card p-3"><p className="text-xs text-slate-500">{goal.type === "money" ? "Target saving" : "Budget"}</p><p className="font-bold">{goal.budget ? `${myMoney(goal.budget)}${goal.type === "money" ? "/yr" : ""}` : "Not set"}</p></div>
-        <div className="card p-3"><p className="text-xs text-slate-500">When</p><p className="font-bold">{countdown(goal.when)}</p></div>
-        <div className="card p-3"><p className="text-xs text-slate-500">Where</p><p className="truncate font-bold">{goal.location || "Not set"}</p></div>
+        <EditableStat
+          label={goal.type === "money" ? "Target saving" : "Budget"}
+          shown={goal.budget ? `${myMoney(goal.budget)}${goal.type === "money" ? "/yr" : ""}` : "Not set"}
+          type="number"
+          value={goal.budget ?? ""}
+          placeholder={`e.g. 30000 (${currentLocale().currency})`}
+          onSave={(v) => updateGoal({ budget: Number(v) > 0 ? Number(v) : null })}
+        />
+        <EditableStat label="When" shown={countdown(goal.when)} type="date" value={goal.when} onSave={(v) => v && updateGoal({ when: v })} />
+        <EditableStat label="Where" shown={goal.location || "Not set"} type="text" value={goal.location || ""} placeholder="e.g. Perth, or Japan" onSave={(v) => updateGoal({ location: v.trim() })} />
       </div>
+      {(goal.budget || goal.location) && prog.live?.items?.length > 0 && editedAfterSearch && (
+        <p className="mt-2 text-xs text-slate-500">You changed this goal. Tap <strong>Search again</strong> below for results that match.</p>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
