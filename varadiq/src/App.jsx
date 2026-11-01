@@ -24,10 +24,10 @@ export default function App() {
   let page;
   if (blocked) page = null;
   else if (route === "/onboarding") page = <Onboarding profile={profile} setProfile={setProfile} />;
-  else if (route === "/dashboard") page = <Dashboard profile={profile} pipeline={pipeline} progress={progress} goalActions={goalActions} />;
+  else if (route === "/dashboard") page = <Dashboard profile={profile} setProfile={setProfile} pipeline={pipeline} progress={progress} goalActions={goalActions} />;
   else if (route === "/pipeline") page = <Pipeline profile={profile} pipeline={pipeline} setStage={setStage} />;
   else if (route.startsWith("/goal/"))
-    page = <Goal key={route} id={route.split("/")[2]} profile={profile} pipeline={pipeline} setStage={setStage} progress={progress} goalActions={goalActions} />;
+    page = <Goal key={route} id={route.split("/")[2]} profile={profile} setProfile={setProfile} pipeline={pipeline} setStage={setStage} progress={progress} goalActions={goalActions} />;
   else if (route === "/privacy") page = <Privacy />;
   else page = <Home hasProfile={!!profile} setProfile={setProfile} />;
 

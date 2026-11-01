@@ -16,6 +16,12 @@ export default function Privacy() {
             The demo keeps your goals and plan in your own browser (local storage). They are not sent to us. When you use the AI
             features, your words and goals are sent to the AI service to produce the answer.
           </p>
+          <p className="mt-2">
+            <strong>Your location.</strong> If you tap "Use my current location", your browser asks your permission first. Your
+            location is used only to measure distances and is saved in your own browser, not on our servers. To show your
+            suburb's name, or when you type a suburb or postcode, that place is looked up with OpenStreetMap's free Nominatim
+            service.
+          </p>
         </section>
         <section>
           <h2 className="text-lg font-semibold text-slate-900">Where suggestions come from</h2>

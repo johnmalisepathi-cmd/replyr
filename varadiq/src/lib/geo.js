@@ -24,7 +24,10 @@ const AU_STATES = new Set(["Western Australia", "New South Wales", "Victoria", "
 
 export const countryOf = (region) => (AU_STATES.has(region) ? "Australia" : region);
 
+/** Where distances are measured from: the person's saved location, else their state's main city. */
 export function homeOf(profile) {
+  const h = profile?.home;
+  if (h && Number.isFinite(h.lat) && Number.isFinite(h.lng)) return { lat: h.lat, lng: h.lng, city: h.label || "your location" };
   return REGION_HOME[profile?.region] || REGION_HOME["Western Australia"];
 }
 
@@ -44,7 +47,7 @@ export function findsFor(profile) {
   for (const goal of profile?.goals || []) {
     for (const find of FINDS.filter((x) => x.type === goal.type)) {
       const s = scoreFind(find, goal, home);
-      out.push({ op: { ...find, distanceKm: Math.max(1, Math.round(distanceKm(home, find))) }, goal, ...s });
+      out.push({ op: { ...find, distanceKm: Math.round(distanceKm(home, find) * 10) / 10 }, goal, ...s });
     }
   }
   return out.sort((a, b) => b.score - a.score);

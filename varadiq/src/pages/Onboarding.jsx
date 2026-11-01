@@ -7,6 +7,7 @@ import { goalsFromText, useAI } from "../lib/ai.js";
 import { daysUntil, formatMoney } from "../lib/match.js";
 import { AIBadge, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import VoiceButton from "../components/VoiceButton.jsx";
+import LocationCard from "../components/LocationCard.jsx";
 
 const blankGoal = () => ({ id: `g-${Date.now()}`, type: "holiday", title: "", wish: "", budget: "", when: new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10), location: "", prefs: [], created: new Date().toISOString().slice(0, 10) });
 
@@ -98,6 +99,10 @@ export default function Onboarding({ profile, setProfile }) {
           </div>
         </div>
 
+        <div className="mt-4">
+          <LocationCard profile={p} setProfile={setP} compact />
+        </div>
+
         <div className="mt-6 flex items-center justify-between">
           <h2 className="font-semibold">Goals I'm watching ({p.goals.length})</h2>
           <button onClick={() => setDraft(blankGoal())} className="text-sm font-medium text-brand-600 hover:text-brand-700">+ Add one by hand</button>
@@ -178,7 +183,7 @@ export default function Onboarding({ profile, setProfile }) {
           </button>
         </div>
       </div>
-      <p className="mt-4 text-center text-xs text-slate-500">Demo: your goals are saved only in this browser.</p>
+      <p className="mt-4 text-center text-xs text-slate-500">Early access: your goals and location are saved only in this browser.</p>
     </main>
   );
 }

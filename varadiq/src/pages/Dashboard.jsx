@@ -4,6 +4,7 @@ import { findsFor, homeOf } from "../lib/geo.js";
 import { daysUntil, priceOf, searchFinds } from "../lib/match.js";
 import { aiErrorText, askPrompt, briefingPrompt, splitIds, useAI } from "../lib/ai.js";
 import { FitBar, ProgressRing } from "../components/ui.jsx";
+import LocationCard from "../components/LocationCard.jsx";
 import { billSavings, dueText, goalProgress, isComplete, planFor, todaysActions } from "../lib/plans.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
@@ -39,7 +40,7 @@ export function boundsOf(items) {
   return [w, s, e, n];
 }
 
-export default function Dashboard({ profile, pipeline, progress, goalActions }) {
+export default function Dashboard({ profile, setProfile, pipeline, progress, goalActions }) {
   const ai = useAI();
   const [goalFilter, setGoalFilter] = useState("all");
   const [kind, setKind] = useState("all");
@@ -129,6 +130,8 @@ export default function Dashboard({ profile, pipeline, progress, goalActions }) 
           </div>
         ))}
       </div>
+
+      <LocationCard profile={profile} setProfile={setProfile} />
 
       <section className="mt-8" aria-labelledby="today-h">
         <div className="flex items-center justify-between gap-3">

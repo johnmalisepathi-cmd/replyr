@@ -265,7 +265,7 @@ export default function WorldMap({ items, home, radiusKm, onOpen, initialView = 
           <div className="min-w-0">
             <p className="truncate font-semibold text-white">{selected.op.title}</p>
             <p className="text-xs text-slate-400">
-              {selected.op.location} · {countryOf(selected.op.region)} · {priceOf(selected.op)} · {colorBy === "fit" ? `${selected.op.distanceKm.toLocaleString()} km from you` : selected.op.tag}
+              {selected.op.location} · {countryOf(selected.op.region)} · {priceOf(selected.op)} · {colorBy === "fit" ? `${selected.op.distanceKm < 10 ? selected.op.distanceKm.toFixed(1) : Math.round(selected.op.distanceKm).toLocaleString()} km from you` : selected.op.tag}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">

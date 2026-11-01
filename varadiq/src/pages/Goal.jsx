@@ -7,6 +7,8 @@ import { advicePrompt, aiErrorText, aiPlan, checkinPrompt, useAI } from "../lib/
 import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
 import { FitBadge, FitBar, ProgressRing } from "../components/ui.jsx";
 import Mandala from "../components/Mandala.jsx";
+import LocationCard from "../components/LocationCard.jsx";
+import { formatKm } from "../lib/location.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import { boundsOf, countdown } from "./Dashboard.jsx";
@@ -132,7 +134,7 @@ function BillSavings({ goal, prog, profile, finds, actions }) {
   );
 }
 
-export default function Goal({ id, profile, pipeline, setStage, progress, goalActions }) {
+export default function Goal({ id, profile, setProfile, pipeline, setStage, progress, goalActions }) {
   const goal = profile.goals.find((g) => g.id === id);
   const prog = progress[id] || {};
   const ai = useAI();
@@ -311,6 +313,8 @@ export default function Goal({ id, profile, pipeline, setStage, progress, goalAc
             {note && <p className="mt-3 text-xs text-amber-300">{note}</p>}
           </div>
 
+          {["dining", "home", "tech", "car"].includes(goal.type) && <LocationCard profile={profile} setProfile={setProfile} compact />}
+
           {goal.type !== "money" && finds.length > 0 && (
             <WorldMap items={finds} home={homeOf(profile)} initialView={boundsOf(finds)} onOpen={(op) => document.getElementById(`find-${op.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} title={`${goal.title}: on the map`} />
           )}
@@ -329,6 +333,9 @@ export default function Goal({ id, profile, pipeline, setStage, progress, goalAc
                 <p className="text-sm text-slate-500">{[op.location, priceOf(op), op.rating ? `${op.rating} ★` : null, op.tag].filter(Boolean).join(" · ")}</p>
                 {op.kind === "option" && goal.type !== "money" && <div className="mt-3"><FitBar score={score} /></div>}
                 <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                  {goal.type === "dining" && (
+                    <div className="flex gap-2"><dt className="shrink-0 text-slate-500">Distance:</dt><dd className="font-medium">{formatKm(op.distanceKm)} from {homeOf(profile).city}</dd></div>
+                  )}
                   {Object.entries(op.facts).map(([k, v]) => (
                     <div key={k} className="flex gap-2"><dt className="shrink-0 text-slate-500">{k}:</dt><dd className="font-medium">{v}</dd></div>
                   ))}
