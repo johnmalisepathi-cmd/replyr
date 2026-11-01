@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEMO_CREATED, DEMO_GOALS, DEMO_PROGRESS } from "./goals.js";
+import { cloudEnabled, loadCloud, saveCloud, signOut as cloudSignOut, supabase } from "./cloud.js";
 
-// Prototype persistence: the profile (with goals) and plan are kept in this
-// browser only. A launched product would store them behind a login.
+// The profile (with goals), plan progress and saved finds are always kept in
+// this browser. When someone is signed in, they are also saved to their
+// account, so they appear on every device and the server can watch them.
 const KEY = "opportunityiq:personal:v1";
 
 export const DEFAULT_PROFILE = {
@@ -26,6 +28,12 @@ export function useAppState() {
   // Per goal: { done: [stepId], saved: number, switched: [findId], steps?: [custom plan] }
   const [progress, setProgress] = useState(saved?.progress || DEMO_PROGRESS);
 
+  // Signed-in person (null when signed out), and how saving to the cloud is going.
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(!cloudEnabled); // false until we know whether someone is signed in
+  const [sync, setSync] = useState(cloudEnabled ? "idle" : "off"); // off | idle | loading | saving | saved | error
+  const loadedFor = useRef(null); // which account's data is loaded, so we never save over it too early
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify({ profile, pipeline, progress }));
@@ -33,6 +41,60 @@ export function useAppState() {
       // Storage blocked (private mode) — the app still works for this visit.
     }
   }, [profile, pipeline, progress]);
+
+  // Follow sign-in and sign-out.
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setUser(data.session?.user || null))
+      .finally(() => setAuthReady(true));
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+      // Just came back from a sign-in link or Google: tidy the address and open Today.
+      if (event === "SIGNED_IN" && new URLSearchParams(window.location.search).has("code")) {
+        window.history.replaceState(null, "", `${window.location.pathname}#/dashboard`);
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  // On sign-in: use the account's saved goals, or move this browser's goals into the account.
+  useEffect(() => {
+    if (!user || loadedFor.current === user.id) return;
+    let live = true;
+    setSync("loading");
+    loadCloud(user.id)
+      .then(async (cloud) => {
+        if (!live) return;
+        if (cloud?.profile) {
+          setProfile(cloud.profile);
+          setPipeline(cloud.pipeline || {});
+          setProgress(cloud.progress || {});
+        } else if (profile) {
+          await saveCloud(user.id, { profile, pipeline, progress });
+        }
+        loadedFor.current = user.id;
+        setSync("saved");
+      })
+      .catch(() => live && setSync("error"));
+    return () => {
+      live = false;
+    };
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save changes to the account, a moment after the last change.
+  useEffect(() => {
+    if (!user || loadedFor.current !== user.id || !profile) return;
+    setSync("saving");
+    const t = setTimeout(() => {
+      saveCloud(user.id, { profile, pipeline, progress })
+        .then(() => setSync("saved"))
+        .catch(() => setSync("error"));
+    }, 800);
+    return () => clearTimeout(t);
+  }, [user, profile, pipeline, progress]);
 
   const patch = (goalId, fn) => setProgress((p) => ({ ...p, [goalId]: fn(p[goalId] || {}) }));
   const toggle = (list = [], id) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
@@ -68,5 +130,17 @@ export function useAppState() {
     setProgress({});
   };
 
-  return { profile, setProfile, pipeline, setStage, progress, goalActions, reset };
+  // Signing out also clears this browser's copy, so the next person on a shared device can't see it.
+  const signOut = async () => {
+    await cloudSignOut();
+    loadedFor.current = null;
+    reset();
+    try {
+      localStorage.removeItem(KEY);
+    } catch {
+      // Storage blocked: nothing to clear.
+    }
+  };
+
+  return { profile, setProfile, pipeline, setStage, progress, goalActions, reset, user, sync, signOut, authReady };
 }

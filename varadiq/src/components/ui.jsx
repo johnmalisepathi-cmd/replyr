@@ -2,6 +2,7 @@ import { go } from "../lib/router.js";
 import { fitLabel } from "../lib/match.js";
 import { CONTACT_EMAIL } from "../lib/config.js";
 import Mandala from "./Mandala.jsx";
+import { cloudEnabled } from "../lib/cloud.js";
 
 // The VaradIQ logo: the V-mandala in front, then "Varad" + "IQ" in the logo's
 // blue-to-green light. Varad (Sanskrit: a wish granted) + IQ.
@@ -32,7 +33,7 @@ export function Logo({ compact = false }) {
   );
 }
 
-export function Nav({ route, hasProfile }) {
+export function Nav({ route, hasProfile, user }) {
   const inApp = route !== "/" && route !== "/privacy";
   const link = (path, text) => (
     <button
@@ -53,9 +54,21 @@ export function Nav({ route, hasProfile }) {
             {link("/dashboard", "Today")}
             {link("/onboarding", "Goals")}
             {link("/pipeline", "Saved")}
+            {cloudEnabled && (
+              <button
+                onClick={() => go("/account")}
+                aria-label={user ? `Account: ${user.email}` : "Sign in"}
+                className={`ml-1 flex h-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${user ? "w-8 bg-brand-500 text-white" : "border border-white/25 px-3 text-white hover:bg-white/10"}`}
+              >
+                {user ? (user.email || "?")[0].toUpperCase() : "Sign in"}
+              </button>
+            )}
           </nav>
         ) : (
           <div className="flex items-center gap-2">
+            {cloudEnabled && !user && (
+              <button onClick={() => go("/account")} className="hidden text-sm font-medium text-slate-300 hover:text-white md:inline">Sign in</button>
+            )}
             <button onClick={() => go(hasProfile ? "/dashboard" : "/onboarding")} className="btn hidden border border-white/20 text-white hover:bg-white/10 sm:inline-flex">
               Start free
             </button>

@@ -17,6 +17,11 @@ export default function Privacy() {
             features, your words and goals are sent to the AI service to produce the answer.
           </p>
           <p className="mt-2">
+            <strong>Your account.</strong> If you sign in, we store your email and your goals, plans and saved finds in our
+            database (Supabase) so they appear on every device and so your agent can watch them. Only you can read them. You can
+            delete them at any time from your Account page.
+          </p>
+          <p className="mt-2">
             <strong>Your location.</strong> If you tap "Use my current location", your browser asks your permission first. Your
             location is used only to measure distances and is saved in your own browser, not on our servers. To show your
             suburb's name, or when you type a suburb or postcode, that place is looked up with OpenStreetMap's free Nominatim

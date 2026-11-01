@@ -67,3 +67,25 @@ About 30–45 minutes, on a computer (easier than a phone). You need: your GitHu
 | Early-access sign-ups | ✅ to your email via Formspree |
 | Prices, places, listings and bills | ⚠️ still sample data, clearly labelled in the site |
 | Goals and progress storage | ⚠️ in each visitor's own browser (no accounts yet) |
+
+## 6. Accounts (sign in and save goals to the cloud)
+
+VaradIQ uses **Supabase** (free to start) for sign-in and for saving goals. Until these settings are added, the site keeps goals in each visitor's browser and hides "Sign in".
+
+1. Go to **supabase.com** → **Start your project** → sign in with **GitHub**.
+2. **New project**: name `varadiq`, a strong database password (save it), region **Sydney** (or the one nearest most customers), **Free** plan.
+3. **SQL Editor → New query**: paste everything from `varadiq/supabase/schema.sql` and click **Run**. This creates the `user_state` table where each person can only see their own goals.
+4. **Authentication → URL Configuration**:
+   - **Site URL:** `https://www.varadiq.com`
+   - **Redirect URLs:** add `https://www.varadiq.com/`, `https://varadiq.com/` and `https://varadiq.vercel.app/`
+5. **Email sign-in links** work straight away. Supabase's built-in email sender only sends a few emails an hour, which is fine for testing; before launch, connect your own sender (Step 2 of the alerts work).
+6. **Google sign-in (optional, can be later):** Authentication → Sign In / Providers → Google needs a Google Cloud "OAuth client". The email link works without it.
+7. **Project Settings → API Keys** (or **Data API**): copy the **Project URL** and the **anon / publishable** key. In **Vercel → Environment Variables** add:
+
+   | Name | Value |
+   | --- | --- |
+   | `VITE_SUPABASE_URL` | the Project URL, e.g. `https://abcd1234.supabase.co` |
+   | `VITE_SUPABASE_ANON_KEY` | the anon / publishable key |
+
+   These two are safe to be public; never paste the **service_role / secret** key into a `VITE_` setting.
+8. **Redeploy** in Vercel. "Sign in" appears in the menu.

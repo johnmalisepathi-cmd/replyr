@@ -6,6 +6,7 @@ import { aiErrorText, askPrompt, briefingPrompt, splitIds, useAI } from "../lib/
 import { FitBar, ProgressRing } from "../components/ui.jsx";
 import LocationCard from "../components/LocationCard.jsx";
 import { myMoney } from "../lib/locale.js";
+import { cloudEnabled } from "../lib/cloud.js";
 import { billSavings, dueText, goalProgress, isComplete, planFor, todaysActions } from "../lib/plans.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
@@ -42,7 +43,7 @@ export function boundsOf(items, minSpan = [1.2, 0.8]) {
   return [w, s, e, n];
 }
 
-export default function Dashboard({ profile, setProfile, pipeline, progress, goalActions }) {
+export default function Dashboard({ user, profile, setProfile, pipeline, progress, goalActions }) {
   const ai = useAI();
   const [goalFilter, setGoalFilter] = useState("all");
   const [kind, setKind] = useState("all");
@@ -132,6 +133,16 @@ export default function Dashboard({ profile, setProfile, pipeline, progress, goa
           </div>
         ))}
       </div>
+
+      {cloudEnabled && !user && (
+        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-4 sm:flex-row sm:items-center">
+          <p className="flex-1 text-sm text-brand-900">
+            <strong>Save your goals and let your agent watch them 24/7.</strong> Sign in free to use them on every device and get
+            alerts. Right now they're only in this browser.
+          </p>
+          <button onClick={() => go("/account")} className="btn-primary shrink-0">Sign in free</button>
+        </div>
+      )}
 
       <LocationCard profile={profile} setProfile={setProfile} />
 

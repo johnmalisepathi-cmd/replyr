@@ -1,0 +1,52 @@
+import { createClient } from "@supabase/supabase-js";
+
+// Accounts and cloud saving, through Supabase. Turned on by two settings:
+// VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (the "anon" key is meant to be
+// public; Row Level Security in supabase/schema.sql keeps each person's data
+// private). Without them the app keeps everything in this browser, as before.
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+
+export const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: true } }) : null;
+export const cloudEnabled = !!supabase;
+
+// Sign-in links come back with ?code=… (PKCE), which doesn't clash with the
+// app's #/ page addresses. The app then opens Today.
+const redirect = () => `${window.location.origin}/`;
+
+/** Emails a one-tap sign-in link. Resolves {error} (null on success). */
+export async function sendMagicLink(email) {
+  if (!supabase) return { error: "Accounts aren't set up yet." };
+  const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirect() } });
+  return { error: error?.message || null };
+}
+
+/** Goes to Google to sign in, then comes back to the app. */
+export async function signInWithGoogle() {
+  if (!supabase) return { error: "Accounts aren't set up yet." };
+  const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirect() } });
+  return { error: error?.message || null };
+}
+
+export async function signOut() {
+  await supabase?.auth.signOut();
+}
+
+/** The saved state for a person, or null if they have none yet. */
+export async function loadCloud(userId) {
+  const { data, error } = await supabase.from("user_state").select("data").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.data || null;
+}
+
+export async function saveCloud(userId, state) {
+  const { error } = await supabase.from("user_state").upsert({ user_id: userId, data: state, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
+/** Deletes everything VaradIQ stores for this person. */
+export async function deleteCloud(userId) {
+  const { error } = await supabase.from("user_state").delete().eq("user_id", userId);
+  if (error) throw error;
+}
