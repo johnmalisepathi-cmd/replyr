@@ -42,6 +42,9 @@ export function useAppState() {
     toggleSwitch: (goalId, findId) => patch(goalId, (g) => ({ ...g, switched: toggle(g.switched, findId) })),
     setSteps: (goalId, steps) => patch(goalId, (g) => ({ ...g, steps, done: [] })),
     setLive: (goalId, live) => patch(goalId, (g) => ({ ...g, live })),
+    // pick: the chosen live option (or null to clear). stepIds: plan steps to tick.
+    choose: (goalId, pick, stepIds = []) =>
+      patch(goalId, (g) => ({ ...g, pick, done: pick ? [...new Set([...(g.done || []), ...stepIds])] : g.done })),
     // Moves the bill savings found by one goal into another goal's fund.
     sendSavings: (fromId, toId, amount) =>
       setProgress((p) => ({

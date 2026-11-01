@@ -3,13 +3,13 @@ import { go } from "../lib/router.js";
 import { GOAL_TYPES, PLAN_STAGES } from "../lib/goals.js";
 import { distanceKm, findsFor, homeOf } from "../lib/geo.js";
 import { monthlyRepayment, priceOf } from "../lib/match.js";
-import { advicePrompt, aiErrorText, aiPlan, canSearchLive, checkinPrompt, liveFinds, useAI } from "../lib/ai.js";
+import { advicePrompt, aiErrorText, aiPlan, canSearchLive, checkinPrompt, comparePrompt, liveFinds, useAI } from "../lib/ai.js";
 import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
 import { FitBadge, FitBar, ProgressRing } from "../components/ui.jsx";
 import Mandala from "../components/Mandala.jsx";
 import LocationCard from "../components/LocationCard.jsx";
 import { formatKm } from "../lib/location.js";
-import { currentLocale, myMoney } from "../lib/locale.js";
+import { currentLocale, defaultHome, myMoney } from "../lib/locale.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import { boundsOf, countdown } from "./Dashboard.jsx";
@@ -148,14 +148,30 @@ const ago = (iso) => {
 };
 
 // Real options found on the web by the AI, with links to the provider's page.
-function LiveFinds({ goal, live, near, onFound, busy, setBusy }) {
+// Button wording by kind of goal: trips are booked, things are bought.
+const VIEW_LABEL = { holiday: "View & book", dining: "View & book", events: "View & book", home: "View listing", career: "View & apply", money: "View plan" };
+
+function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, ai }) {
   const [note, setNote] = useState("");
+  const [compare, setCompare] = useState("");
+  const [comparing, setComparing] = useState(false);
+  const runCompare = async () => {
+    setComparing(true);
+    setCompare("");
+    try {
+      await ai.text(comparePrompt(goal, live.items), { onText: ({ text }) => setCompare(text) });
+    } catch (e) {
+      setNote(aiErrorText(e));
+    }
+    setComparing(false);
+  };
   const search = async () => {
     setBusy(true);
     setNote("");
     try {
       const r = await liveFinds(goal, near);
       onFound(r);
+      setCompare("");
       if (!r.items.length) setNote("I couldn't find good live options this time. Try again, or add more detail to the goal.");
     } catch (e) {
       setNote([aiErrorText(e), e?.detail ? `(Details: ${e.detail})` : ""].filter(Boolean).join(" "));
@@ -181,15 +197,31 @@ function LiveFinds({ goal, live, near, onFound, busy, setBusy }) {
                 <p className="mt-0.5 text-xs text-slate-400">{[it.location, it.price, host(it.url) !== (it.location || "").toLowerCase() ? host(it.url) : null].filter(Boolean).join(" · ")}</p>
                 {it.why && <p className="mt-1 text-sm text-slate-300">{it.why}</p>}
               </div>
-              <a href={it.url} target="_blank" rel="noopener noreferrer nofollow" className="btn-primary shrink-0 px-4 py-2">View &amp; book →</a>
+              <div className="flex shrink-0 gap-2">
+                <a href={it.url} target="_blank" rel="noopener noreferrer nofollow" className="btn-primary px-4 py-2">{VIEW_LABEL[goal.type] || "View & buy"} →</a>
+                <button
+                  onClick={() => onChoose(pick?.url === it.url ? null : it)}
+                  aria-pressed={pick?.url === it.url}
+                  className={`btn px-4 py-2 ${pick?.url === it.url ? "bg-amber-400 text-navy-950" : "border border-white/20 text-white hover:bg-white/10"}`}
+                >
+                  {pick?.url === it.url ? "Chosen ✓" : "Choose this"}
+                </button>
+              </div>
             </li>
           ))}
         </ul>
       )}
+      {compare && <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4"><AIText text={compare} streaming={comparing} /></div>}
+      {comparing && !compare && <div className="mt-4"><AIThinking label="Comparing the options for you" /></div>}
       {!busy && (
-        <button onClick={search} className={`${live?.items?.length ? "btn mt-4 border border-white/20 text-white hover:bg-white/10" : "btn-ai mt-4"}`}>
-          {live?.items?.length ? "Search again" : <><Sparkle /> Search the web for this goal</>}
-        </button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {live?.items?.length > 1 && ai && !comparing && (
+            <button onClick={runCompare} className="btn-ai"><Sparkle /> {compare ? "Compare again" : "Compare these for me"}</button>
+          )}
+          <button onClick={search} className={`${live?.items?.length ? "btn border border-white/20 text-white hover:bg-white/10" : "btn-ai"}`}>
+            {live?.items?.length ? "Search again" : <><Sparkle /> Search the web for this goal</>}
+          </button>
+        </div>
       )}
       {note && <p className="mt-3 text-xs text-amber-300">{note}</p>}
       <p className="mt-3 text-[11px] text-slate-500">Found by AI on public websites. Prices and availability can change, so confirm on the provider's site before you book or buy.</p>
@@ -233,6 +265,10 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
     return true;
   };
   const live = canSearchLive && goal.type !== "money";
+  // Shopping somewhere other than home (e.g. a phone in Singapore): search there, not near home.
+  const placeLc = (goal.location || "").trim().toLowerCase();
+  const homeNames = [near.city, defaultHome(profile).city, currentLocale().countryName].map((x) => (x || "").toLowerCase());
+  const buyElsewhere = goal.type !== "holiday" && !!placeLc && !homeNames.some((h) => h && (placeLc.includes(h) || h.includes(placeLc)));
   const finds = live ? allFinds.filter(fits) : allFinds;
   // Live places with a location, shaped like finds so the map can pin them.
   const livePoints = (prog.live?.items || [])
@@ -246,11 +282,17 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
   const mapStatus = searching ? "searching" : livePoints.length ? "live" : "example";
 
   const steps = planFor(goal, prog);
+  // Choosing a live option ticks the person's "decide / pick / choose" step, and
+  // any shortlisting step before it (choosing means the shortlist is done).
+  const decideAt = steps.findIndex((st) => !st.done && st.who === "you" && /decide|pick|choose/i.test(st.title));
+  const pickSteps = decideAt < 0 ? [] : steps.slice(0, decideAt + 1).filter((st, i) => i === decideAt || /shortlist/i.test(st.title)).map((st) => st.id);
+  const choosePick = (it) => goalActions.choose(goal.id, it && { title: it.title, location: it.location, price: it.price, url: it.url, at: new Date().toISOString() }, pickSteps);
   const savings = goal.type === "money" ? null : savingsStatus(goal, prog);
   const bills = goal.type === "money" ? billSavings(goal, prog) : null;
   const progressPct = Math.round(goalProgress(goal, prog) * 100);
   const complete = isComplete(goal, prog);
-  const moneyText = bills ? `Bills switched: ${money(bills.perYear)} a year of a ${money(bills.target)} target.` : savings ? `Saved ${money(savings.saved)} of ${money(savings.target)}; ${savings.onTrack ? "on track" : `${money(savings.gap)} behind`}; needs ${money(savings.weekly)} a week.` : "No savings needed.";
+  const pickText = prog.pick ? ` Their chosen option: ${prog.pick.title}${prog.pick.price ? ` (${prog.pick.price})` : ""}.` : "";
+  const moneyText = (bills ? `Bills switched: ${money(bills.perYear)} a year of a ${money(bills.target)} target.` : savings ? `Saved ${money(savings.saved)} of ${money(savings.target)}; ${savings.onTrack ? "on track" : `${money(savings.gap)} behind`}; needs ${money(savings.weekly)} a week.` : "No savings needed.") + pickText;
 
   const stream = async (prompt, set, setFlag) => {
     ctl.current?.abort();
@@ -326,8 +368,22 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
+          {prog.pick && (
+            <div className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">⭐ Your pick</p>
+                <p className="mt-0.5 font-semibold">{prog.pick.title}</p>
+                <p className="text-sm text-slate-600">{[prog.pick.location, prog.pick.price].filter(Boolean).join(" · ")}</p>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <a href={prog.pick.url} target="_blank" rel="noopener noreferrer nofollow" className="btn-primary px-4 py-2">{VIEW_LABEL[goal.type] || "View & buy"} →</a>
+                <button onClick={() => goalActions.choose(goal.id, null)} className="btn-ghost px-4 py-2">Change</button>
+              </div>
+            </div>
+          )}
+
           {canSearchLive && goal.type !== "money" && (
-            <LiveFinds goal={goal} live={prog.live} near={{ label: near.city, ...currentLocale() }} onFound={(r) => goalActions.setLive(goal.id, r)} busy={searching} setBusy={setSearching} />
+            <LiveFinds goal={goal} live={prog.live} near={{ label: near.city, ...currentLocale(), elsewhere: buyElsewhere }} onFound={(r) => goalActions.setLive(goal.id, r)} busy={searching} setBusy={setSearching} pick={prog.pick} ai={ai} onChoose={choosePick} />
           )}
 
           {/* THE PLAN */}

@@ -38,7 +38,7 @@ function prompt(goal, near) {
 
 ${describe(goal, near)}
 
-Find 3 to 5 real, specific options available now (for example hotels or flights for a trip, restaurants open near them, products in stock at stores that sell in ${country(near)}, homes or cars for sale, energy plans). For anything local (restaurants, shops, homes, cars, bills) search near where they live; for travel, search the destination, with flights from their nearest city. Show prices in ${cur(near)} where the site does, otherwise as published. Prefer options that fit the budget and what matters to them, and the official provider or booking page for each.
+Find 3 to 5 real, specific options available now (for example hotels or flights for a trip, restaurants open near them, products in stock at stores that sell in ${country(near)}, homes or cars for sale, energy plans). For travel, search the destination, with flights from their nearest city. For everything else (restaurants, shops, homes, cars, bills), search in the goal's Place if one is given, otherwise near where they live. Show prices in ${cur(near)} where the site does, otherwise as published. Prefer options that fit the budget and what matters to them, and the official provider or booking page for each.
 
 Reply with ONLY a JSON array, no other text:
 [{"title": string (max 70 chars), "location": string (suburb, city or store/website name), "price": string or null (as published, e.g. "From $189/night" or "$1,099"), "why": string (one short sentence on why it fits), "url": string (the exact page URL from your search results where they can view or book it), "lat": number or null, "lng": number or null (approximate latitude/longitude of the place, its city, or the destination; null for online-only stores)}]
@@ -94,7 +94,8 @@ export default async function handler(req, res) {
   if (near?.label) loc.city = clean(near.label, 60);
   if (/^[A-Z]{2}$/.test(near?.country || "")) loc.country = near.country;
   if (typeof near?.timezone === "string" && /^[A-Za-z_]+\/[A-Za-z_/+-]+$/.test(near.timezone)) loc.timezone = near.timezone;
-  if (loc.city || loc.country) tools[0].user_location = loc;
+  // If the goal names somewhere else to buy (e.g. a phone in Singapore), don't bias the search to home.
+  if ((loc.city || loc.country) && near?.elsewhere !== true) tools[0].user_location = loc;
 
   const messages = [{ role: "user", content: prompt(goal, near) }];
   const started = Date.now();

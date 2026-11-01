@@ -367,3 +367,23 @@ export async function liveFinds(goal, near) {
   if (data.refused) throw { code: "refused" };
   return { items: Array.isArray(data.items) ? data.items : [], at: new Date().toISOString() };
 }
+
+/** Prompt: compare real options found on the web and recommend the best ones. */
+export function comparePrompt(goal, items) {
+  const list = items.map((it, i) => `${i + 1}. ${it.title} | ${it.location || "online"} | ${it.price || "price not shown"} | ${it.why || ""} | ${it.url}`).join("\n");
+  return `You are VaradIQ, a warm, honest AI goal agent. ${aboutPerson()}
+Goal: ${describeGoal(goal)}
+
+Real options found on the web just now:
+${list}
+
+Compare them for this person and recommend. Use ONLY the facts listed; where something isn't stated, say so. Max 160 words, in this format:
+## Best pick
+**<option name>**: one sentence on why.
+## Also good
+- **<option name>**: why, and who it suits.
+- **<option name>**: why, and who it suits.
+## Check before you buy
+1-2 bullets (e.g. warranty, model, delivery, total price with fees).
+No preamble, no sign-off.`;
+}
