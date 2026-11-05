@@ -102,7 +102,7 @@ export default function Account({ user, sync, signOut }) {
       <div className="card p-6 text-center">
         <Mandala size={56} className="mx-auto" />
         <h1 className="mt-3 text-2xl font-bold">Sign in to VaradIQ</h1>
-        <p className="mb-6 mt-2 text-sm text-slate-600">Save your goals, use them on every device, and let your agent watch them 24/7. Free, no password needed.</p>
+        <p className="mb-6 mt-2 text-sm text-slate-600">Save your goals, use them on every device, and let your agent search for them every day. Free, no password needed.</p>
 
         {googleEnabled && (
           <>

@@ -10,6 +10,7 @@ import WorldMap from "../components/WorldMap.jsx";
 import { COUNTRY_COUNT, findsFor } from "../lib/geo.js";
 import { DEFAULT_PROFILE } from "../lib/store.js";
 import { Sparkle } from "../components/ai-ui.jsx";
+import VideoSection, { VideoModal } from "../components/VideoSection.jsx";
 
 // The home map shows what the assistant found for the demo goals.
 const MAP_ITEMS = findsFor(DEFAULT_PROFILE);
@@ -17,7 +18,7 @@ const MAP_ITEMS = findsFor(DEFAULT_PROFILE);
 const STEPS = [
   { n: "01", title: "Tell it your goal", body: "Type or speak it in your own words: a holiday, a new phone, a home, lower bills, dinner tonight.", eg: "\"Bali in 6 months, under $4,000\"" },
   { n: "02", title: "It makes the plan", body: "Steps with dates, who does what, and a weekly savings amount so the money is ready in time.", eg: "Save $160/wk · book flights in month 2" },
-  { n: "03", title: "It works 24/7", body: "The agent does its steps: watching prices, comparing options, finding cheaper bills, setting reminders.", eg: "Checked 930 fares this month" },
+  { n: "03", title: "It searches every day", body: "Every morning the agent searches the web again for your goals and emails you when something is cheaper or better.", eg: "7am: \"Tokyo flights down to A$940\"" },
   { n: "04", title: "It keeps you moving", body: "Each morning: today's actions. Each week: a check-in on how you're going and what's next.", eg: "\"Flights down 22%. Book today.\"" },
   { n: "05", title: "Done ✓", body: "Every step ticked off, and the goal moves to your history. Then on to the next one.", eg: "\"🎉 Bali booked, under budget\"" },
 ];
@@ -46,7 +47,7 @@ const FAQ = [
 ];
 
 const STATS = [
-  ["24/7", "working on your goals"],
+  ["Every day", "it searches for your goals"],
   ["1 plan", "for every goal, with dates"],
   ["$990/yr", "typical bills cut (sample)"],
   ["0", "bookings made without you"],
@@ -58,6 +59,7 @@ function Eyebrow({ children }) {
 
 export default function Home({ hasProfile, setProfile }) {
   const [open, setOpen] = useState(0);
+  const [video, setVideo] = useState(false);
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
   return (
@@ -77,7 +79,7 @@ export default function Home({ hasProfile, setProfile }) {
               <Sparkle className="h-3.5 w-3.5 text-ai-cyan" /> Your AI goal agent · early access
             </span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.04] tracking-tight text-white sm:text-5xl lg:text-6xl" style={{ textWrap: "balance" }}>
-              Tell it your goal. <span className="ai-text">It works on it 24/7 until it's done.</span>
+              Tell it your goal. <span className="ai-text">It works on it every day until it's done.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-slate-300">
               A holiday, a new phone, your first home, lower bills? Say it once. VaradIQ makes the plan, does the
@@ -87,8 +89,8 @@ export default function Home({ hasProfile, setProfile }) {
               <button onClick={() => scrollTo("try-ai")} className="btn-ai px-6 py-3 text-base">
                 <Sparkle /> Try it now
               </button>
-              <button onClick={() => scrollTo("pilot")} className="btn border border-white/25 px-6 py-3 text-base text-white hover:bg-white/10">
-                Get early access
+              <button onClick={() => setVideo(true)} className="btn border border-white/25 px-6 py-3 text-base text-white hover:bg-white/10">
+                ▶ Watch the 1-minute video
               </button>
             </div>
             <p className="mt-4 text-sm text-slate-500">Free to start. No credit card.</p>
@@ -113,6 +115,9 @@ export default function Home({ hasProfile, setProfile }) {
           </dl>
         </div>
       </section>
+
+      <VideoSection onPlay={() => setVideo(true)} />
+      <VideoModal open={video} onClose={() => setVideo(false)} />
 
       {/* TRY THE AI */}
       <section id="try-ai" className="section scroll-mt-20 py-16">
@@ -180,7 +185,7 @@ export default function Home({ hasProfile, setProfile }) {
         </h2>
         <p className="mt-4 max-w-2xl text-slate-400">
           Chatbots answer, then forget. To-do apps wait for you to do everything. VaradIQ is an agent: it plans each
-          goal, does its own steps around the clock, and keeps you moving until it's done.
+          goal, searches the web for it every day, and keeps you moving until it's done.
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {[

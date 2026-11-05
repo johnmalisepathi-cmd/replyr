@@ -238,7 +238,7 @@ const describeFind = (s) =>
   `[${s.op.id}] ${s.op.title} | ${s.op.kind === "watch" ? "Watching (alert, not a product)" : "Available now"} | ${s.op.location} | ${priceOf(s.op) || "no price"} | ${s.op.rating ? `rated ${s.op.rating}` : "no rating"} | ${s.op.tag} | ${Object.entries(s.op.facts).map(([k, v]) => `${k}: ${v}`).join("; ")} | fit ${s.score}% for goal "${s.goal.title}"`;
 
 export function briefingPrompt(profile, top, todo = []) {
-  return `You are VaradIQ, a warm, sharp AI goal agent that plans people's goals, watches the world 24/7 for them and keeps them moving until each goal is done. Everything below is fictional sample data.
+  return `You are VaradIQ, a warm, sharp AI goal agent that plans people's goals, searches the web for them every day and keeps them moving until each goal is done. Everything below is fictional sample data.
 
 Their goals:
 ${profile.goals.map(describeGoal).join("\n")}
@@ -314,7 +314,7 @@ const describeStep = (s) => `${s.done ? "[done]" : "[todo]"} ${s.title} (due ${s
 export async function aiPlan(goal) {
   const ai = await getAI();
   if (!ai) return null;
-  const raw = await ai.json(`You are VaradIQ, an AI goal agent that plans goals and works on them 24/7. Write a step-by-step plan for this goal.
+  const raw = await ai.json(`You are VaradIQ, an AI goal agent that plans goals and searches the web for them every day. Write a step-by-step plan for this goal.
 Goal: ${describeGoal(goal)} Today is ${iso(Date.now())}.
 Reply with only a JSON array of 4-7 steps in order: [{"title": string (max 6 words), "inDays": number (days from today, last step on or before the goal date), "who": "agent"|"you", "detail": string (one short sentence: what happens, e.g. what the agent watches or what the person must do)}].
 "agent" steps are research, watching prices and reminders. "you" steps are decisions, bookings, payments and signing. ${aboutPerson()}`);
@@ -330,7 +330,7 @@ Reply with only a JSON array of 4-7 steps in order: [{"title": string (max 6 wor
 }
 
 export function checkinPrompt(profile, goal, steps, money, scored) {
-  return `You are VaradIQ, a warm but honest AI goal agent. You work on people's goals 24/7 and check in weekly to keep them moving. Everything is fictional sample data. ${aboutPerson()}
+  return `You are VaradIQ, a warm but honest AI goal agent. You search the web for people's goals every day and check in weekly to keep them moving. Everything is fictional sample data. ${aboutPerson()}
 
 Person: ${profile.name || "the user"}. Goal: ${describeGoal(goal)}
 Plan:

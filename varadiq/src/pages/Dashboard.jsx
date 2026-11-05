@@ -145,7 +145,7 @@ export default function Dashboard({ user, profile, setProfile, pipeline, progres
       {cloudEnabled && !user && (
         <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-4 sm:flex-row sm:items-center">
           <p className="flex-1 text-sm text-brand-900">
-            <strong>Save your goals and let your agent watch them 24/7.</strong> Sign in free to use them on every device and get
+            <strong>Save your goals and let your agent search for them every day.</strong> Sign in free to use them on every device and get
             alerts. Right now they're only in this browser.
           </p>
           <button onClick={() => go("/account")} className="btn-primary shrink-0">Sign in free</button>

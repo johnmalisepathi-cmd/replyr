@@ -79,7 +79,7 @@ export default function AIDemo({ setProfile }) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-5 py-4">
         <div className="flex items-center gap-2">
           <Sparkle className="h-5 w-5 text-ai-cyan" />
-          <p className="font-semibold text-white">Tell me your goals. I'll plan them and work on them 24/7.</p>
+          <p className="font-semibold text-white">Tell me your goals. I'll plan them and search for them every day.</p>
         </div>
         <AIBadge live={!!ai} />
       </div>

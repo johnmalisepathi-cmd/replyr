@@ -6,7 +6,7 @@ const COLS = ["ChatGPT / Google", "To-do & alert apps", "VaradIQ"];
 // Each cell: [level, text]. level: 2 = yes, 1 = partly, 0 = no.
 const ROWS = [
   ["Makes a plan for your goal", [1, "Gives advice, then it's up to you"], [0, "You write every task"], [2, "Steps, dates and who does what"]],
-  ["Works on it while you're away", [0, "Only when you ask"], [1, "Price drops only"], [2, "Prices, listings, bills, 24/7"]],
+  ["Works on it while you're away", [0, "Only when you ask"], [1, "Price drops only"], [2, "Searches every day, emails you deals"]],
   ["Tells you what to do today", [0, "No"], [1, "Reminders you set"], [2, "Today's actions every morning"]],
   ["Finds the money", [0, "No"], [1, "Comparison sites, one bill at a time"], [2, "Cuts bills and sends the saving to your goal"]],
   ["Checks in until it's done", [0, "No"], [0, "No"], [2, "Weekly check-in, progress tracked"]],
