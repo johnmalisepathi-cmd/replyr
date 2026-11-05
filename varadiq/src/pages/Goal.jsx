@@ -4,13 +4,13 @@ import { GOAL_TYPES, PLAN_STAGES } from "../lib/goals.js";
 import { distanceKm, findsFor, fitsGoal, homeOf } from "../lib/geo.js";
 import { monthlyRepayment, priceOf } from "../lib/match.js";
 import { advicePrompt, aiErrorText, aiPlan, canSearchLive, checkinPrompt, comparePrompt, liveFinds, useAI } from "../lib/ai.js";
-import { agentLog, billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
+import { billSavings, dueText, goalProgress, isComplete, planFor, savingsStatus } from "../lib/plans.js";
 import { FitBadge, FitBar, ProgressRing } from "../components/ui.jsx";
 import Mandala from "../components/Mandala.jsx";
 import LocationCard from "../components/LocationCard.jsx";
 import { formatKm } from "../lib/location.js";
 import { currentLocale, defaultHome, myMoney } from "../lib/locale.js";
-import { cloudEnabled } from "../lib/cloud.js";
+import { cloudEnabled, loadWatch } from "../lib/cloud.js";
 import WorldMap from "../components/WorldMap.jsx";
 import { AIBadge, AIText, AIThinking, IndustryIcon, Sparkle } from "../components/ai-ui.jsx";
 import { boundsOf, countdown } from "./Dashboard.jsx";
@@ -190,10 +190,29 @@ function EditableStat({ label, shown, type, value, placeholder, onSave }) {
   );
 }
 
+// How many goals each person can have watched daily (the server checks too).
+export const WATCH_LIMIT = 2;
+
+// Turns the daily watch (search every morning + email alerts) on or off for a goal.
+function WatchSwitch({ goal, user, othersWatched, onToggle, dark = false }) {
+  if (!cloudEnabled || goal.type === "money") return null;
+  const base = dark ? "border-white/20 text-white hover:bg-white/10" : "border-slate-300 text-slate-800 hover:border-slate-400";
+  if (!user) return <button onClick={() => go("/account")} className={`btn border ${base}`}>🔔 Sign in free to get deal alerts</button>;
+  if (goal.watch)
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-600"><span className="h-2 w-2 animate-glow rounded-full bg-emerald-500" />Watching daily · email alerts on</span>
+        <button onClick={onToggle} className={`text-xs ${dark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"}`}>Stop watching</button>
+      </div>
+    );
+  if (othersWatched >= WATCH_LIMIT) return <p className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Free accounts can watch {WATCH_LIMIT} goals. Stop watching another goal to watch this one.</p>;
+  return <button onClick={onToggle} className="btn-primary">🔔 Watch daily &amp; email me deals</button>;
+}
+
 // Button wording by kind of goal: trips are booked, things are bought.
 const VIEW_LABEL = { holiday: "View & book", dining: "View & book", events: "View & book", home: "View listing", career: "View & apply", money: "View plan" };
 
-function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, ai, user }) {
+function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, ai, user, watchSlot }) {
   const [note, setNote] = useState("");
   const [left, setLeft] = useState(null);
   const needsSignIn = cloudEnabled && !user;
@@ -230,11 +249,12 @@ function LiveFinds({ goal, live, near, onFound, busy, setBusy, pick, onChoose, a
     <section className="ai-panel p-5" aria-labelledby="live-h">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="live-h" className="flex items-center gap-2 font-semibold text-white">🌐 Live from the web</h2>
-        {live?.at && <span className="text-xs text-slate-400">Searched {ago(live.at)}</span>}
+        {live?.at && <span className="text-xs text-slate-400">{live.auto ? "Checked automatically" : "Searched"} {ago(live.at)}</span>}
       </div>
       {!live?.items?.length && !busy && (
         <p className="mt-2 text-sm text-slate-400">The AI searches the web right now for real options for this goal, with links to view and book on the provider's own site.</p>
       )}
+      {watchSlot && <div className="mt-3">{watchSlot}</div>}
       {busy && <div className="mt-4"><AIThinking label="Searching the web for you (about 20 seconds)" /></div>}
       {live?.items?.length > 0 && !busy && (
         <ul className="mt-4 space-y-3">
@@ -298,6 +318,24 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
   const allFinds = useMemo(() => findsFor(profile).filter((s) => s.goal.id === id), [profile, id]);
   const [searching, setSearching] = useState(false);
   const [editedAfterSearch, setEditedAfterSearch] = useState(false);
+  // The latest automatic check of this goal (daily watch), shown as its live results.
+  const [watchInfo, setWatchInfo] = useState(null);
+  const watching = !!goal?.watch;
+  useEffect(() => {
+    if (!cloudEnabled || !user || !watching) return;
+    let on = true;
+    loadWatch(user.id, id)
+      .then((w) => {
+        if (!on || !w) return;
+        setWatchInfo(w);
+        const cur = progress[id]?.live;
+        if (w.items?.length && (!cur?.at || new Date(w.checked_at) > new Date(cur.at))) goalActions.setLive(id, { items: w.items, at: w.checked_at, auto: true });
+      })
+      .catch(() => {});
+    return () => {
+      on = false;
+    };
+  }, [user?.id, id, watching]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!goal) {
     return (
@@ -339,6 +377,9 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
   // any shortlisting step before it (choosing means the shortlist is done).
   const decideAt = steps.findIndex((st) => !st.done && st.who === "you" && /decide|pick|choose/i.test(st.title));
   const pickSteps = decideAt < 0 ? [] : steps.slice(0, decideAt + 1).filter((st, i) => i === decideAt || /shortlist/i.test(st.title)).map((st) => st.id);
+  const othersWatched = profile.goals.filter((g) => g.watch && g.id !== goal.id).length;
+  const toggleWatch = () => setProfile({ ...profile, goals: profile.goals.map((g) => (g.id === goal.id ? { ...g, watch: !g.watch } : g)) });
+  const watchSwitch = (dark) => <WatchSwitch goal={goal} user={user} othersWatched={othersWatched} onToggle={toggleWatch} dark={dark} />;
   const choosePick = (it) => goalActions.choose(goal.id, it && { title: it.title, location: it.location, price: it.price, url: it.url, at: new Date().toISOString() }, pickSteps);
   const savings = goal.type === "money" ? null : savingsStatus(goal, prog);
   const bills = goal.type === "money" ? billSavings(goal, prog) : null;
@@ -385,7 +426,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
       ...next.map((s) => `- **${s.title}**: ${dueText(s.due).toLowerCase()}. ${s.detail}`),
       savings && savings.saved < savings.target ? `- **Savings**: put aside ${money(Math.ceil(savings.weekly / 10) * 10)} this week.` : null,
       "## I'm handling",
-      `- ${agentLog(goal, finds.length)[0]}, and I'll alert you if anything changes.`,
+      goal.watch ? "- Searching the web for this goal every morning. I'll email you when something is cheaper or better." : "- Turn on daily watching and I'll search the web every morning and email you the deals.",
     ].filter(Boolean).join("\n");
   };
 
@@ -446,7 +487,7 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
           )}
 
           {canSearchLive && goal.type !== "money" && (
-            <LiveFinds goal={goal} live={prog.live} near={{ label: near.city, ...currentLocale(), elsewhere: buyElsewhere }} onFound={(r) => goalActions.setLive(goal.id, r)} busy={searching} setBusy={setSearching} pick={prog.pick} ai={ai} onChoose={choosePick} user={user} />
+            <LiveFinds goal={goal} live={prog.live} near={{ label: near.city, ...currentLocale(), elsewhere: buyElsewhere }} onFound={(r) => goalActions.setLive(goal.id, r)} busy={searching} setBusy={setSearching} pick={prog.pick} ai={ai} onChoose={choosePick} user={user} watchSlot={watchSwitch(true)} />
           )}
 
           {/* THE PLAN */}
@@ -583,20 +624,28 @@ export default function Goal({ id, profile, setProfile, pipeline, setStage, prog
           {bills && <BillSavings goal={goal} prog={prog} profile={profile} finds={finds} actions={goalActions} />}
           {savings && <SavingsCard goal={goal} status={savings} onAdd={(v) => goalActions.addSaved(goal.id, v)} />}
           {goal.type === "home" && <RepaymentCalc budget={goal.budget} />}
-          <div className="card p-5">
-            <p className="font-semibold">What the agent did for you</p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              {agentLog(goal, finds.length).map((w) => (
-                <li key={w} className="flex gap-2"><span className="text-violet-600">🤖</span>{w}</li>
-              ))}
-            </ul>
-            <p className="mt-4 text-sm font-semibold">Watching 24/7</p>
-            <ul className="mt-2 space-y-2 text-sm">
-              {GOAL_TYPES[goal.type].watches.map((w) => (
-                <li key={w} className="flex items-center gap-2"><span className="h-2 w-2 animate-glow rounded-full bg-emerald-500" />{w}</li>
-              ))}
-            </ul>
-          </div>
+          {goal.type !== "money" && (
+            <div className="card p-5">
+              <p className="font-semibold">🔔 Daily watch</p>
+              <p className="mt-2 text-sm text-slate-600">
+                {goal.watch && user
+                  ? "Every morning your agent searches the web again for this goal and emails you when something is cheaper or better."
+                  : "Turn this on and your agent searches the web for this goal every morning, then emails you when it's the best time to buy."}
+              </p>
+              {goal.watch && user && (
+                <p className="mt-3 text-sm font-medium text-slate-800">
+                  {watchInfo ? `Last check: ${ago(watchInfo.checked_at)} · ${watchInfo.checks} ${watchInfo.checks === 1 ? "check" : "checks"} so far` : "First check: tomorrow morning"}
+                </p>
+              )}
+              <p className="mt-4 text-sm font-semibold">What it looks for</p>
+              <ul className="mt-2 space-y-2 text-sm">
+                {GOAL_TYPES[goal.type].watches.map((w) => (
+                  <li key={w} className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${goal.watch && user ? "animate-glow bg-emerald-500" : "bg-slate-300"}`} />{w}</li>
+                ))}
+              </ul>
+              <div className="mt-4">{watchSwitch(false)}</div>
+            </div>
+          )}
           <button onClick={() => go("/pipeline")} className="btn-ghost w-full">View saved finds →</button>
         </aside>
       </div>

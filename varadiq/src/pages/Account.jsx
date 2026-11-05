@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { go } from "../lib/router.js";
-import { cloudEnabled, deleteCloud, googleEnabled, sendMagicLink, signInWithGoogle } from "../lib/cloud.js";
+import { cloudEnabled, deleteCloud, googleEnabled, loadEmailsOff, setEmailsOff, sendMagicLink, signInWithGoogle } from "../lib/cloud.js";
 import Mandala from "../components/Mandala.jsx";
 
 const SYNC_TEXT = {
@@ -16,6 +16,10 @@ export default function Account({ user, sync, signOut }) {
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
+  const [emailsOff, setOff] = useState(null);
+  useEffect(() => {
+    if (user) loadEmailsOff(user.id).then(setOff).catch(() => setOff(false));
+  }, [user]);
 
   if (!cloudEnabled) {
     return (
@@ -40,6 +44,30 @@ export default function Account({ user, sync, signOut }) {
           </div>
           <p className={`mt-4 text-sm ${sync === "error" ? "text-amber-700" : "text-slate-600"}`} role="status">{SYNC_TEXT[sync] || ""}</p>
           <p className="mt-2 text-sm text-slate-600">Your goals, plans and picks are saved to your account and appear on every device where you sign in.</p>
+          <div className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-4">
+            <div>
+              <p className="text-sm font-semibold">Deal alert emails</p>
+              <p className="text-xs text-slate-500">When a watched goal has something cheaper or better.</p>
+            </div>
+            {emailsOff !== null && (
+              <button
+                onClick={async () => {
+                  const next = !emailsOff;
+                  setOff(next);
+                  try {
+                    await setEmailsOff(user.id, next);
+                  } catch {
+                    setOff(!next);
+                    setNote("Couldn't change that just now. Please try again.");
+                  }
+                }}
+                aria-pressed={!emailsOff}
+                className={`btn shrink-0 px-4 py-2 ${emailsOff ? "border border-slate-300 text-slate-700" : "bg-emerald-500 text-white"}`}
+              >
+                {emailsOff ? "Off" : "On ✓"}
+              </button>
+            )}
+          </div>
           <div className="mt-6 flex flex-wrap gap-2">
             <button onClick={() => go("/dashboard")} className="btn-primary">Go to Today</button>
             <button onClick={async () => { await signOut(); go("/"); }} className="btn-ghost">Sign out</button>

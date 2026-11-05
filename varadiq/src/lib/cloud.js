@@ -57,3 +57,22 @@ export async function deleteCloud(userId) {
   const { error } = await supabase.from("user_state").delete().eq("user_id", userId);
   if (error) throw error;
 }
+
+/** The latest automatic (daily watch) check of a goal, or null. */
+export async function loadWatch(userId, goalId) {
+  const { data, error } = await supabase.from("goal_watch").select("checked_at,checks,items,news").eq("user_id", userId).eq("goal_id", goalId).maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+/** Whether this person has switched alert emails off. */
+export async function loadEmailsOff(userId) {
+  const { data, error } = await supabase.from("alert_prefs").select("emails_off").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return !!data?.emails_off;
+}
+
+export async function setEmailsOff(userId, off) {
+  const { error } = await supabase.from("alert_prefs").upsert({ user_id: userId, emails_off: off, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}

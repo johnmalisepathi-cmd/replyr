@@ -22,8 +22,15 @@ export default function Privacy() {
             delete them at any time from your Account page.
           </p>
           <p className="mt-2">
+            <strong>Daily watch and alert emails.</strong> If you turn on "Watch daily" for a goal, each morning our server sends
+            that goal (and your suburb or city, country and currency) to the AI service to search the web again, saves what it
+            finds in your account, and emails you when something is cheaper or better. You can stop watching a goal at any time,
+            and every alert email has a link to stop alert emails. Emails are sent through Resend.
+          </p>
+          <p className="mt-2">
             <strong>Your location.</strong> If you tap "Use my current location", your browser asks your permission first. Your
-            location is used only to measure distances and is saved in your own browser, not on our servers. To show your
+            location is used to measure distances and to search near you. It is saved in your browser and, if you sign in, with
+            your goals in your account. To show your
             suburb's name, or when you type a suburb or postcode, that place is looked up with OpenStreetMap's free Nominatim
             service.
           </p>
