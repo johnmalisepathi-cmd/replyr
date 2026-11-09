@@ -144,7 +144,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-3 max-w-xs text-sm">
-            Your AI goal agent. Tell it a goal, and it plans it, watches it and keeps you moving until it's done. Varad (Sanskrit): a wish granted.
+            Your AI goal agent. Tell it a goal, and it plans it, watches it and keeps you moving until it's done.
           </p>
         </div>
         <div className="text-sm">

@@ -24,10 +24,10 @@
 **Name:** VaradIQ
 
 **Tagline** (60 characters max):
-> Tell it your goal. It works on it 24/7 until it's done.
+> Tell it your goal. It works on it every day until it's done.
 
 **Description** (260 characters max):
-> VaradIQ is an AI goal agent. Say your goal, like a Bali trip, a new phone or lower bills. It makes the plan, watches prices 24/7, tells you exactly what to do each day, and finds money in your bills to fund it. Early access: free.
+> VaradIQ is an AI goal agent. Say your goal, like a Bali trip, a new phone or lower bills. It makes the plan, searches the web every day for better prices, tells you exactly what to do each day, and finds money in your bills to fund it. Early access: free.
 
 **Topics:** Artificial Intelligence, Productivity, Personal Finance, Travel
 
@@ -40,12 +40,10 @@
 >
 > ChatGPT gives great answers, but then it's up to you. To-do apps wait for you to do everything. So I built **VaradIQ**, an *agent* that:
 > - turns your goal into a plan with dates (who does what, and how much to save each week)
-> - works on its own steps 24/7: watching prices, comparing options, finding cheaper bills
+> - searches the web every day for better prices and options, and emails you when it finds a better deal
 > - tells you today's actions, and checks in every week until it's done
 >
-> **The name:** *Varad* is Sanskrit for "a wish granted", and *IQ* is the intelligence that makes it happen. The logo turns gold when a goal is done ✨
->
-> **Honest note:** this is early access. The AI is real; places, prices and bills are sample data while we connect live sources. I'd love your feedback: **what's the first goal you'd give it?**
+> **Honest note:** this is early access. The AI is real and results come live from the web, so always confirm prices with the provider. I'd love your feedback: **what's the first goal you'd give it?**
 
 **Gallery** (images 1270 × 760, up to 8):
 1. The hero: "Tell it your goal" + the animated mandala (a screenshot of the gold "done" moment)
@@ -66,9 +64,7 @@
 **LinkedIn**
 > Today I'm launching **VaradIQ** on Product Hunt 🚀
 >
-> It's an AI goal agent: you say a goal ("Bali in 6 months under $4,000"), and it makes the plan, watches prices 24/7, finds money in your bills to fund it, and checks in every week until it's done.
->
-> Why the name? *Varad* is Sanskrit for "a wish granted". When a goal is done, the logo turns gold.
+> It's an AI goal agent: you say a goal ("Bali in 6 months under $4,000"), and it makes the plan, searches the web every day for better prices, finds money in your bills to fund it, and checks in every week until it's done.
 >
 > It's free in early access, and I'd be grateful for your support and honest feedback 🙏 [Product Hunt link]
 >
@@ -76,12 +72,12 @@
 
 **X (Twitter)**
 > Launching VaradIQ today 🚀
-> Tell it your goal → it makes the plan, works on it 24/7, and keeps you moving until it's done. It even finds money in your bills to pay for it.
+> Tell it your goal → it makes the plan, searches the web for it every day, and keeps you moving until it's done. It even finds money in your bills to pay for it.
 > Free early access 👉 [Product Hunt link]
 
 **Instagram / TikTok** (with the video)
 > POV: you tell an AI "Bali in 6 months" and it actually gets you there ✈️✨
-> Plan ✅ Prices watched 24/7 ✅ Bills cut to fund it ✅
+> Plan ✅ Prices checked every day ✅ Bills cut to fund it ✅
 > VaradIQ: free early access, link in bio
 > #ai #goals #travelhacks #moneytips #productivity
 

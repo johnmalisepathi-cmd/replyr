@@ -94,10 +94,6 @@ export default function Home({ hasProfile, setProfile }) {
               </button>
             </div>
             <p className="mt-4 text-sm text-slate-500">Free to start. No credit card.</p>
-            <p className="mt-6 max-w-md border-l-2 border-amber-300/60 pl-3 text-sm text-slate-400">
-              <span className="font-semibold text-slate-200">Varad</span> is Sanskrit for "a wish granted".{" "}
-              <span className="font-semibold text-slate-200">IQ</span> is the intelligence that makes it happen. When a goal is done, our logo turns gold.
-            </p>
           </div>
           <div className="min-w-0">
             <AICore />
